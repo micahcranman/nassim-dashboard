@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nassim Confidence Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0F1419;
+  color: #E0E0E0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 1rem;
+  line-height: 1.5;
+}
+.container { max-width: 1400px; margin: 0 auto; }
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid #2A3142;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+h1 { font-size: 1.4rem; font-weight: 700; color: #E0E0E0; }
+.subtitle { color: #7A8090; font-style: italic; font-size: 0.85rem; }
+.score-block {
+  background: #1A1F2E;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.5rem;
+}
+.score-num { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+.score-meta { font-size: 0.85rem; color: #7A8090; }
+.score-label { font-size: 1rem; font-weight: 600; margin-top: 0.25rem; }
+.score-delta { font-size: 0.95rem; font-weight: 600; }
+.synthesis {
+  background: #1A1F2E;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.synthesis h2 { font-size: 0.8rem; color: #4FC3F7; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+.synthesis p { font-size: 0.95rem; margin-bottom: 0.3rem; }
+.dashboard-image {
+  background: #1A1F2E;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+.dashboard-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1A1F2E;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+th, td { padding: 0.5rem 0.75rem; text-align: right; border-bottom: 1px solid #2A3142; }
+th { background: #20263A; color: #7A8090; font-weight: 600; }
+th:first-child, td:first-child { text-align: left; }
+td.score-cell { font-weight: 700; }
+.history-section h2, .archive-section h2 {
+  font-size: 0.9rem;
+  color: #4FC3F7;
+  letter-spacing: 0.05em;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.archive-list a {
+  display: inline-block;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
+  color: #4FC3F7;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.archive-list a:hover { text-decoration: underline; }
+.missing-banner {
+  background: #2A1F0F;
+  border-left: 3px solid #FFCA28;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #FFCA28;
+}
+footer {
+  text-align: center;
+  color: #7A8090;
+  font-size: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2A3142;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>NASSIM CONFIDENCE DASHBOARD</h1>
+    <span class="subtitle">v7.8d strategy confidence calibrator · diagnostic only</span>
+  </header>
+
+  <div id="score-block" class="score-block">
+    <div>
+      <div id="score-num" class="score-num">—</div>
+      <div class="score-meta">RISK SCORE (0–100)</div>
+      <div id="score-label" class="score-label">—</div>
+    </div>
+    <div>
+      <div class="score-meta">Last updated</div>
+      <div id="last-updated" style="font-size: 1rem; margin-top: 0.25rem;">—</div>
+      <div class="score-meta" style="margin-top: 0.5rem;">Snapshot</div>
+      <div id="snapshot" style="font-size: 0.9rem; margin-top: 0.15rem;">—</div>
+    </div>
+    <div>
+      <div class="score-meta" style="text-align: right;">Δ 1 week</div>
+      <div id="score-delta" class="score-delta" style="text-align: right;">—</div>
+    </div>
+  </div>
+
+  <div id="missing-banner" class="missing-banner" style="display:none;"></div>
+
+  <div class="synthesis">
+    <h2>SYNTHESIS</h2>
+    <div id="synthesis"></div>
+  </div>
+
+  <div class="dashboard-image">
+    <img id="dashboard-png" src="latest.png" alt="Dashboard PNG">
+  </div>
+
+  <div class="history-section">
+    <h2>SCORE HISTORY (last 12 runs)</h2>
+    <table id="history-table">
+      <thead><tr><th>Timestamp</th><th>Composite</th><th>Δ from prior</th><th>BTC</th><th>MSTR</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="archive-section">
+    <h2>ARCHIVE</h2>
+    <div id="archive-list" class="archive-list">Loading…</div>
+  </div>
+
+  <footer>
+    Dashboard auto-built via GitHub Actions. Score is backward-looking · weights hand-calibrated · N=3–4 BTC cycles · does NOT capture geopolitical/black-swan risk.
+  </footer>
+</div>
+
+<script>
+async function load() {
+  // Latest
+  try {
+    const latest = await fetch('latest.json').then(r => r.json());
+    const composite = latest.composite;
+    const color = scoreColor(composite);
+    document.getElementById('score-num').textContent = composite != null ? composite : 'N/A';
+    document.getElementById('score-num').style.color = color;
+    document.getElementById('score-label').textContent = latest.regime_label || '';
+    document.getElementById('score-label').style.color = color;
+    document.getElementById('last-updated').textContent = new Date(latest.timestamp).toLocaleString();
+    const snap = latest.snapshot;
+    document.getElementById('snapshot').textContent =
+      `BTC $${snap.btc_price?.toLocaleString(undefined,{maximumFractionDigits:0})} · ` +
+      `MSTR $${snap.mstr_price?.toFixed(2)} · ` +
+      `mNAV ${snap.mnav?.toFixed(2)}x · ` +
+      `IV ${(snap.mstr_iv_atm*100)?.toFixed(0)}%`;
+    const delta = latest.delta_1w;
+    if (delta != null) {
+      const sign = delta >= 0 ? '+' : '';
+      const dcolor = delta >= 0 ? '#66BB6A' : '#EF5350';
+      const el = document.getElementById('score-delta');
+      el.textContent = `${sign}${delta.toFixed(1)}`;
+      el.style.color = dcolor;
+    } else {
+      document.getElementById('score-delta').textContent = 'first run';
+    }
+    document.getElementById('synthesis').innerHTML =
+      latest.synthesis.map(l => `<p>${escapeHtml(l)}</p>`).join('');
+
+    if (latest.missing && latest.missing.length) {
+      const banner = document.getElementById('missing-banner');
+      banner.style.display = 'block';
+      banner.textContent =
+        `⚠ Missing data this run (reweighted across available): ${latest.missing.join(', ')}`;
+    }
+  } catch (e) {
+    document.getElementById('synthesis').textContent = 'Failed to load latest.json: ' + e;
+  }
+
+  // History
+  try {
+    const csv = await fetch('history.csv').then(r => r.text());
+    const rows = parseCSV(csv).slice(-12).reverse();
+    const tbody = document.querySelector('#history-table tbody');
+    let prev = null;
+    rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      const composite = parseFloat(row.composite);
+      const priorRow = rows[i+1];
+      const priorComp = priorRow ? parseFloat(priorRow.composite) : null;
+      const delta = priorComp != null && !isNaN(priorComp) ? (composite - priorComp).toFixed(1) : '—';
+      const deltaSign = delta !== '—' && parseFloat(delta) >= 0 ? '+' : '';
+      const btc = parseFloat(row.btc_price);
+      const mstr = parseFloat(row.mstr_price);
+      tr.innerHTML = `
+        <td>${new Date(row.timestamp).toLocaleString()}</td>
+        <td class="score-cell" style="color:${scoreColor(composite)}">${isNaN(composite) ? '—' : composite.toFixed(1)}</td>
+        <td>${delta === '—' ? '—' : deltaSign + delta}</td>
+        <td>$${isNaN(btc) ? '—' : btc.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+        <td>$${isNaN(mstr) ? '—' : mstr.toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error('history fail', e);
+  }
+
+  // Archive list
+  try {
+    const archive = await fetch('archive.json').then(r => r.json());
+    const el = document.getElementById('archive-list');
+    if (archive.length === 0) {
+      el.textContent = 'No archived snapshots yet.';
+    } else {
+      el.innerHTML = archive.slice().reverse().slice(0, 60).map(name =>
+        `<a href="${name}">${name.replace('.png','')}</a>`
+      ).join('');
+    }
+  } catch (e) {
+    document.getElementById('archive-list').textContent = 'No archive index found.';
+  }
+}
+
+function scoreColor(s) {
+  if (s == null) return '#808080';
+  if (s >= 80) return '#2E8B57';
+  if (s >= 60) return '#90EE90';
+  if (s >= 40) return '#F0E68C';
+  if (s >= 20) return '#FF8C00';
+  return '#B22222';
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split(',');
+    const row = {};
+    headers.forEach((h, i) => { row[h] = vals[i]; });
+    return row;
+  });
+}
+
+load();
+</script>
+</body>
+</html>

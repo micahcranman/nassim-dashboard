@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-05-29T18:43:20.707393",
+  "composite": 72.2,
+  "regime_label": "BULL \u2014 confidence supported",
+  "delta_1w": null,
+  "sub_scores": {
+    "mvrv_z": null,
+    "nupl": null,
+    "lth_trend": null,
+    "sopr": null,
+    "m2_trend": 75.0,
+    "netliq_trend": 100.0,
+    "dxy_trend": 40.0,
+    "hy_oas": 90.0,
+    "real_yield": 30.0,
+    "mnav": 85.0,
+    "mstr_btc_trend": 15.0,
+    "funding": 80.0,
+    "ssr": 75.0
+  },
+  "raw_values": {
+    "mvrv_z": null,
+    "nupl": null,
+    "lth_trend": null,
+    "sopr": null,
+    "m2_trend": 1.6728119022885277,
+    "netliq_trend": 2.7103826054164983,
+    "dxy_trend": 0.12345845813194097,
+    "hy_oas": 2.72,
+    "real_yield": 2.06,
+    "mnav": 1.2045249106324125,
+    "mstr_btc_trend": 19.795071143671468,
+    "funding": 2.7486445334623504,
+    "ssr": 5.444590394202056
+  },
+  "missing": [
+    "mvrv_z",
+    "nupl",
+    "lth_trend",
+    "sopr"
+  ],
+  "weights_used": {
+    "m2_trend": 0.23076923076923073,
+    "netliq_trend": 0.15384615384615383,
+    "dxy_trend": 0.07692307692307691,
+    "hy_oas": 0.15384615384615383,
+    "real_yield": 0.07692307692307691,
+    "mnav": 0.15384615384615383,
+    "mstr_btc_trend": 0.07692307692307691,
+    "funding": 0.04615384615384614,
+    "ssr": 0.030769230769230764
+  },
+  "synthesis": [
+    "Cycle phase: EUPHORIA / DISTRIBUTION \u00b7 Macro liquidity: expanding \u00b7 Risk regime: HY 2.72%",
+    "Strongest signals: M2 TREND(75), NETLIQ TREND(100), HY OAS(90)",
+    "Weakest signals: MSTR BTC TREND(15), REAL YIELD(30), SSR(75)"
+  ],
+  "snapshot": {
+    "btc_price": 73292.52639649756,
+    "mstr_price": 159.08999633789062,
+    "mnav": 1.2045249106324125,
+    "mstr_btc_holdings": 597325.0,
+    "mstr_btc_holdings_stale": true,
+    "mstr_iv_atm": 0.6336706555175782
+  }
+}
