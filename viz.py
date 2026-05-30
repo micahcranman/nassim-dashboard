@@ -323,11 +323,19 @@ def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, his
     # Row 11-13: MSTR/BTC + Funding + SSR
     ax = fig.add_subplot(gs[11:14, 0:8])
     mbtc_series = derived.get("mstr_btc_ratio_series", pd.Series(dtype=float))
-    draw_card(ax, "MSTR / BTC Ratio (50d Δ%)", derived.get("mstr_btc_50d_pct"),
+    mbtc_pct = derived.get("mstr_btc_50d_pct")
+    if mbtc_pct is not None and mbtc_pct > 0:
+        direction = f"MSTR outperforming BTC by {mbtc_pct:.1f}% over 50d → mNAV expanding (worse entry)"
+    elif mbtc_pct is not None:
+        direction = f"MSTR compressing vs BTC by {abs(mbtc_pct):.1f}% over 50d → mNAV compressing (better entry)"
+    else:
+        direction = ""
+    draw_card(ax, "MSTR / BTC 50d Trend  (inverse: falling = bullish)",
+              mbtc_pct,
               score["sub_scores"]["mstr_btc_trend"],
               series=mbtc_series,
               value_fmt=lambda v: f"{v:+.2f}%" if v is not None else "N/A",
-              footnote=f"current ratio: {derived.get('mstr_btc_ratio'):.6f}" if derived.get('mstr_btc_ratio') else "")
+              footnote=direction)
     # Funding
     ax = fig.add_subplot(gs[11:14, 8:16])
     draw_card(ax, "BTC Perp Funding (ann %)", results["funding"]["value"],

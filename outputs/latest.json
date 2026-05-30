@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-05-29T18:43:20.707393",
-  "composite": 72.2,
+  "timestamp": "2026-05-29T19:06:33.880265",
+  "composite": 74.5,
   "regime_label": "BULL \u2014 confidence supported",
   "delta_1w": null,
   "sub_scores": {
@@ -13,7 +13,7 @@
     "dxy_trend": 40.0,
     "hy_oas": 90.0,
     "real_yield": 30.0,
-    "mnav": 85.0,
+    "mnav": 100.0,
     "mstr_btc_trend": 15.0,
     "funding": 80.0,
     "ssr": 75.0
@@ -28,10 +28,10 @@
     "dxy_trend": 0.12345845813194097,
     "hy_oas": 2.72,
     "real_yield": 2.06,
-    "mnav": 1.2045249106324125,
-    "mstr_btc_trend": 19.795071143671468,
-    "funding": 2.7486445334623504,
-    "ssr": 5.444590394202056
+    "mnav": 0.8519626442679865,
+    "mstr_btc_trend": 19.39219867207848,
+    "funding": 3.1334969423478,
+    "ssr": 5.565160796940642
   },
   "missing": [
     "mvrv_z",
@@ -51,16 +51,16 @@
     "ssr": 0.030769230769230764
   },
   "synthesis": [
-    "Cycle phase: EUPHORIA / DISTRIBUTION \u00b7 Macro liquidity: expanding \u00b7 Risk regime: HY 2.72%",
-    "Strongest signals: M2 TREND(75), NETLIQ TREND(100), HY OAS(90)",
+    "Cycle phase: UNKNOWN (on-chain data unavailable) \u00b7 Macro liquidity: expanding \u00b7 Risk regime: HY 2.72%",
+    "Strongest signals: M2 TREND(75), NETLIQ TREND(100), MNAV(100)",
     "Weakest signals: MSTR BTC TREND(15), REAL YIELD(30), SSR(75)"
   ],
   "snapshot": {
-    "btc_price": 73292.52639649756,
+    "btc_price": 73359.77791567403,
     "mstr_price": 159.08999633789062,
-    "mnav": 1.2045249106324125,
-    "mstr_btc_holdings": 597325.0,
-    "mstr_btc_holdings_stale": true,
-    "mstr_iv_atm": 0.6336706555175782
+    "mnav": 0.8519626442679865,
+    "mstr_btc_holdings": 843738.0,
+    "mstr_btc_holdings_stale": false,
+    "mstr_iv_atm": 0.6774934594726563
   }
 }

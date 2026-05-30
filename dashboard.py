@@ -229,10 +229,17 @@ def synthesize_text(score_result, raw, derived, results):
     def fmt(k):
         return k.replace("_", " ").upper()
 
-    cycle_phase = "ACCUMULATION" if (subs.get("mvrv_z", 0) or 0) >= 85 and (subs.get("nupl", 0) or 0) >= 65 else \
-                  "BELIEF" if (subs.get("nupl", 0) or 0) >= 35 else \
-                  "EUPHORIA / DISTRIBUTION" if (subs.get("nupl", 0) or 0) <= 10 else \
-                  "MID-CYCLE"
+    # Cycle phase requires on-chain data; if missing, label as UNKNOWN (don't guess).
+    if subs.get("mvrv_z") is None or subs.get("nupl") is None:
+        cycle_phase = "UNKNOWN (on-chain data unavailable)"
+    elif subs["mvrv_z"] >= 85 and subs["nupl"] >= 65:
+        cycle_phase = "ACCUMULATION"
+    elif subs["nupl"] >= 35:
+        cycle_phase = "BELIEF"
+    elif subs["nupl"] <= 10:
+        cycle_phase = "EUPHORIA / DISTRIBUTION"
+    else:
+        cycle_phase = "MID-CYCLE"
 
     macro_dir = "expanding" if (subs.get("m2_trend", 0) or 0) >= 55 and (subs.get("netliq_trend", 0) or 0) >= 50 else \
                 "contracting" if (subs.get("m2_trend", 0) or 0) <= 35 or (subs.get("netliq_trend", 0) or 0) <= 30 else \
