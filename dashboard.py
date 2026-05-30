@@ -302,6 +302,57 @@ def main():
 
     # Write latest.json
     synthesis = synthesize_text(score, raw, derived, results)
+    from indicator_meta import INDICATOR_META
+    # Build per-indicator rich block
+    indicators = {}
+    series_sources = {
+        "mvrv_z":         ("raw",   results["mvrv_z"]["series"]),
+        "nupl":           ("raw",   results["nupl"]["series"]),
+        "sopr":           ("raw",   results["sopr"]["series"]),
+        "lth_trend":      ("raw",   results["liveliness"]["series"]),
+        "m2_trend":       ("raw",   results["m2"]["series"]),
+        "netliq_trend":   ("raw",   results["netliq"]["series"]),
+        "dxy_trend":      ("raw",   results["dxy"]["series"]),
+        "hy_oas":         ("raw",   results["hy_oas"]["series"]),
+        "real_yield":     ("raw",   results["real_yield"]["series"]),
+        "mnav":           ("none",  None),
+        "mstr_btc_trend": ("raw",   derived.get("mstr_btc_ratio_series")),
+        "funding":        ("raw",   results["funding"]["series"]),
+        "ssr":            ("none",  None),
+    }
+    raw_value_for_card = {
+        "mvrv_z":         results["mvrv_z"]["value"],
+        "nupl":           results["nupl"]["value"],
+        "sopr":           results["sopr"]["value"],
+        "lth_trend":      derived.get("liveliness_90d_pct"),
+        "m2_trend":       derived.get("m2_12w_pct"),
+        "netliq_trend":   derived.get("netliq_4w_pct"),
+        "dxy_trend":      derived.get("dxy_50d_pct"),
+        "hy_oas":         results["hy_oas"]["value"],
+        "real_yield":     results["real_yield"]["value"],
+        "mnav":           derived.get("mnav"),
+        "mstr_btc_trend": derived.get("mstr_btc_50d_pct"),
+        "funding":        results["funding"]["value"],
+        "ssr":            derived.get("ssr"),
+    }
+    for key, meta in INDICATOR_META.items():
+        _, series = series_sources.get(key, ("none", None))
+        series_data = []
+        if series is not None and len(series) > 0:
+            s = series.dropna().tail(365)
+            for idx, v in s.items():
+                try:
+                    d = idx.strftime("%Y-%m-%d")
+                except Exception:
+                    d = str(idx)
+                series_data.append({"d": d, "v": round(float(v), 6)})
+        indicators[key] = {
+            **meta,
+            "value":      raw_value_for_card.get(key),
+            "sub_score": score["sub_scores"].get(key),
+            "series":    series_data,
+        }
+
     latest = {
         "timestamp": ts_now.isoformat(),
         "composite": score["composite"],
@@ -312,6 +363,7 @@ def main():
         "missing": score["missing"],
         "weights_used": score["weights_used"],
         "synthesis": synthesis,
+        "indicators": indicators,
         "snapshot": {
             "btc_price": results["btc_price"]["value"],
             "mstr_price": results["mstr"]["value"],
