@@ -408,30 +408,66 @@ function clipSeries(arr, fromIso, toIso) {
   return arr.filter(p => p.d >= fromIso && (!toIso || p.d <= toIso));
 }
 
-// ----- Chart building -----
-function buildBandShapes(meta, fromIso, toIso, ymin, ymax) {
-  if (!meta.regime_bands) return [];
-  const x0 = fromIso || '1900-01-01';
-  const x1 = toIso || '2100-01-01';
-  return meta.regime_bands.map(b => ({
-    type: 'rect', xref: 'x', yref: 'y',
-    x0: x0, x1: x1,
-    y0: b.lo, y1: b.hi,
-    fillcolor: b.color, opacity: 0.13,
-    line: { width: 0 }, layer: 'below',
-  }));
+// Compute [min,max] over a numeric array, ignoring null/NaN
+function minMax(arr) {
+  let lo = Infinity, hi = -Infinity;
+  for (const v of arr) {
+    if (v == null || !isFinite(v)) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  if (!isFinite(lo)) return null;
+  return [lo, hi];
 }
 
-function buildBandAnnotations(meta) {
+// Padded y-range from data (small headroom for bands)
+function paddedRange(lo, hi, pad=0.08) {
+  if (lo === hi) { const e = Math.max(Math.abs(lo)*0.05, 1e-6); return [lo-e, hi+e]; }
+  const span = hi - lo;
+  return [lo - span*pad, hi + span*pad];
+}
+
+// ----- Chart building -----
+function buildBandShapes(meta, ymin, ymax) {
   if (!meta.regime_bands) return [];
-  // Right-edge labels for bands
-  return meta.regime_bands.map(b => ({
-    xref: 'paper', yref: 'y', x: 1.0, y: (b.lo + b.hi) / 2,
-    xanchor: 'left', yanchor: 'middle',
-    text: ' ' + b.label,
-    showarrow: false,
-    font: { size: 8, color: COLORS.muted },
-  }));
+  // Render bands using xref:paper so they span the full plot horizontally
+  // regardless of x-axis range. Clip each band's y0/y1 to the visible y-range
+  // so they never force the y-axis to expand beyond the data window.
+  const shapes = [];
+  for (const b of meta.regime_bands) {
+    // Skip bands entirely outside the visible y-range
+    if (ymax != null && b.lo >= ymax) continue;
+    if (ymin != null && b.hi <= ymin) continue;
+    const y0 = (ymin != null) ? Math.max(b.lo, ymin) : b.lo;
+    const y1 = (ymax != null) ? Math.min(b.hi, ymax) : b.hi;
+    if (y1 <= y0) continue;
+    shapes.push({
+      type: 'rect', xref: 'paper', yref: 'y',
+      x0: 0, x1: 1, y0, y1,
+      fillcolor: b.color, opacity: 0.13,
+      line: { width: 0 }, layer: 'below',
+    });
+  }
+  return shapes;
+}
+
+function buildBandAnnotations(meta, ymin, ymax) {
+  if (!meta.regime_bands) return [];
+  const out = [];
+  for (const b of meta.regime_bands) {
+    if (ymax != null && b.lo >= ymax) continue;
+    if (ymin != null && b.hi <= ymin) continue;
+    const lo = (ymin != null) ? Math.max(b.lo, ymin) : b.lo;
+    const hi = (ymax != null) ? Math.min(b.hi, ymax) : b.hi;
+    out.push({
+      xref: 'paper', yref: 'y', x: 1.0, y: (lo + hi) / 2,
+      xanchor: 'left', yanchor: 'middle',
+      text: ' ' + b.label,
+      showarrow: false,
+      font: { size: 8, color: COLORS.muted },
+    });
+  }
+  return out;
 }
 
 function buildTraces(meta, overlayOn) {
@@ -444,8 +480,6 @@ function buildTraces(meta, overlayOn) {
       x: xs, y: ys,
       type: 'scatter', mode: 'lines',
       line: { color: COLORS.accent, width: 2 },
-      fill: 'tozeroy',
-      fillcolor: 'rgba(79,195,247,0.08)',
       name: meta.label,
       hovertemplate: '%{x|%b %d, %Y}<br>' + meta.label + ': <b>%{y:.4f}</b><extra></extra>',
     });
@@ -473,30 +507,76 @@ function plotCard(key, meta) {
   if (!div) return;
 
   const overlayOn = document.getElementById('btc-overlay-toggle').checked;
-  const traces = buildTraces(meta, overlayOn);
 
   // Determine initial range: per-indicator default if it exists, else global current
-  const initialRange = PER_INDICATOR_DEFAULT[key] || CURRENT_RANGE;
+  // Range priority: explicit custom > global override > per-indicator default
   const endDate = meta.series && meta.series.length ? meta.series[meta.series.length-1].d : null;
-  const range = rangeToDates(initialRange, endDate);
+  let range = null;
+  let initialRange = '2y';
+  if (CUSTOM_RANGE_OVERRIDE) {
+    range = CUSTOM_RANGE_OVERRIDE;
+    initialRange = 'custom';
+  } else if (GLOBAL_RANGE_OVERRIDE) {
+    initialRange = GLOBAL_RANGE_OVERRIDE;
+    range = rangeToDates(initialRange, endDate);
+  } else {
+    initialRange = PER_INDICATOR_DEFAULT[key] || CURRENT_RANGE;
+    range = rangeToDates(initialRange, endDate);
+  }
+  const fromIso = range ? range[0] : null;
+  const toIso = range ? range[1] : null;
+
+  // Clip the indicator series to the visible window so y-axis can be tightened
+  const visiblePts = (meta.series || []).filter(p => (!fromIso || p.d >= fromIso) && (!toIso || p.d <= toIso));
+  const visYs = visiblePts.map(p => p.v);
+  const dataRange = minMax(visYs) || minMax((meta.series||[]).map(p=>p.v));
+  let yRange = null;
+  if (dataRange) {
+    yRange = paddedRange(dataRange[0], dataRange[1], 0.10);
+  }
+
+  // Build traces, clipping BTC overlay to the visible window
+  const traces = [];
+  if (visiblePts.length > 0) {
+    traces.push({
+      x: visiblePts.map(p=>p.d), y: visiblePts.map(p=>p.v),
+      type: 'scatter', mode: 'lines',
+      line: { color: COLORS.accent, width: 2 },
+      name: meta.label,
+      hovertemplate: '%{x|%b %d, %Y}<br>' + meta.label + ': <b>%{y:.4f}</b><extra></extra>',
+    });
+  }
+  if (overlayOn && BTC_OVERLAY.length > 0) {
+    const btcVis = clipSeries(BTC_OVERLAY, fromIso, toIso);
+    if (btcVis.length > 0) {
+      traces.push({
+        x: btcVis.map(p=>p.d), y: btcVis.map(p=>p.v),
+        type: 'scatter', mode: 'lines',
+        line: { color: COLORS.btcOverlay, width: 1.0 },
+        opacity: 0.28, yaxis: 'y2',
+        hoverinfo: 'skip', name: 'BTC',
+      });
+    }
+  }
 
   const layout = JSON.parse(JSON.stringify(BASE_LAYOUT));
   layout.height = 220;
   layout.margin = { l: 45, r: 28, t: 8, b: 28 };
-  layout.shapes = buildBandShapes(meta);
+  layout.shapes = buildBandShapes(meta, yRange ? yRange[0] : null, yRange ? yRange[1] : null);
   if (range) {
     layout.xaxis.range = range;
     layout.xaxis.autorange = false;
   } else {
     layout.xaxis.autorange = true;
   }
-  // Suffix formatter on y-axis ticks
-  if (meta.value_suffix === '%') {
-    layout.yaxis.ticksuffix = '%';
+  if (yRange) {
+    layout.yaxis.range = yRange;
+    layout.yaxis.autorange = false;
   }
-  // Hide secondary axis ticks for tight cards (but keep trace overlay)
+  if (meta.value_suffix === '%') layout.yaxis.ticksuffix = '%';
   layout.yaxis2.showticklabels = false;
   layout.yaxis2.title = null;
+  layout.yaxis2.autorange = true; // log axis on visible BTC subset → tight scale
   layout.showlegend = false;
 
   Plotly.react(div, traces, layout, PLOTLY_CONFIG);
@@ -531,20 +611,20 @@ function renderCard(key, meta) {
 }
 
 // ----- Global range control -----
+// Override per-indicator defaults so plotCard uses the user-selected range
+let GLOBAL_RANGE_OVERRIDE = null;
+let CUSTOM_RANGE_OVERRIDE = null; // [from, to] explicit dates
+
 function applyGlobalRange(range) {
   CURRENT_RANGE = range;
+  GLOBAL_RANGE_OVERRIDE = range;
+  CUSTOM_RANGE_OVERRIDE = null;
   document.querySelectorAll('.range-btn[data-range]').forEach(b => {
     b.classList.toggle('active', b.dataset.range === range);
   });
-  // Apply to every chart
-  for (const [key, info] of Object.entries(CHARTS)) {
-    const meta = DATA.indicators[key];
-    const endDate = meta.series && meta.series.length ? meta.series[meta.series.length-1].d : null;
-    const r = rangeToDates(range, endDate);
-    const update = r
-      ? { 'xaxis.range': r, 'xaxis.autorange': false }
-      : { 'xaxis.autorange': true };
-    Plotly.relayout(info.div, update);
+  // Re-plot every chart so y-axis + bands recalculate for the new window
+  for (const key of Object.keys(CHARTS)) {
+    plotCard(key, DATA.indicators[key]);
   }
 }
 
@@ -553,18 +633,17 @@ function applyCustomRange() {
   const to = document.getElementById('custom-to').value;
   if (!from || !to) return;
   document.querySelectorAll('.range-btn[data-range]').forEach(b => b.classList.remove('active'));
-  for (const [key, info] of Object.entries(CHARTS)) {
-    Plotly.relayout(info.div, { 'xaxis.range': [from, to], 'xaxis.autorange': false });
+  CUSTOM_RANGE_OVERRIDE = [from, to];
+  GLOBAL_RANGE_OVERRIDE = null;
+  for (const key of Object.keys(CHARTS)) {
+    plotCard(key, DATA.indicators[key]);
   }
 }
 
 function toggleBtcOverlay() {
-  // Re-render every chart with new overlay setting (cheaper than per-trace add/remove)
-  for (const [key, info] of Object.entries(CHARTS)) {
+  for (const key of Object.keys(CHARTS)) {
     plotCard(key, DATA.indicators[key]);
   }
-  // Reapply current range so default windows aren't reset by re-plot
-  if (CURRENT_RANGE) applyGlobalRange(CURRENT_RANGE);
 }
 
 // ----- Modal -----
@@ -597,8 +676,13 @@ function openModal(key) {
   const layout = JSON.parse(JSON.stringify(BASE_LAYOUT));
   layout.height = 500;
   layout.margin = { l: 60, r: 60, t: 30, b: 60 };
-  layout.shapes = buildBandShapes(meta);
-  layout.annotations = buildBandAnnotations(meta);
+  // Compute y-range from full series for modal (modal lets user explore all data via rangeslider)
+  const allYs = (meta.series||[]).map(p=>p.v);
+  const modalDataRange = minMax(allYs);
+  const modalYRange = modalDataRange ? paddedRange(modalDataRange[0], modalDataRange[1], 0.10) : null;
+  layout.shapes = buildBandShapes(meta, modalYRange ? modalYRange[0] : null, modalYRange ? modalYRange[1] : null);
+  layout.annotations = buildBandAnnotations(meta, modalYRange ? modalYRange[0] : null, modalYRange ? modalYRange[1] : null);
+  if (modalYRange) { layout.yaxis.range = modalYRange; layout.yaxis.autorange = false; }
   layout.showlegend = true;
   layout.legend = { orientation: 'h', x: 0, y: 1.08, font: { color: COLORS.muted, size: 10 } };
   layout.xaxis.rangeslider = { visible: true, thickness: 0.06, bgcolor: '#161B2A' };
