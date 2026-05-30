@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-29T19:33:50.792059",
+  "timestamp": "2026-05-29T19:37:35.165667",
   "composite": 74.2,
   "regime_label": "BULL \u2014 confidence supported",
   "delta_1w": null,
@@ -28,10 +28,10 @@
     "dxy_trend": 0.12345845813194097,
     "hy_oas": 2.72,
     "real_yield": 2.06,
-    "mnav": 0.8521932749319547,
+    "mnav": 0.8521909632221606,
     "mstr_btc_trend": 19.39219867207848,
-    "funding": 3.7334865405054,
-    "ssr": 5.472436322081623
+    "funding": 3.818365306478549,
+    "ssr": 5.472352549750146
   },
   "missing": [],
   "weights_used": {
@@ -55,9 +55,9 @@
     "Weakest signals: MSTR BTC TREND(15), REAL YIELD(30), SSR(75)"
   ],
   "snapshot": {
-    "btc_price": 73339.92442141757,
+    "btc_price": 73340.12336816649,
     "mstr_price": 159.08999633789062,
-    "mnav": 0.8521932749319547,
+    "mnav": 0.8521909632221606,
     "mstr_btc_holdings": 843738.0,
     "mstr_btc_holdings_stale": false,
     "mstr_iv_atm": 0.6774934594726563

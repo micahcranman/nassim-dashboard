@@ -115,7 +115,7 @@ def draw_card(ax, title, value, sub_score, sub_label="", series=None,
             spine.set_visible(False)
         chart_ax.tick_params(axis='both', colors=MUTED, labelsize=9)
         chart_ax.set_xticks([s.index[0], s.index[-1]])
-        chart_ax.set_xticklabels([s.index[0].strftime("%b"), s.index[-1].strftime("%b")])
+        chart_ax.set_xticklabels([s.index[0].strftime("%b '%y"), s.index[-1].strftime("%b '%y")])
 
         # Regime band shading
         if regime_bands:
