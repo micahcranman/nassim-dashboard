@@ -16,6 +16,17 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 
 REPO_ROOT = Path(__file__).resolve().parent
+
+# Lightweight .env loader (no python-dotenv dep)
+_env_path = REPO_ROOT / ".env"
+if _env_path.exists():
+    for line in _env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
 # Output dir: env override else ./outputs/ in repo (so CI & repo are self-contained).
 OUT_DIR = Path(os.environ.get("NASSIM_DASHBOARD_OUT", REPO_ROOT / "outputs"))
 ARCHIVE_DIR = OUT_DIR / "archive"
@@ -80,7 +91,7 @@ def fetch_all(logger):
         ("mvrv_z",      onchain.fetch_mvrv_zscore),
         ("nupl",        onchain.fetch_nupl),
         ("sopr",        onchain.fetch_sopr),
-        ("lth",         coinmetrics.fetch_lth_supply),
+        ("liveliness",  onchain.fetch_liveliness),
         ("funding",     funding.fetch_funding_rate),
         ("mstr_btc_holdings", mstr_holdings.fetch_mstr_btc_holdings),
     ]
@@ -159,14 +170,14 @@ def compute_derived(results: dict, logger):
         derived["mstr_btc_ratio"] = None
         derived["mstr_btc_50d_pct"] = None
 
-    # LTH 90d % change
-    derived["lth_90d_pct"] = pct_change_over(results["lth"]["series"], 90)
+    # LTH proxy: Liveliness 90d % change (RAW — scoring inverts: falling = bullish)
+    derived["liveliness_90d_pct"] = pct_change_over(results["liveliness"]["series"], 90)
 
     logger.info(f"  Derived trends: M2 12w={derived['m2_12w_pct']}, "
                 f"NetLiq 4w={derived['netliq_4w_pct']}, "
                 f"DXY 50d={derived['dxy_50d_pct']}, "
                 f"MSTR/BTC 50d={derived['mstr_btc_50d_pct']}, "
-                f"LTH 90d={derived['lth_90d_pct']}")
+                f"Liveliness 90d={derived['liveliness_90d_pct']}")
     return derived
 
 
@@ -175,7 +186,7 @@ def build_raw_for_scoring(results, derived):
     return {
         "mvrv_z":         results["mvrv_z"]["value"],
         "nupl":           results["nupl"]["value"],
-        "lth_trend":      derived.get("lth_90d_pct"),
+        "lth_trend":      derived.get("liveliness_90d_pct"),
         "sopr":           results["sopr"]["value"],
         "m2_trend":       derived.get("m2_12w_pct"),
         "netliq_trend":   derived.get("netliq_4w_pct"),

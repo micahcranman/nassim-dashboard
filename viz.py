@@ -269,14 +269,14 @@ def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, his
     draw_card(ax, "SOPR (7d MA)", results["sopr"]["value"],
               score["sub_scores"]["sopr"],
               series=results["sopr"]["series"], value_fmt=lambda v: f"{v:.4f}")
-    # LTH supply trend
+    # Liveliness (LTH proxy: falling liveliness = LTHs accumulating = bullish)
     ax = fig.add_subplot(gs[5:8, 5:11])
-    lth_val = derived.get("lth_90d_pct")
-    draw_card(ax, "LTH Supply (90d Δ%)", lth_val,
+    liv_val = derived.get("liveliness_90d_pct")
+    draw_card(ax, "Liveliness  90d Δ%  (inverse: falling = bullish)", liv_val,
               score["sub_scores"]["lth_trend"],
-              series=results["lth"]["series"],
+              series=results["liveliness"]["series"],
               value_fmt=lambda v: f"{v:+.2f}%" if v is not None else "N/A",
-              footnote=("source unavailable on free tier" if lth_val is None else ""))
+              footnote=(f"current: {results['liveliness']['value']:.4f}" if results['liveliness']['value'] else ""))
     # M2 trend
     ax = fig.add_subplot(gs[5:8, 11:17])
     draw_card(ax, "US M2 (12w Δ%)", derived.get("m2_12w_pct"),

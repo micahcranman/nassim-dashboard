@@ -39,6 +39,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run dashboard build
+        env:
+          BGEO_TOKEN: ${{ secrets.BGEO_TOKEN }}
         run: python dashboard.py
 
       - name: Move outputs to docs/

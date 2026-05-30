@@ -54,9 +54,13 @@ def score_nupl(v):
     return _piecewise(v, [(0, 100), (0.25, 85), (0.5, 65), (0.75, 35), (float("inf"), 5)])
 
 def score_lth_trend(pct):
-    """90-day % change in LTH supply."""
+    """90-day % change in Liveliness (INVERTED: falling liveliness = LTHs accumulating = bullish).
+
+    We pass the RAW 90d % change in liveliness here. The scorer inverts: negative
+    delta gets the high score; positive delta gets the low score.
+    """
     if pct is None: return None
-    return _piecewise(pct, [(-1, 10), (0, 45), (2, 75), (float("inf"), 100)])
+    return _piecewise(pct, [(-5, 100), (-1, 75), (1, 50), (5, 25), (float("inf"), 5)])
 
 def score_sopr(v):
     """SOPR 7d MA."""

@@ -44,15 +44,20 @@ def test_nupl_euphoria():
     assert score_nupl(0.9) == 5
 
 
-# ---- LTH trend ----
+# ---- LTH trend (Liveliness 90d Δ%, INVERTED) ----
+# Falling liveliness = LTHs accumulating = bullish (high score)
 def test_lth_trend_strong_accumulation():
-    assert score_lth_trend(3.0) == 100
+    # Liveliness dropping fast → LTHs accumulating
+    assert score_lth_trend(-7.0) == 100
 def test_lth_trend_accumulation():
-    assert score_lth_trend(1.0) == 75
-def test_lth_trend_mild_distribution():
-    assert score_lth_trend(-0.5) == 45
+    assert score_lth_trend(-2.0) == 75
+def test_lth_trend_flat():
+    assert score_lth_trend(0) == 50
+def test_lth_trend_distribution():
+    assert score_lth_trend(2.0) == 25
 def test_lth_trend_heavy_distribution():
-    assert score_lth_trend(-2.0) == 10
+    # Liveliness rising fast → LTHs distributing
+    assert score_lth_trend(7.0) == 5
 
 
 # ---- SOPR ----
@@ -184,7 +189,7 @@ def test_composite_all_max():
     raw = {k: None for k in WEIGHTS}
     # Set every indicator to its max-bullish raw value
     raw.update({
-        "mvrv_z": -1, "nupl": -0.1, "lth_trend": 3, "sopr": 0.95,
+        "mvrv_z": -1, "nupl": -0.1, "lth_trend": -7, "sopr": 0.95,
         "m2_trend": 3, "netliq_trend": 3, "dxy_trend": -5,
         "hy_oas": 2, "real_yield": -0.5,
         "mnav": 0.9, "mstr_btc_trend": -15,
@@ -205,7 +210,7 @@ def test_composite_all_max():
 
 def test_composite_all_min():
     raw = {
-        "mvrv_z": 8, "nupl": 0.9, "lth_trend": -3, "sopr": 1.1,
+        "mvrv_z": 8, "nupl": 0.9, "lth_trend": 7, "sopr": 1.1,
         "m2_trend": -3, "netliq_trend": -5, "dxy_trend": 5,
         "hy_oas": 8, "real_yield": 3,
         "mnav": 3, "mstr_btc_trend": 20,
@@ -214,7 +219,7 @@ def test_composite_all_min():
     res = compute_composite(raw)
     # Compute expected min weighted sum
     expected = (
-        0.15*0 + 0.10*5 + 0.05*10 + 0.05*5 +
+        0.15*0 + 0.10*5 + 0.05*5 + 0.05*5 +
         0.15*0 + 0.10*10 + 0.05*10 +
         0.10*0 + 0.05*10 +
         0.10*0 + 0.05*15 +

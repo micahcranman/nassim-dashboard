@@ -9,8 +9,10 @@ import requests
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-BASE = "https://bitcoin-data.com/api/v1"
+BASE = "https://api.bgeometrics.com/v1"
 HEADERS = {"User-Agent": "nassim-dashboard/1.0", "Accept": "application/json"}
+
+_TOKEN = os.environ.get("BGEO_TOKEN", "")
 
 _CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
 _CACHE_DIR.mkdir(exist_ok=True)
@@ -43,8 +45,9 @@ def _save_cache(endpoint, series):
         pass
 
 
-def _fetch(endpoint: str, value_key_candidates=("mvrvZscore", "nupl", "sopr", "value")):
-    r = requests.get(f"{BASE}/{endpoint}", headers=HEADERS, timeout=30)
+def _fetch(endpoint: str, value_key_candidates=("mvrvZscore", "nupl", "sopr", "liveliness", "value")):
+    params = {"token": _TOKEN} if _TOKEN else {}
+    r = requests.get(f"{BASE}/{endpoint}", headers=HEADERS, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
     if not isinstance(data, list) or not data:
@@ -144,8 +147,18 @@ def fetch_sopr():
     return r
 
 
+def fetch_liveliness():
+    """Liveliness (LTH proxy).
+
+    Liveliness = CDD / cumulative_coin_days_created. Range ~0-1.
+    Falling liveliness = LTHs accumulating (bullish).
+    Rising liveliness = LTHs distributing (bearish).
+    """
+    return _wrap("liveliness", "Liveliness (LTH proxy)", ("liveliness", "value"))
+
+
 if __name__ == "__main__":
-    for fn in [fetch_mvrv_zscore, fetch_nupl, fetch_sopr]:
+    for fn in [fetch_mvrv_zscore, fetch_nupl, fetch_sopr, fetch_liveliness]:
         r = fn()
         print(f"{r['label']}: {r['value']} @ {r['timestamp']} (stale={r['stale']})")
         if r.get("error"):
