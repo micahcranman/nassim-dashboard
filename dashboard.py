@@ -132,11 +132,25 @@ def compute_derived(results: dict, logger):
         derived["mstr_mcap"] = mstr_mcap
         derived["btc_holdings_value"] = btc_value
         logger.info(f"  Derived: mNAV = {mnav:.3f}  (MSTR mcap ${mstr_mcap/1e9:.1f}B / BTC val ${btc_value/1e9:.1f}B)")
+        # APPROXIMATE mNAV time series — uses current shares + current BTC holdings as constants.
+        # CAVEAT: shares & holdings have grown over time, so historical mNAV is slightly biased
+        # high (we're dividing today's holdings × historical BTC price → understates past BTC value
+        # → overstates historical mNAV). For directional/regime use only.
+        mstr_series = results["mstr"]["series"]
+        btc_series = results["btc_price"]["series"]
+        if not mstr_series.empty and not btc_series.empty:
+            idx = mstr_series.index.intersection(btc_series.index)
+            if len(idx) > 30:
+                mcap_s = mstr_series.reindex(idx) * shares
+                btc_val_s = btc_series.reindex(idx) * btc_holdings
+                mnav_s = (mcap_s / btc_val_s).dropna()
+                derived["mnav_series"] = mnav_s
+                logger.info(f"  Derived: mNAV series len={len(mnav_s)}")
     else:
         derived["mnav"] = None
         logger.warning("  Derived: mNAV unavailable (missing inputs)")
 
-    # SSR = BTC mcap / Stablecoin mcap
+    # SSR = BTC mcap / Stablecoin mcap (scalar + series)
     btc_mcap = results["btc_mcap"]["value"]
     stables = results["stables"]["value"]
     if btc_mcap is not None and stables and stables > 0:
@@ -145,6 +159,15 @@ def compute_derived(results: dict, logger):
         logger.info(f"  Derived: SSR = {ssr:.2f}  (BTC mcap ${btc_mcap/1e9:.0f}B / Stables ${stables/1e9:.0f}B)")
     else:
         derived["ssr"] = None
+    # SSR time series
+    btc_mcap_s = results["btc_mcap"]["series"]
+    stables_s = results["stables"]["series"]
+    if not btc_mcap_s.empty and not stables_s.empty:
+        idx = btc_mcap_s.index.intersection(stables_s.index)
+        if len(idx) > 10:
+            ssr_s = (btc_mcap_s.reindex(idx) / stables_s.reindex(idx).replace(0, np.nan)).dropna()
+            derived["ssr_series"] = ssr_s
+            logger.info(f"  Derived: SSR series len={len(ssr_s)}")
 
     # M2 12w % change
     derived["m2_12w_pct"] = pct_change_over(results["m2"]["series"], 84)
@@ -305,20 +328,44 @@ def main():
     from indicator_meta import INDICATOR_META
     # Build per-indicator rich block
     indicators = {}
+    # For 'trend' indicators we render the rolling-pct-change series (not raw) so
+    # the regime bands in indicator_meta.py (which are calibrated to % change) overlay
+    # meaningfully on the chart.
+    def pct_series(s, days):
+        """Rolling percent change over a date-window (calendar days), not row offset.
+        Handles irregular sampling (e.g., monthly M2, weekly net-liq)."""
+        if s is None or s.empty:
+            return pd.Series(dtype=float)
+        s = s.dropna().sort_index()
+        if len(s) < 3:
+            return pd.Series(dtype=float)
+        out = {}
+        idx = s.index
+        for t in idx:
+            cutoff = t - pd.Timedelta(days=days)
+            older = s.loc[:cutoff]
+            if older.empty:
+                continue
+            old = older.iloc[-1]
+            if old == 0 or pd.isna(old):
+                continue
+            out[t] = (s.loc[t] - old) / abs(old) * 100.0
+        return pd.Series(out)
+
     series_sources = {
         "mvrv_z":         ("raw",   results["mvrv_z"]["series"]),
         "nupl":           ("raw",   results["nupl"]["series"]),
         "sopr":           ("raw",   results["sopr"]["series"]),
-        "lth_trend":      ("raw",   results["liveliness"]["series"]),
-        "m2_trend":       ("raw",   results["m2"]["series"]),
-        "netliq_trend":   ("raw",   results["netliq"]["series"]),
-        "dxy_trend":      ("raw",   results["dxy"]["series"]),
+        "lth_trend":      ("pct",   pct_series(results["liveliness"]["series"], 90)),
+        "m2_trend":       ("pct",   pct_series(results["m2"]["series"], 84)),   # 12 weeks
+        "netliq_trend":   ("pct",   pct_series(results["netliq"]["series"], 28)),
+        "dxy_trend":      ("pct",   pct_series(results["dxy"]["series"], 50)),
         "hy_oas":         ("raw",   results["hy_oas"]["series"]),
         "real_yield":     ("raw",   results["real_yield"]["series"]),
-        "mnav":           ("none",  None),
-        "mstr_btc_trend": ("raw",   derived.get("mstr_btc_ratio_series")),
+        "mnav":           ("raw",   derived.get("mnav_series")),
+        "mstr_btc_trend": ("pct",   pct_series(derived.get("mstr_btc_ratio_series"), 50)),
         "funding":        ("raw",   results["funding"]["series"]),
-        "ssr":            ("none",  None),
+        "ssr":            ("raw",   derived.get("ssr_series")),
     }
     raw_value_for_card = {
         "mvrv_z":         results["mvrv_z"]["value"],
@@ -339,7 +386,8 @@ def main():
         _, series = series_sources.get(key, ("none", None))
         series_data = []
         if series is not None and len(series) > 0:
-            s = series.dropna().tail(365)
+            # Keep up to ~6 years to support 5Y range selector and All view
+            s = series.dropna().tail(365 * 6)
             for idx, v in s.items():
                 try:
                     d = idx.strftime("%Y-%m-%d")
@@ -353,8 +401,35 @@ def main():
             "series":    series_data,
         }
 
+    # BTC overlay series for cross-asset correlation context on every chart.
+    btc_overlay = []
+    btc_s = results["btc_price"]["series"]
+    if btc_s is not None and not btc_s.empty:
+        # Try to extend BTC history beyond CoinGecko's 365-day window via Yahoo (BTC-USD).
+        try:
+            import yfinance as _yf
+            yh = _yf.Ticker("BTC-USD").history(period="max", auto_adjust=False)
+            if not yh.empty:
+                yh_s = yh["Close"].dropna()
+                yh_s.index = yh_s.index.tz_localize(None) if yh_s.index.tz is not None else yh_s.index
+                # Combine: prefer CoinGecko where available, backfill with Yahoo
+                combined = yh_s.copy()
+                for idx, v in btc_s.items():
+                    combined.loc[idx] = v
+                btc_s = combined.sort_index()
+                logger.info(f"  BTC overlay: extended history via Yahoo to {len(btc_s)} pts")
+        except Exception as e:
+            logger.warning(f"  BTC overlay Yahoo extension failed (non-fatal): {e}")
+        for idx, v in btc_s.tail(365 * 6).items():
+            try:
+                d = idx.strftime("%Y-%m-%d")
+            except Exception:
+                d = str(idx)
+            btc_overlay.append({"d": d, "v": round(float(v), 2)})
+
     latest = {
         "timestamp": ts_now.isoformat(),
+        "btc_overlay": btc_overlay,
         "composite": score["composite"],
         "regime_label": regime_label(score["composite"]),
         "delta_1w": delta_1w,
