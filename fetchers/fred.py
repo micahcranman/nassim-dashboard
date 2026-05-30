@@ -1,17 +1,73 @@
-"""FRED data fetcher. No auth required for CSV endpoints."""
+"""FRED data fetcher. No auth required for CSV endpoints.
+
+Hardened: retries with exponential backoff + on-disk cache fallback so a
+transient FRED outage doesn't drop us to None for hours.
+"""
 import io
+import os
+import time
 import pandas as pd
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
-FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
+# Use cosd= (start date) to avoid 504s on large daily series. 2018 is plenty for
+# every indicator we compute (longest lookback is ~5y trend windows).
+FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd=2018-01-01"
+UA = "nassim-dashboard/1.0"
+
+_CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
+_CACHE_DIR.mkdir(exist_ok=True)
+_CACHE_TTL_HOURS = 24
+
+
+def _cache_path(series_id: str) -> Path:
+    return _CACHE_DIR / f"fred_{series_id}.csv"
+
+
+def _save_cache(series_id: str, df: pd.DataFrame) -> None:
+    try:
+        df.to_csv(_cache_path(series_id), index=False)
+    except Exception:
+        pass
+
+
+def _load_cache(series_id: str, max_age_hours: float = _CACHE_TTL_HOURS):
+    p = _cache_path(series_id)
+    if not p.exists():
+        return None
+    age = (datetime.now() - datetime.fromtimestamp(p.stat().st_mtime)).total_seconds() / 3600
+    if age > max_age_hours:
+        return None
+    try:
+        return pd.read_csv(p)
+    except Exception:
+        return None
 
 
 def _fetch_series(series_id: str) -> pd.Series:
     url = FRED_CSV.format(series=series_id)
-    r = requests.get(url, timeout=20, headers={"User-Agent": "nassim-dashboard/1.0"})
-    r.raise_for_status()
-    df = pd.read_csv(io.StringIO(r.text))
+    # Try fresh fetch with 8s timeout + 2 attempts. Fall back to ANY cached copy
+    # (no age limit) on failure so a transient FRED outage doesn't drop us to None.
+    last_err = None
+    df = None
+    for attempt in range(2):
+        try:
+            r = requests.get(url, timeout=5, headers={"User-Agent": UA})
+            r.raise_for_status()
+            df = pd.read_csv(io.StringIO(r.text))
+            _save_cache(series_id, df)
+            break
+        except Exception as e:
+            last_err = e
+            time.sleep(0.5)
+    if df is None:
+        # Last resort: ANY cached copy (no TTL on emergency fallback)
+        cached = _load_cache(series_id, max_age_hours=24 * 365)
+        if cached is not None:
+            df = cached
+        else:
+            raise last_err if last_err else RuntimeError("FRED fetch failed and no cache")
     # FRED columns: observation_date,SERIES_ID
     date_col = df.columns[0]
     val_col = df.columns[1]

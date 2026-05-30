@@ -35,7 +35,8 @@ def fetch_dxy():
 
 
 def fetch_mstr():
-    return _wrap("MSTR", "MSTR Price")
+    # Need full history back to 2020-08 to compute historical mNAV
+    return _wrap("MSTR", "MSTR Price", period="max")
 
 
 def fetch_mstr_shares():
@@ -60,6 +61,64 @@ def fetch_mstr_shares():
             "value": None, "series": pd.Series(dtype=float),
             "timestamp": datetime.now(timezone.utc),
             "source": "Yahoo:MSTR.info", "label": "MSTR Shares Outstanding",
+            "stale": True, "error": str(e),
+        }
+
+
+def fetch_mstr_shares_history():
+    """MSTR daily basic shares outstanding back to 2020, split-adjusted.
+
+    Source: yfinance get_shares_full() returns ACTUAL historical shares
+    (not split-adjusted). yfinance price history (auto_adjust=False) is
+    nevertheless still split-adjusted on Yahoo's side. To keep mNAV math
+    consistent (mcap = price * shares), we multiply pre-split shares by
+    the cumulative split ratio of all splits AFTER that date.
+    """
+    try:
+        t = yf.Ticker("MSTR")
+        s = t.get_shares_full(start="2020-01-01")
+        if s is None or len(s) == 0:
+            raise RuntimeError("get_shares_full returned empty")
+        # Convert timezone-aware index to date-only
+        s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+        s = s.groupby(s.index).last()  # collapse duplicate days
+        s = s.astype(float)
+
+        # Apply split adjustment: for each date d, multiply by product of all
+        # split ratios with split_date > d.
+        splits = t.splits.copy()
+        if splits is not None and len(splits) > 0:
+            splits.index = pd.to_datetime(splits.index).tz_localize(None).normalize()
+            # For each share-date, cumulative ratio of splits AFTER it
+            def _ratio_after(date):
+                future = splits[splits.index > date]
+                if len(future) == 0:
+                    return 1.0
+                r = 1.0
+                for v in future.values:
+                    r *= float(v)
+                return r
+            ratios = pd.Series([_ratio_after(d) for d in s.index], index=s.index)
+            s = s * ratios
+        s.name = "mstr_shares"
+        # Daily forward-fill
+        idx = pd.date_range(s.index.min(), pd.Timestamp.today().normalize(), freq="D")
+        daily = s.reindex(idx).ffill()
+        return {
+            "value": float(daily.iloc[-1]),
+            "series": daily,
+            "timestamp": datetime.now(timezone.utc),
+            "source": "yfinance:get_shares_full",
+            "label": "MSTR Shares Outstanding (daily)",
+            "stale": False,
+            "error": None,
+        }
+    except Exception as e:
+        return {
+            "value": None, "series": pd.Series(dtype=float),
+            "timestamp": datetime.now(timezone.utc),
+            "source": "yfinance:get_shares_full",
+            "label": "MSTR Shares Outstanding (daily)",
             "stale": True, "error": str(e),
         }
 

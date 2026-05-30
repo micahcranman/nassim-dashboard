@@ -25,8 +25,30 @@ def _get(path: str, params=None, retries=3, delay=2.0):
 
 
 def fetch_btc_price():
+    # Use yfinance for full daily history (BTC-USD back to 2014); CoinGecko free
+    # tier requires paid for days=max and rate-limits 1y queries. yfinance is
+    # the reliable long-history path — required for the historical mNAV series.
     try:
-        # Series for 1y chart
+        import yfinance as yf
+        hist = yf.Ticker("BTC-USD").history(period="max", auto_adjust=False)
+        if hist is None or hist.empty:
+            raise RuntimeError("yfinance BTC-USD returned empty")
+        s = hist["Close"].copy()
+        s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
+        s = s.groupby(s.index).last()
+        s.name = "price"
+        return {
+            "value": float(s.iloc[-1]),
+            "series": s,
+            "timestamp": s.index[-1].to_pydatetime(),
+            "source": "yfinance:BTC-USD",
+            "label": "BTC Price (USD)",
+            "stale": False,
+            "error": None,
+        }
+    except Exception as e_yf:
+        pass
+    try:
         chart = _get("/coins/bitcoin/market_chart", {"vs_currency": "usd", "days": "365"})
         prices = chart["prices"]
         df = pd.DataFrame(prices, columns=["ts_ms", "price"])
@@ -42,12 +64,12 @@ def fetch_btc_price():
             "stale": False,
             "error": None,
         }
-    except Exception as e:
+    except Exception as e_cg:
         return {
             "value": None, "series": pd.Series(dtype=float),
             "timestamp": datetime.now(timezone.utc),
-            "source": "CoinGecko:bitcoin", "label": "BTC Price (USD)",
-            "stale": True, "error": str(e),
+            "source": "BTC price (yf + CG)", "label": "BTC Price (USD)",
+            "stale": True, "error": f"yf: {e_yf} | CG: {e_cg}",
         }
 
 

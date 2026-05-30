@@ -74,7 +74,7 @@ def pct_change_over(series: pd.Series, days: int):
 
 def fetch_all(logger):
     """Run all fetchers. Returns dict of indicator name -> result dict."""
-    from fetchers import fred, yahoo, coingecko, onchain, coinmetrics, funding, mstr_holdings
+    from fetchers import fred, yahoo, coingecko, onchain, coinmetrics, funding, mstr_holdings, mstr_history
 
     fetchers = [
         ("m2",          fred.fetch_m2),
@@ -84,6 +84,7 @@ def fetch_all(logger):
         ("dxy",         yahoo.fetch_dxy),
         ("mstr",        yahoo.fetch_mstr),
         ("mstr_shares", yahoo.fetch_mstr_shares),
+        ("mstr_shares_hist", yahoo.fetch_mstr_shares_history),
         ("mstr_iv",     yahoo.fetch_mstr_iv_percentile),
         ("btc_price",   coingecko.fetch_btc_price),
         ("btc_mcap",    coingecko.fetch_btc_market_cap),
@@ -94,6 +95,7 @@ def fetch_all(logger):
         ("liveliness",  onchain.fetch_liveliness),
         ("funding",     funding.fetch_funding_rate),
         ("mstr_btc_holdings", mstr_holdings.fetch_mstr_btc_holdings),
+        ("mstr_history", mstr_history.fetch_mstr_purchase_history),
     ]
     results = {}
     for name, fn in fetchers:
@@ -123,7 +125,9 @@ def compute_derived(results: dict, logger):
     mstr_px = results["mstr"]["value"]
     shares = results["mstr_shares"]["value"]
     btc_px = results["btc_price"]["value"]
-    btc_holdings = results["mstr_btc_holdings"]["value"]
+    # Prefer strategy.com canonical holdings; fall back to bitcointreasuries.net scrape
+    btc_holdings = (results.get("mstr_history", {}).get("value")
+                    or results["mstr_btc_holdings"]["value"])
     if all(v is not None for v in [mstr_px, shares, btc_px, btc_holdings]):
         mstr_mcap = mstr_px * shares
         btc_value = btc_holdings * btc_px
@@ -132,20 +136,49 @@ def compute_derived(results: dict, logger):
         derived["mstr_mcap"] = mstr_mcap
         derived["btc_holdings_value"] = btc_value
         logger.info(f"  Derived: mNAV = {mnav:.3f}  (MSTR mcap ${mstr_mcap/1e9:.1f}B / BTC val ${btc_value/1e9:.1f}B)")
-        # APPROXIMATE mNAV time series — uses current shares + current BTC holdings as constants.
-        # CAVEAT: shares & holdings have grown over time, so historical mNAV is slightly biased
-        # high (we're dividing today's holdings × historical BTC price → understates past BTC value
-        # → overstates historical mNAV). For directional/regime use only.
+
+        # TRUE historical mNAV series, using:
+        #   - daily MSTR close (yfinance)
+        #   - daily BTC close (coingecko)
+        #   - daily MSTR basic shares outstanding (yfinance get_shares_full, daily ffill)
+        #   - daily MSTR BTC holdings (strategy.com canonical purchase log, daily ffill step)
+        # No constants, no approximation. mNAV_t = (MSTR_close_t * shares_t) / (holdings_t * BTC_t)
         mstr_series = results["mstr"]["series"]
         btc_series = results["btc_price"]["series"]
-        if not mstr_series.empty and not btc_series.empty:
-            idx = mstr_series.index.intersection(btc_series.index)
-            if len(idx) > 30:
-                mcap_s = mstr_series.reindex(idx) * shares
-                btc_val_s = btc_series.reindex(idx) * btc_holdings
-                mnav_s = (mcap_s / btc_val_s).dropna()
-                derived["mnav_series"] = mnav_s
-                logger.info(f"  Derived: mNAV series len={len(mnav_s)}")
+        shares_hist = results.get("mstr_shares_hist", {}).get("series", pd.Series(dtype=float))
+        mstr_hist = results.get("mstr_history", {})
+        holdings_hist = mstr_hist.get("holdings_series", pd.Series(dtype=float))
+
+        if (not mstr_series.empty and not btc_series.empty
+                and not shares_hist.empty and not holdings_hist.empty):
+            # Normalize all indices to tz-naive daily timestamps
+            def _norm(s):
+                s = s.copy()
+                s.index = pd.to_datetime(s.index)
+                if s.index.tz is not None:
+                    s.index = s.index.tz_localize(None)
+                s.index = s.index.normalize()
+                return s[~s.index.duplicated(keep="last")]
+            mstr_n = _norm(mstr_series)
+            btc_n = _norm(btc_series)
+            shares_n = _norm(shares_hist)
+            hold_n = _norm(holdings_hist)
+            # Daily index = first BTC holding date to today (mNAV only meaningful post-Aug 2020)
+            start = max(mstr_n.index.min(), btc_n.index.min(), hold_n.index.min())
+            end = min(mstr_n.index.max(), btc_n.index.max())
+            idx = pd.date_range(start, end, freq="D")
+            mstr_d = mstr_n.reindex(idx).ffill()
+            btc_d = btc_n.reindex(idx).ffill()
+            shares_d = shares_n.reindex(idx).ffill()
+            hold_d = hold_n.reindex(idx).ffill()
+            mcap_s = mstr_d * shares_d
+            btc_val_s = hold_d * btc_d
+            mnav_s = (mcap_s / btc_val_s).dropna()
+            derived["mnav_series"] = mnav_s
+            logger.info(f"  Derived: mNAV series (TRUE historical) len={len(mnav_s)}, "
+                        f"range {mnav_s.min():.2f}-{mnav_s.max():.2f}, latest {mnav_s.iloc[-1]:.3f}")
+        else:
+            logger.warning("  Derived: mNAV series unavailable (missing component series)")
     else:
         derived["mnav"] = None
         logger.warning("  Derived: mNAV unavailable (missing inputs)")
@@ -280,7 +313,9 @@ def synthesize_text(score_result, raw, derived, results):
                 "mixed"
 
     lines = []
-    lines.append(f"Cycle phase: {cycle_phase} · Macro liquidity: {macro_dir} · Risk regime: HY {results['hy_oas']['value']:.2f}%")
+    hy_val = results.get('hy_oas', {}).get('value')
+    hy_str = f"HY {hy_val:.2f}%" if isinstance(hy_val, (int, float)) else "HY n/a"
+    lines.append(f"Cycle phase: {cycle_phase} · Macro liquidity: {macro_dir} · Risk regime: {hy_str}")
     top_str = ", ".join(f"{fmt(k)}({int(v)})" for k, v, w, c in top_3)
     bot_str = ", ".join(f"{fmt(k)}({int(v)})" for k, v, w, c in bottom_3)
     lines.append(f"Strongest signals: {top_str}")
@@ -443,8 +478,14 @@ def main():
             "btc_price": results["btc_price"]["value"],
             "mstr_price": results["mstr"]["value"],
             "mnav": derived.get("mnav"),
-            "mstr_btc_holdings": results["mstr_btc_holdings"]["value"],
-            "mstr_btc_holdings_stale": results["mstr_btc_holdings"]["stale"],
+            "mstr_btc_holdings": (results.get("mstr_history", {}).get("value")
+                                  or results["mstr_btc_holdings"]["value"]),
+            "mstr_btc_holdings_stale": (results.get("mstr_history", {}).get("stale", True)
+                                        if results.get("mstr_history", {}).get("value")
+                                        else results["mstr_btc_holdings"]["stale"]),
+            "mstr_btc_holdings_source": (results.get("mstr_history", {}).get("source")
+                                         if results.get("mstr_history", {}).get("value")
+                                         else results["mstr_btc_holdings"]["source"]),
             "mstr_iv_atm": results["mstr_iv"]["value"],
         },
     }
