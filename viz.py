@@ -39,7 +39,7 @@ plt.rcParams.update({
     "axes.spines.top": False,
     "axes.spines.right": False,
     "font.family": "sans-serif",
-    "font.size": 9,
+    "font.size": 13,
 })
 
 
@@ -76,7 +76,7 @@ def draw_card(ax, title, value, sub_score, sub_label="", series=None,
         spine.set_visible(False)
 
     # Title bar
-    ax.text(0.03, 0.92, title, fontsize=10, color=TEXT, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.03, 0.92, title, fontsize=15, color=TEXT, fontweight="bold", transform=ax.transAxes)
     if value is None:
         val_str = "N/A"
     else:
@@ -85,35 +85,35 @@ def draw_card(ax, title, value, sub_score, sub_label="", series=None,
         except Exception:
             val_str = "N/A"
     val_color = TEXT if value is not None else MUTED
-    ax.text(0.03, 0.74, val_str, fontsize=18, color=val_color, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.03, 0.72, val_str, fontsize=26, color=val_color, fontweight="bold", transform=ax.transAxes)
 
     # Sub-score chip top-right
     if sub_score is not None:
         chip_color = score_color(sub_score)
-        chip = FancyBboxPatch((0.78, 0.82), 0.18, 0.13,
+        chip = FancyBboxPatch((0.76, 0.80), 0.20, 0.15,
                               boxstyle="round,pad=0.01",
                               facecolor=chip_color, edgecolor="none",
                               transform=ax.transAxes)
         ax.add_patch(chip)
-        ax.text(0.87, 0.88, f"{int(sub_score)}",
-                fontsize=14, color="#0F1419", fontweight="bold",
+        ax.text(0.86, 0.875, f"{int(sub_score)}",
+                fontsize=20, color="#0F1419", fontweight="bold",
                 ha="center", va="center", transform=ax.transAxes)
         if sub_label:
-            ax.text(0.87, 0.78, sub_label, fontsize=7, color=MUTED,
+            ax.text(0.86, 0.76, sub_label, fontsize=10, color=MUTED,
                     ha="center", transform=ax.transAxes)
 
     # Mini chart in lower half
     if series is not None and not series.empty:
-        chart_ax = ax.inset_axes([0.05, 0.08, 0.9, 0.45], transform=ax.transAxes)
+        chart_ax = ax.inset_axes([0.05, 0.10, 0.9, 0.45], transform=ax.transAxes)
         s = series.dropna()
         if len(s) > 365:
             s = s.iloc[-365:]
-        chart_ax.plot(s.index, s.values, color=ACCENT, linewidth=1.5)
+        chart_ax.plot(s.index, s.values, color=ACCENT, linewidth=2.0)
         chart_ax.fill_between(s.index, s.values, s.min(), alpha=0.15, color=ACCENT)
         chart_ax.set_facecolor(PANEL_BG)
         for spine in chart_ax.spines.values():
             spine.set_visible(False)
-        chart_ax.tick_params(axis='both', colors=MUTED, labelsize=6)
+        chart_ax.tick_params(axis='both', colors=MUTED, labelsize=9)
         chart_ax.set_xticks([s.index[0], s.index[-1]])
         chart_ax.set_xticklabels([s.index[0].strftime("%b"), s.index[-1].strftime("%b")])
 
@@ -127,7 +127,7 @@ def draw_card(ax, title, value, sub_score, sub_label="", series=None,
                     chart_ax.axhspan(lo, hi, color=color, alpha=0.12, zorder=0)
 
     if footnote:
-        ax.text(0.03, 0.02, footnote, fontsize=7, color=MUTED, transform=ax.transAxes, style="italic")
+        ax.text(0.03, 0.03, footnote, fontsize=10, color=MUTED, transform=ax.transAxes, style="italic")
 
 
 def draw_score_gauge(ax, composite, delta_1w, history):
@@ -142,22 +142,22 @@ def draw_score_gauge(ax, composite, delta_1w, history):
     label = regime_label(composite)
 
     # Big score number
-    ax.text(0.5, 0.70, f"{composite if composite is not None else 'N/A'}",
-            fontsize=64, color=color, fontweight="bold",
+    ax.text(0.5, 0.72, f"{composite if composite is not None else 'N/A'}",
+            fontsize=92, color=color, fontweight="bold",
             ha="center", va="center", transform=ax.transAxes)
-    ax.text(0.5, 0.40, "RISK SCORE  (0–100)", fontsize=9, color=MUTED,
+    ax.text(0.5, 0.42, "RISK SCORE  (0–100)", fontsize=14, color=MUTED,
             ha="center", transform=ax.transAxes)
-    ax.text(0.5, 0.30, label, fontsize=10, color=color, fontweight="bold",
+    ax.text(0.5, 0.30, label, fontsize=15, color=color, fontweight="bold",
             ha="center", transform=ax.transAxes)
 
     # Delta
     if delta_1w is not None:
         sign = "+" if delta_1w >= 0 else ""
         dcolor = GREEN if delta_1w >= 0 else RED
-        ax.text(0.5, 0.18, f"Δ 1w: {sign}{delta_1w:.1f}", fontsize=10, color=dcolor,
+        ax.text(0.5, 0.18, f"Δ 1w: {sign}{delta_1w:.1f}", fontsize=14, color=dcolor,
                 ha="center", transform=ax.transAxes)
     else:
-        ax.text(0.5, 0.18, "Δ 1w: first run", fontsize=9, color=MUTED,
+        ax.text(0.5, 0.18, "Δ 1w: first run", fontsize=12, color=MUTED,
                 ha="center", transform=ax.transAxes)
 
     # Sparkline of last 12 scores
@@ -179,11 +179,11 @@ def draw_header(ax, results, derived, run_ts):
         spine.set_visible(False)
 
     ax.text(0.005, 0.78, "NASSIM CONFIDENCE DASHBOARD",
-            fontsize=18, color=TEXT, fontweight="bold", transform=ax.transAxes)
+            fontsize=24, color=TEXT, fontweight="bold", transform=ax.transAxes)
     ax.text(0.005, 0.45, "v7.8d strategy confidence calibrator · diagnostic only",
-            fontsize=9, color=MUTED, transform=ax.transAxes, style="italic")
+            fontsize=13, color=MUTED, transform=ax.transAxes, style="italic")
     ax.text(0.005, 0.18, f"Run: {run_ts}",
-            fontsize=8, color=MUTED, transform=ax.transAxes)
+            fontsize=11, color=MUTED, transform=ax.transAxes)
 
     # Snapshot stats: BTC, MSTR, mNAV, MSTR BTC holdings
     btc = results["btc_price"]["value"]
@@ -204,8 +204,8 @@ def draw_header(ax, results, derived, run_ts):
     dx = 0.12
     for i, (label, val) in enumerate(snaps):
         x = x0 + i*dx
-        ax.text(x, 0.62, label, fontsize=8, color=MUTED, transform=ax.transAxes, ha="center")
-        ax.text(x, 0.25, val, fontsize=13, color=TEXT, fontweight="bold",
+        ax.text(x, 0.65, label, fontsize=11, color=MUTED, transform=ax.transAxes, ha="center")
+        ax.text(x, 0.22, val, fontsize=18, color=TEXT, fontweight="bold",
                 transform=ax.transAxes, ha="center")
 
 
@@ -221,13 +221,13 @@ def draw_footer(ax, synthesis_lines, caveats):
                          facecolor=PANEL_BG, edgecolor=MUTED, linewidth=0.5,
                          transform=ax.transAxes)
     ax.add_patch(box)
-    ax.text(0.012, 0.86, "SYNTHESIS", fontsize=9, color=ACCENT, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.012, 0.86, "SYNTHESIS", fontsize=13, color=ACCENT, fontweight="bold", transform=ax.transAxes)
     for i, line in enumerate(synthesis_lines[:3]):
-        ax.text(0.012, 0.70 - i*0.13, line, fontsize=10, color=TEXT, transform=ax.transAxes)
+        ax.text(0.012, 0.70 - i*0.13, line, fontsize=14, color=TEXT, transform=ax.transAxes)
 
-    ax.text(0.005, 0.32, "Caveats:", fontsize=7, color=MUTED, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.005, 0.32, "Caveats:", fontsize=11, color=MUTED, fontweight="bold", transform=ax.transAxes)
     for i, c in enumerate(caveats[:4]):
-        ax.text(0.005, 0.22 - i*0.06, f"  • {c}", fontsize=6.5, color=MUTED, transform=ax.transAxes)
+        ax.text(0.005, 0.22 - i*0.06, f"  • {c}", fontsize=10, color=MUTED, transform=ax.transAxes)
 
 
 def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, history):
@@ -365,6 +365,14 @@ def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, his
     ]
     draw_footer(ax_footer, synthesis, caveats)
 
-    fig.savefig(png_path, dpi=110, facecolor=BG, bbox_inches="tight")
+    # PNG — high DPI for crisp zoom on raster
+    fig.savefig(png_path, dpi=200, facecolor=BG, bbox_inches="tight")
+    # Also write SVG for vector-scaling in browser
+    svg_path = str(png_path).replace(".png", ".svg")
+    try:
+        fig.savefig(svg_path, facecolor=BG, bbox_inches="tight")
+    except Exception as e:
+        import sys
+        print(f"SVG save failed: {e}", file=sys.stderr)
     plt.close(fig)
     return png_path
