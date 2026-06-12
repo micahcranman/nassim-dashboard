@@ -283,14 +283,14 @@ def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, his
               score["sub_scores"]["m2_trend"],
               series=results["m2"]["series"],
               value_fmt=lambda v: f"{v:+.2f}%" if v is not None else "N/A",
-              footnote=f"latest: ${results['m2']['value']/1000:.1f}T @ {results['m2']['timestamp'].strftime('%Y-%m')}")
+              footnote=(f"latest: ${results['m2']['value']/1000:.1f}T @ {results['m2']['timestamp'].strftime('%Y-%m')}" if results['m2'].get('value') is not None and results['m2'].get('timestamp') is not None else "latest: N/A (FRED unavailable)"))
     # Net Liquidity trend
     ax = fig.add_subplot(gs[5:8, 17:24])
     draw_card(ax, "Net Liquidity (4w Δ%)", derived.get("netliq_4w_pct"),
               score["sub_scores"]["netliq_trend"],
               series=results["netliq"]["series"],
               value_fmt=lambda v: f"{v:+.2f}%" if v is not None else "N/A",
-              footnote=f"latest: ${results['netliq']['value']/1000:.2f}T")
+              footnote=(f"latest: ${results['netliq']['value']/1000:.2f}T" if results['netliq'].get('value') is not None else "latest: N/A (FRED unavailable)"))
 
     # Row 8-13: Macro continued + Risk + MSTR + Tactical
     # DXY
@@ -299,7 +299,7 @@ def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, his
               score["sub_scores"]["dxy_trend"],
               series=results["dxy"]["series"],
               value_fmt=lambda v: f"{v:+.2f}%" if v is not None else "N/A",
-              footnote=f"current: {results['dxy']['value']:.2f}")
+              footnote=(f"current: {results['dxy']['value']:.2f}" if results['dxy'].get('value') is not None else "current: N/A"))
     # HY OAS
     ax = fig.add_subplot(gs[8:11, 6:12])
     draw_card(ax, "HY OAS Spread", results["hy_oas"]["value"],
@@ -318,7 +318,7 @@ def render_dashboard(png_path, results, derived, score, delta_1w, synthesis, his
               score["sub_scores"]["mnav"],
               series=None,
               value_fmt=lambda v: f"{v:.2f}x",
-              footnote=f"current: {derived.get('mnav'):.2f}x · holdings flag=*{'live' if not results['mstr_btc_holdings']['stale'] else 'fallback'}")
+              footnote=(f"current: {derived.get('mnav'):.2f}x · holdings flag=*{'live' if not results['mstr_btc_holdings']['stale'] else 'fallback'}" if derived.get('mnav') is not None else "current: N/A"))
 
     # Row 11-13: MSTR/BTC + Funding + SSR
     ax = fig.add_subplot(gs[11:14, 0:8])
