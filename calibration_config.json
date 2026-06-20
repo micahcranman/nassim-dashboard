@@ -1,0 +1,24 @@
+{
+  "_generated_by": "scripts/calibrate_weights.py",
+  "_method": "per-indicator top/bottom AUC, |r|>0.7 cluster caps, shrink-to-prior",
+  "_shrink": 0.45,
+  "_cluster_cap": 0.42,
+  "core_w": {
+    "mri": 0.101,
+    "mvrv_z": 0.12,
+    "nupl": 0.078,
+    "sth_sopr": 0.094,
+    "sth_mvrv": 0.103,
+    "feargreed": 0.096,
+    "rsi": 0.124,
+    "mnav": 0.125,
+    "mstr_btc_trend": 0.107,
+    "slope_5d": 0.052
+  },
+  "macro_w": {
+    "hy_oas": 0.16,
+    "funding": 0.632,
+    "netliq_trend": 0.115,
+    "m2_trend": 0.093
+  }
+}

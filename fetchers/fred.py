@@ -1,122 +1,155 @@
-"""FRED data fetcher. No auth required for CSV endpoints.
+"""FRED macro fetcher — bulletproofed.
 
-Hardened: retries with exponential backoff + on-disk cache fallback so a
-transient FRED outage doesn't drop us to None for hours.
+PRIMARY: official FRED JSON API with FRED_API_KEY (120 req/min, reliable).
+FALLBACK: keyless fredgraph CSV (what this used before — flaky, kept only as a fallback
+so local dev works without a key).
+Plus: exponential backoff, on-disk cache, and committed last-good (survives fresh CI
+runners) so M2 / Net Liquidity / HY OAS never silently drop to blank.
+
+Net Liquidity = Fed Balance Sheet (WALCL) − TGA − RRP. The historical SERIES comes from
+FRED; the freshest CURRENT value is taken from the issuers (Treasury Fiscal Data + NY Fed)
+via treasury.py / nyfed.py, which are lower-latency and don't depend on FRED being up.
 """
 import io
 import os
 import time
 import pandas as pd
 import requests
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Use cosd= (start date) to avoid 504s on large daily series. 2018 is plenty for
-# every indicator we compute (longest lookback is ~5y trend windows).
-FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd=2018-01-01"
+try:
+    from . import lastgood, treasury, nyfed
+except ImportError:  # direct execution
+    import lastgood, treasury, nyfed
+
+FRED_JSON = "https://api.stlouisfed.org/fred/series/observations"
+FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd=2015-01-01"
 UA = "nassim-dashboard/1.0"
+_API_KEY = os.environ.get("FRED_API_KEY", "").strip()
 
 _CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
 _CACHE_DIR.mkdir(exist_ok=True)
-_CACHE_TTL_HOURS = 24
 
 
 def _cache_path(series_id: str) -> Path:
     return _CACHE_DIR / f"fred_{series_id}.csv"
 
 
-def _save_cache(series_id: str, df: pd.DataFrame) -> None:
+def _save_cache(series_id: str, s: pd.Series) -> None:
     try:
-        df.to_csv(_cache_path(series_id), index=False)
+        s.to_frame("v").to_csv(_cache_path(series_id))
     except Exception:
         pass
 
 
-def _load_cache(series_id: str, max_age_hours: float = _CACHE_TTL_HOURS):
+def _load_cache(series_id: str):
     p = _cache_path(series_id)
     if not p.exists():
         return None
-    age = (datetime.now() - datetime.fromtimestamp(p.stat().st_mtime)).total_seconds() / 3600
-    if age > max_age_hours:
-        return None
     try:
-        return pd.read_csv(p)
+        return pd.read_csv(p, index_col=0, parse_dates=True).iloc[:, 0]
     except Exception:
         return None
 
 
-def _fetch_series(series_id: str) -> pd.Series:
-    url = FRED_CSV.format(series=series_id)
-    # Try fresh fetch with 8s timeout + 2 attempts. Fall back to ANY cached copy
-    # (no age limit) on failure so a transient FRED outage doesn't drop us to None.
-    last_err = None
-    df = None
-    for attempt in range(2):
+def _fetch_json(series_id: str) -> pd.Series:
+    params = {
+        "series_id": series_id, "api_key": _API_KEY, "file_type": "json",
+        "observation_start": "2015-01-01",
+    }
+    last = None
+    for attempt in range(4):
         try:
-            r = requests.get(url, timeout=5, headers={"User-Agent": UA})
+            r = requests.get(FRED_JSON, params=params, headers={"User-Agent": UA}, timeout=15)
+            if r.status_code in (429, 500, 502, 503, 504):
+                last = requests.HTTPError(f"{r.status_code}")
+                time.sleep(2 ** attempt)
+                continue
+            r.raise_for_status()
+            obs = r.json().get("observations", [])
+            idx, vals = [], []
+            for o in obs:
+                v = o.get("value")
+                if v in (None, ".", ""):
+                    continue
+                idx.append(pd.to_datetime(o["date"]))
+                vals.append(float(v))
+            s = pd.Series(vals, index=idx, name=series_id)
+            if s.empty:
+                raise RuntimeError("empty observations")
+            return s
+        except Exception as e:
+            last = e
+            time.sleep(2 ** attempt)
+    raise last if last else RuntimeError("FRED JSON failed")
+
+
+def _fetch_csv(series_id: str) -> pd.Series:
+    last = None
+    for attempt in range(3):
+        try:
+            # NOTE: FRED's keyless fredgraph endpoint blackholes requests that send a
+            # custom User-Agent (read-timeout). The default requests UA returns 200 fast.
+            r = requests.get(FRED_CSV.format(series=series_id), timeout=8)
             r.raise_for_status()
             df = pd.read_csv(io.StringIO(r.text))
-            _save_cache(series_id, df)
-            break
+            df[df.columns[0]] = pd.to_datetime(df[df.columns[0]])
+            df = df.set_index(df.columns[0])
+            s = pd.to_numeric(df[df.columns[0]], errors="coerce").dropna()
+            s.name = series_id
+            if s.empty:
+                raise RuntimeError("empty CSV")
+            return s
         except Exception as e:
-            last_err = e
-            time.sleep(0.5)
-    if df is None:
-        # Last resort: ANY cached copy (no TTL on emergency fallback)
-        cached = _load_cache(series_id, max_age_hours=24 * 365)
-        if cached is not None:
-            df = cached
-        else:
-            raise last_err if last_err else RuntimeError("FRED fetch failed and no cache")
-    # FRED columns: observation_date,SERIES_ID
-    date_col = df.columns[0]
-    val_col = df.columns[1]
-    df[date_col] = pd.to_datetime(df[date_col])
-    df = df.set_index(date_col)
-    # FRED uses "." for missing
-    s = pd.to_numeric(df[val_col], errors="coerce").dropna()
-    s.name = series_id
-    return s
+            last = e
+            time.sleep(1.5 * (attempt + 1))
+    raise last if last else RuntimeError("FRED CSV failed")
+
+
+def _fetch_series(series_id: str) -> pd.Series:
+    """Keyed JSON primary, keyless CSV fallback, then disk cache (any age)."""
+    err = None
+    if _API_KEY:
+        try:
+            s = _fetch_json(series_id)
+            _save_cache(series_id, s)
+            return s
+        except Exception as e:
+            err = e
+    try:
+        s = _fetch_csv(series_id)
+        _save_cache(series_id, s)
+        return s
+    except Exception as e:
+        err = e
+    cached = _load_cache(series_id)
+    if cached is not None and not cached.empty:
+        return cached
+    raise err if err else RuntimeError(f"FRED fetch failed for {series_id}")
 
 
 def _wrap(series_id: str, label: str):
     try:
         s = _fetch_series(series_id)
-        return {
-            "value": float(s.iloc[-1]),
-            "series": s,
-            "timestamp": s.index[-1].to_pydatetime(),
-            "source": f"FRED:{series_id}",
-            "label": label,
-            "stale": False,
-            "error": None,
-        }
+        val = float(s.iloc[-1])
+        ts = s.index[-1].to_pydatetime()
+        lastgood.save(f"fred_{series_id}", val, ts)
+        return {"value": val, "series": s, "timestamp": ts,
+                "source": f"FRED:{series_id}", "label": label, "stale": False, "error": None}
     except Exception as e:
-        return {
-            "value": None,
-            "series": pd.Series(dtype=float),
-            "timestamp": datetime.now(timezone.utc),
-            "source": f"FRED:{series_id}",
-            "label": label,
-            "stale": True,
-            "error": str(e),
-        }
+        lg = lastgood.load(f"fred_{series_id}")
+        if lg is not None:
+            return {"value": float(lg["value"]), "series": pd.Series(dtype=float),
+                    "timestamp": lastgood.parse_ts(lg), "source": f"FRED:{series_id} (last-good)",
+                    "label": label, "stale": True, "error": str(e)}
+        return {"value": None, "series": pd.Series(dtype=float),
+                "timestamp": datetime.now(timezone.utc), "source": f"FRED:{series_id}",
+                "label": label, "stale": True, "error": str(e)}
 
 
 def fetch_m2():
     return _wrap("M2SL", "US M2 Money Supply")
-
-
-def fetch_walcl():
-    return _wrap("WALCL", "Fed Balance Sheet")
-
-
-def fetch_tga():
-    return _wrap("WTREGEN", "Treasury General Account")
-
-
-def fetch_rrp():
-    return _wrap("RRPONTSYD", "Overnight Reverse Repo")
 
 
 def fetch_real_yield_10y():
@@ -128,39 +161,68 @@ def fetch_hy_oas():
 
 
 def fetch_net_liquidity():
-    """Net Liquidity = Fed BS - TGA - RRP. All in $B."""
+    """Net Liquidity = WALCL − TGA − RRP in $B.
+
+    Series from FRED; current value refreshed from issuers (Treasury TGA + NY Fed RRP)
+    and cross-checked. Falls back gracefully at each layer.
+    """
+    label = "US Net Liquidity ($B)"
     try:
-        walcl = _fetch_series("WALCL")     # weekly, in $M
-        tga = _fetch_series("WTREGEN")      # weekly, in $B
-        rrp = _fetch_series("RRPONTSYD")    # daily, in $B
-        # Resample to weekly, forward-fill, align
+        walcl = _fetch_series("WALCL") / 1000.0          # $M → $B
+        tga_fred = _fetch_series("WTREGEN") / 1000.0     # $M → $B
+        rrp_fred = _fetch_series("RRPONTSYD")            # already $B
         idx = walcl.index
-        tga_w = tga.reindex(idx, method="ffill")
-        rrp_w = rrp.reindex(idx, method="ffill")
-        # FRED units: WALCL in $M, WTREGEN in $M, RRPONTSYD in $B. Normalize all to $B.
-        net = (walcl / 1000.0) - (tga_w / 1000.0) - rrp_w
-        net = net.dropna()
-        return {
-            "value": float(net.iloc[-1]),
-            "series": net,
-            "timestamp": net.index[-1].to_pydatetime(),
-            "source": "FRED computed (WALCL/1000 - WTREGEN - RRPONTSYD)",
-            "label": "US Net Liquidity ($B)",
-            "stale": False,
-            "error": None,
-        }
+        tga_w = tga_fred.reindex(idx, method="ffill")
+        rrp_w = rrp_fred.reindex(idx, method="ffill")
+        net = (walcl - tga_w - rrp_w).dropna()
+        if net.empty:
+            raise RuntimeError("empty net-liq series")
+
+        # Freshest current value from issuers (independent of FRED freshness)
+        cur_walcl = float(walcl.iloc[-1])
+        tga_iss = treasury.fetch_tga()
+        rrp_iss = nyfed.fetch_rrp()
+        cur_tga = tga_iss["value"] if tga_iss["value"] is not None else float(tga_w.iloc[-1])
+        cur_rrp = rrp_iss["value"] if rrp_iss["value"] is not None else float(rrp_w.iloc[-1])
+        cur_net = cur_walcl - cur_tga - cur_rrp
+
+        # Cross-check TGA: issuer vs FRED (flag large divergence, don't fail)
+        xcheck = None
+        try:
+            if tga_iss["value"] is not None:
+                d = abs(tga_iss["value"] - float(tga_w.iloc[-1]))
+                if d > 50:  # >$50B apart → worth noting
+                    xcheck = f"TGA issuer {tga_iss['value']:.0f} vs FRED {float(tga_w.iloc[-1]):.0f}"
+        except Exception:
+            pass
+
+        # Use the fresher issuer-based current value as the headline; keep FRED series for history
+        series = net.copy()
+        series.iloc[-1] = cur_net
+        val = cur_net
+        ts = max(net.index[-1].to_pydatetime(),
+                 tga_iss.get("timestamp") or net.index[-1].to_pydatetime())
+        lastgood.save("net_liquidity", val, datetime.now(timezone.utc))
+        src = "FRED series + issuer current (Treasury/NYFed)"
+        return {"value": val, "series": series, "timestamp": ts, "source": src,
+                "label": label, "stale": False, "error": xcheck,
+                "components": {"walcl": cur_walcl, "tga": cur_tga, "rrp": cur_rrp}}
     except Exception as e:
-        return {
-            "value": None, "series": pd.Series(dtype=float),
-            "timestamp": datetime.now(timezone.utc),
-            "source": "FRED computed", "label": "US Net Liquidity ($B)",
-            "stale": True, "error": str(e),
-        }
+        lg = lastgood.load("net_liquidity")
+        if lg is not None:
+            return {"value": float(lg["value"]), "series": pd.Series(dtype=float),
+                    "timestamp": lastgood.parse_ts(lg), "source": "net-liq (last-good)",
+                    "label": label, "stale": True, "error": str(e)}
+        return {"value": None, "series": pd.Series(dtype=float),
+                "timestamp": datetime.now(timezone.utc), "source": "FRED computed",
+                "label": label, "stale": True, "error": str(e)}
 
 
 if __name__ == "__main__":
     for fn in [fetch_m2, fetch_real_yield_10y, fetch_hy_oas, fetch_net_liquidity]:
         r = fn()
-        print(f"{r['label']}: {r['value']} @ {r['timestamp']} (stale={r['stale']})")
+        print(f"{r['label']}: {r['value']} @ {r['timestamp']} (stale={r['stale']}) {r['source']}")
+        if r.get("components"):
+            print(f"   components: {r['components']}")
         if r["error"]:
-            print(f"  ERROR: {r['error']}")
+            print(f"  note: {r['error']}")

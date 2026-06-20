@@ -1,837 +1,460 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<title>Nassim Confidence Dashboard</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Strategy² · v8.5 Console</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0F1419;
-  --panel: #1A1F2E;
-  --panel-hi: #232940;
-  --text: #E0E0E0;
-  --muted: #8A92A0;
-  --accent: #4FC3F7;
-  --green: #66BB6A;
-  --red: #EF5350;
-  --yellow: #FFCA28;
-  --line: #2A3142;
+:root{
+  --bg:#070b14; --glass:rgba(20,28,48,0.55); --glass-brd:rgba(120,150,220,0.16);
+  --ink:#eaf0ff; --muted:#8c98b8; --faint:#586187;
+  --long:#16c784; --short:#ea3943; --neutral:#f3c623; --accent:#4aa8ff; --accent2:#7c5cff;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  padding: 1rem;
-  -webkit-font-smoothing: antialiased;
-}
-.container { max-width: 1700px; margin: 0 auto; }
-header {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 0.75rem; margin-bottom: 1rem;
-}
-h1 { font-size: 1.5rem; font-weight: 700; }
-.subtitle { color: var(--muted); font-style: italic; font-size: 0.95rem; }
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{background:
+    radial-gradient(1200px 700px at 12% -8%, rgba(74,168,255,.10), transparent 60%),
+    radial-gradient(1000px 600px at 100% 0%, rgba(124,92,255,.10), transparent 55%),
+    radial-gradient(900px 700px at 50% 120%, rgba(22,199,132,.06), transparent 60%),
+    var(--bg); min-height:100vh}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 16px 80px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.brand small{font-weight:600;color:var(--muted);letter-spacing:2px;font-size:11px}
+.spacer{flex:1}
+.age{font:600 12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:7px}
+.age .dot2{width:8px;height:8px;border-radius:50%}
+.age .ok{background:var(--long);box-shadow:0 0 10px rgba(22,199,132,.5)}
+.age .stale{background:var(--neutral);box-shadow:0 0 10px rgba(243,198,35,.5)}
+button.refresh{font:600 13px var(--sans);color:var(--ink);cursor:pointer;
+  background:linear-gradient(180deg,rgba(74,168,255,.22),rgba(74,168,255,.10));
+  border:1px solid rgba(74,168,255,.35);border-radius:11px;padding:9px 15px;display:flex;gap:8px;align-items:center;transition:transform .12s, box-shadow .2s}
+button.refresh:hover{box-shadow:0 0 22px rgba(74,168,255,.3);transform:translateY(-1px)}
+button.refresh.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;
+  backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  box-shadow:0 10px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04)}
+.cat{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--faint)}
 
-.score-block {
-  background: var(--panel); border-radius: 12px;
-  padding: 1.25rem; margin-bottom: 1rem;
-  display: grid; grid-template-columns: 1fr; gap: 1rem;
-}
-@media (min-width: 768px) {
-  .score-block { grid-template-columns: auto 1fr auto; align-items: center; }
-}
-.score-num { font-size: 4rem; font-weight: 800; line-height: 1; text-align: center; }
-@media (min-width: 768px) { .score-num { font-size: 5rem; text-align: left; } }
-.score-meta { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.score-label { font-size: 1.1rem; font-weight: 600; margin-top: 0.4rem; text-align: center; }
-@media (min-width: 768px) { .score-label { text-align: left; } }
-.score-delta-block { text-align: center; }
-@media (min-width: 768px) { .score-delta-block { text-align: right; } }
-.score-delta { font-size: 1.15rem; font-weight: 700; }
-.snapshot-line { font-size: 0.95rem; color: var(--text); margin-top: 0.3rem; }
+/* verdict hero */
+.hero{padding:22px;overflow:hidden}
+.hero .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.verdict{display:flex;align-items:center;gap:18px}
+.vbadge{font:800 30px var(--mono);letter-spacing:1px;padding:10px 20px;border-radius:14px;text-transform:uppercase}
+.netnum{font:800 64px var(--mono);line-height:.9;letter-spacing:-2px}
+.netlabel{font-size:14px;color:var(--muted);font-weight:600;margin-top:4px}
+.confbar{height:7px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:12px;max-width:560px}
+.confbar > i{display:block;height:100%;border-radius:99px}
+.subline{color:var(--muted);font-size:13px;margin-top:8px}
 
-.missing-banner {
-  background: #2A1F0F; border-left: 4px solid var(--yellow);
-  padding: 0.75rem 1rem; margin-bottom: 1rem;
-  font-size: 0.9rem; color: var(--yellow); border-radius: 4px;
-}
+/* range bar */
+.rangebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 2px 0}
+.rangebar .rb{font:600 12px var(--mono);color:var(--muted);cursor:pointer;padding:5px 11px;border-radius:9px;border:1px solid transparent;background:rgba(255,255,255,.04)}
+.rangebar .rb.on{color:var(--ink);border-color:rgba(74,168,255,.4);background:rgba(74,168,255,.14)}
 
-.synthesis {
-  background: var(--panel); border-radius: 12px;
-  padding: 1rem 1.25rem; margin-bottom: 1.25rem;
-}
-.synthesis h2 {
-  font-size: 0.75rem; color: var(--accent);
-  letter-spacing: 0.08em; margin-bottom: 0.5rem;
-}
-.synthesis p { font-size: 1rem; margin-bottom: 0.35rem; }
+.chip-toggle{font:600 11px var(--mono);color:var(--muted);cursor:pointer;padding:5px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)}
+.chip-toggle.on{color:var(--accent);border-color:rgba(74,168,255,.4)}
 
-/* GLOBAL DATE RANGE CONTROL */
-.range-bar {
-  background: var(--panel); border-radius: 12px;
-  padding: 0.75rem 1rem; margin-bottom: 1rem;
-  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
-  position: sticky; top: 0.5rem; z-index: 50;
-  border: 1px solid var(--line);
-}
-.range-bar .label {
-  font-size: 0.75rem; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.08em; margin-right: 0.5rem;
-}
-.range-btn {
-  background: #232940; color: var(--text); border: 1px solid var(--line);
-  padding: 0.35rem 0.7rem; font-size: 0.85rem;
-  border-radius: 6px; cursor: pointer; font-weight: 600;
-  transition: background 0.15s, border-color 0.15s;
-}
-.range-btn:hover { background: var(--panel-hi); border-color: var(--accent); }
-.range-btn.active {
-  background: var(--accent); color: #0F1419; border-color: var(--accent);
-}
-.range-bar input[type="date"] {
-  background: #232940; color: var(--text); border: 1px solid var(--line);
-  padding: 0.3rem 0.5rem; font-size: 0.85rem; border-radius: 6px;
-  font-family: inherit;
-}
-.btc-toggle {
-  margin-left: auto; display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.85rem; color: var(--muted);
-}
+.sec{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;font-weight:700;font-size:15px;flex-wrap:wrap}
+.sec .hint{font-weight:500;font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{padding:10px 13px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);min-width:120px}
+.chip .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:600}
+.chip .v{font:700 19px var(--mono);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.badge{font:700 10px var(--mono);padding:3px 7px;border-radius:6px;letter-spacing:.5px}
+.badge.long{background:rgba(22,199,132,.16);color:var(--long);border:1px solid rgba(22,199,132,.3)}
+.badge.short{background:rgba(234,57,67,.16);color:var(--short);border:1px solid rgba(234,57,67,.3)}
+.badge.neutral{background:rgba(243,198,35,.14);color:var(--neutral);border:1px solid rgba(243,198,35,.3)}
+.action{margin-top:14px;padding:11px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(74,168,255,.12),rgba(124,92,255,.07));border:1px solid rgba(74,168,255,.2);font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center}
 
-.section-header {
-  font-size: 0.8rem; color: var(--accent);
-  letter-spacing: 0.08em; font-weight: 700;
-  margin: 1.5rem 0 0.5rem 0; text-transform: uppercase;
-}
+/* breakdown diverging bars */
+.brk{padding:18px}
+.brkrow{display:grid;grid-template-columns:150px 1fr 44px;align-items:center;gap:10px;margin:7px 0;font-size:12.5px}
+.brkrow .nm{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brkrow .bar{position:relative;height:14px;background:rgba(255,255,255,.04);border-radius:7px}
+.brkrow .bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.18)}
+.brkrow .bar > i{position:absolute;top:0;bottom:0;border-radius:5px}
+.brkrow .sc{text-align:right;font-family:var(--mono);font-weight:700}
 
-.card-grid {
-  display: grid; grid-template-columns: 1fr; gap: 0.75rem;
-}
-@media (min-width: 700px)  { .card-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1200px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1500px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+.chart{padding:14px 10px 6px}
+.chart .plot{width:100%;height:340px}
+.chart.tall .plot{height:420px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:4px 2px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 
-.card {
-  background: var(--panel); border-radius: 12px;
-  padding: 0.85rem 1rem 0.5rem 1rem;
-  display: flex; flex-direction: column;
-  position: relative; min-height: 320px;
-}
-.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.card-title { font-size: 0.95rem; font-weight: 600; flex: 1; cursor: pointer; }
-.card-title:hover { color: var(--accent); }
-.card-value-row { display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.3rem; }
-.card-value { font-size: 1.7rem; font-weight: 700; }
-.card-value.na { color: var(--muted); }
-.card-direction { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
-.chip {
-  border-radius: 8px; padding: 0.25rem 0.55rem;
-  font-size: 0.95rem; font-weight: 800;
-  color: #0F1419; min-width: 2.4rem; text-align: center;
-  cursor: help;
-}
-.card-plot { flex: 1; min-height: 200px; margin-top: 0.5rem; }
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:14px}
+.tile{padding:15px;cursor:pointer;transition:transform .14s,box-shadow .25s,border-color .25s;position:relative;overflow:hidden}
+.tile:hover{transform:translateY(-3px);border-color:rgba(120,150,220,.34)}
+.tile .lab{font-size:12px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.tile .val{font:700 27px var(--mono);margin:6px 0 2px}
+.tile .scorechip{display:inline-block;margin-top:8px;font:700 11px var(--mono);padding:3px 9px;border-radius:7px}
+.tile .spark{position:absolute;left:0;right:0;bottom:0;height:42px;opacity:.5}
 
-.history-section { margin-top: 1.5rem; }
-.scroll-wrap { overflow-x: auto; }
-table {
-  width: 100%; border-collapse: collapse; background: var(--panel);
-  border-radius: 12px; overflow: hidden; font-size: 0.9rem; margin-bottom: 1rem;
-}
-th, td { padding: 0.6rem 0.8rem; text-align: right; border-bottom: 1px solid var(--line); }
-th { background: #20263A; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
-th:first-child, td:first-child { text-align: left; }
-td.score-cell { font-weight: 700; }
-
-footer {
-  text-align: center; color: var(--muted);
-  font-size: 0.75rem; margin-top: 2rem;
-  padding-top: 1rem; border-top: 1px solid var(--line);
-}
-
-/* MODAL */
-.modal-backdrop {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-  display: none; z-index: 100; padding: 1rem; overflow-y: auto;
-}
-.modal-backdrop.open { display: flex; align-items: flex-start; justify-content: center; }
-.modal {
-  background: var(--panel); border-radius: 16px;
-  width: 100%; max-width: 1200px; padding: 1.25rem;
-  margin: 1rem 0; position: relative;
-}
-.modal-close {
-  position: absolute; top: 0.75rem; right: 1rem;
-  background: none; border: none; color: var(--muted);
-  font-size: 2rem; cursor: pointer; line-height: 1; padding: 0.25rem 0.5rem;
-}
-.modal-close:hover { color: var(--text); }
-.modal h2 { font-size: 1.2rem; font-weight: 700; padding-right: 2.5rem; margin-bottom: 0.25rem; }
-.modal-category { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; }
-.modal-value-row { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: baseline; margin-bottom: 0.5rem; }
-.modal-value { font-size: 2.5rem; font-weight: 800; }
-.modal-meta { color: var(--muted); font-size: 0.85rem; }
-.modal-chip { border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 1.1rem; font-weight: 800; color: #0F1419; }
-.modal-plot { margin: 1rem 0; height: 520px; }
-.modal-explanation { background: #161B2A; border-radius: 8px; padding: 1rem; margin-top: 0.75rem; }
-.modal-explanation h3 { font-size: 0.75rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem; }
-.modal-explanation p { font-size: 0.95rem; margin-bottom: 0.75rem; line-height: 1.55; }
-.modal-explanation h3:not(:first-child) { margin-top: 0.75rem; }
-.modal-bands { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
-.modal-band { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 4px; color: #0F1419; font-weight: 600; }
+.modal-bg{position:fixed;inset:0;background:rgba(4,7,14,.72);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
+.modal-bg.on{display:flex}
+.modal{max-width:780px;width:100%;max-height:90vh;overflow:auto;padding:22px;position:relative}
+.modal h3{margin:0 0 2px;font-size:20px}
+.modal .mval{font:800 30px var(--mono);margin:6px 0}
+.modal p{color:var(--muted);font-size:13.5px;line-height:1.6}
+.modal .x{position:absolute;top:14px;right:18px;cursor:pointer;color:var(--muted);font-size:24px;line-height:1}
+.foot{color:var(--faint);font-size:11px;text-align:center;margin-top:30px}
+@media(max-width:720px){.netnum{font-size:48px}.vbadge{font-size:24px}.chart .plot{height:300px}.brkrow{grid-template-columns:96px 1fr 40px}}
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>NASSIM CONFIDENCE DASHBOARD</h1>
-    <span class="subtitle">v7.8d strategy confidence calibrator · diagnostic only · interactive</span>
-  </header>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="dot"></span>STRATEGY² <small>v8.5 CONSOLE</small></div>
+    <div class="spacer"></div>
+    <div class="age" id="age"><span class="dot2 ok" id="ageDot"></span><span id="ageTxt">loading…</span></div>
+    <button class="refresh" id="refreshBtn" onclick="refresh()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
+  </div>
 
-  <div class="score-block">
-    <div>
-      <div id="score-num" class="score-num">—</div>
-      <div class="score-meta" style="text-align:center;">RISK SCORE (0–100)</div>
-      <div id="score-label" class="score-label">—</div>
+  <!-- VERDICT HERO -->
+  <div class="card hero" id="hero">
+    <div class="head">
+      <div class="verdict">
+        <span class="vbadge" id="vbadge">—</span>
+        <div>
+          <div class="cat">Net Conviction</div>
+          <div class="netnum mono" id="netNum">–</div>
+          <div class="netlabel" id="netRead"></div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="cat">BTC / MSTR</div>
+        <div class="mono" id="px" style="font-size:20px;font-weight:700;margin-top:6px"></div>
+        <div class="mono" id="mnavTop" style="color:var(--muted);font-size:13px;margin-top:4px"></div>
+      </div>
     </div>
-    <div>
-      <div class="score-meta">Last updated</div>
-      <div id="last-updated" style="font-size: 1rem;">—</div>
-      <div class="snapshot-line" id="snapshot">—</div>
+    <div class="confbar"><i id="confFill"></i></div>
+    <div class="subline" id="netSub"></div>
+    <div class="rangebar" id="rangebar"></div>
+    <div class="chart" style="padding:8px 0 0"><div class="plot" id="osc" style="height:300px"></div></div>
+    <div class="legend">
+      <span><i style="background:#fff"></i>Conviction (smoothed)</span>
+      <span><i style="background:#c9a4ff"></i>MSTR price (right axis)</span>
+      <span><i style="background:var(--long)"></i>LONG zone (bottom)</span>
+      <span><i style="background:var(--short)"></i>SHORT zone (top)</span>
+      <span style="color:var(--faint)">axis flipped: LONG/cheap at bottom, aligns with low price</span>
     </div>
-    <div class="score-delta-block">
-      <div class="score-meta">Δ 1 week</div>
-      <div id="score-delta" class="score-delta">—</div>
-    </div>
   </div>
 
-  <div id="missing-banner" class="missing-banner" style="display:none;"></div>
-
-  <div class="synthesis">
-    <h2>SYNTHESIS</h2>
-    <div id="synthesis"></div>
+  <div class="sec">v8.5 Strategy State <span class="hint">— the mechanical call (system of record)</span></div>
+  <div class="card" style="padding:18px">
+    <div class="chips" id="chips"></div>
+    <div class="action" id="action"></div>
   </div>
 
-  <!-- GLOBAL DATE RANGE CONTROL -->
-  <div class="range-bar" role="toolbar" aria-label="Date range selector">
-    <span class="label">Range:</span>
-    <button class="range-btn" data-range="1m">1M</button>
-    <button class="range-btn" data-range="3m">3M</button>
-    <button class="range-btn" data-range="6m">6M</button>
-    <button class="range-btn" data-range="1y">1Y</button>
-    <button class="range-btn active" data-range="2y">2Y</button>
-    <button class="range-btn" data-range="5y">5Y</button>
-    <button class="range-btn" data-range="all">All</button>
-    <span style="color:var(--muted); margin: 0 0.4rem;">|</span>
-    <span class="label">Custom:</span>
-    <input type="date" id="custom-from" aria-label="Start date">
-    <input type="date" id="custom-to" aria-label="End date">
-    <button class="range-btn" id="custom-apply">Apply</button>
-    <label class="btc-toggle">
-      <input type="checkbox" id="btc-overlay-toggle" checked>
-      <span>BTC overlay</span>
-    </label>
+  <div class="sec">MSTR Price · v8.5 Backtest Signals <span class="hint">— REAL backtest entries/exits (not live tags): Q-fire longs, PUT/SHORT hedges, t1b exits</span></div>
+  <div class="card chart tall">
+    <div class="plot" id="sigchart"></div>
+    <div class="legend" id="siglegend"></div>
   </div>
 
-  <div class="section-header">Cycle Phase  (BTC on-chain, 35% weight)</div>
-  <div class="card-grid" id="cards-cycle"></div>
+  <div class="sec">Conviction Drivers <span class="hint">— what's pulling the score, signed (green = LONG, red = SHORT)</span></div>
+  <div class="card brk" id="brk"></div>
 
-  <div class="section-header">Macro Liquidity  (30% weight)</div>
-  <div class="card-grid" id="cards-macro"></div>
+  <div class="sec">Macro / Liquidity <span class="hint">— a SEPARATE backdrop score (kept out of the core net — it's noise for top/bottom timing)</span></div>
+  <div class="card" id="macroCard" style="padding:18px"></div>
 
-  <div class="section-header">Risk Regime  (15% weight)</div>
-  <div class="card-grid" id="cards-risk"></div>
+  <div class="sec">Indicators <span class="hint">— one signed score each · tap for detail</span></div>
+  <div class="tiles" id="tiles"></div>
 
-  <div class="section-header">MSTR-Specific  (15% weight)</div>
-  <div class="card-grid" id="cards-mstr"></div>
-
-  <div class="section-header">Tactical  (5% weight)</div>
-  <div class="card-grid" id="cards-tactical"></div>
-
-  <div class="section-header">Score History (last 12 runs)</div>
-  <div class="scroll-wrap">
-    <table id="history-table">
-      <thead><tr><th>Timestamp</th><th>Composite</th><th>Δ</th><th>BTC</th><th>MSTR</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <footer>
-    Score is backward-looking · weights hand-calibrated · N=3–4 BTC cycles for calibration · ETF era recalibration pending · does NOT capture geopolitical/black-swan risk (that's the qualitative override layer).
-    <br>
-    Built via GitHub Actions. Source: <a href="https://github.com/micahcranman/nassim-dashboard" style="color: var(--accent);">github.com/micahcranman/nassim-dashboard</a>
-  </footer>
+  <div class="foot" id="foot"></div>
 </div>
 
-<!-- Modal -->
-<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()">×</button>
-    <div class="modal-category" id="modal-category"></div>
-    <h2 id="modal-title"></h2>
-    <div class="modal-value-row">
-      <div class="modal-value" id="modal-value">—</div>
-      <div class="modal-chip" id="modal-chip">—</div>
-      <div class="modal-meta" id="modal-direction"></div>
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="card modal" id="modal">
+    <div class="x" onclick="closeModal()">×</div>
+    <div class="cat" id="mCat"></div>
+    <h3 id="mTitle"></h3>
+    <div class="mval mono" id="mVal"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <span id="mScore" style="font:700 12px var(--mono);padding:4px 10px;border-radius:7px"></span>
+      <span class="chip-toggle" id="mOverlayBtn" onclick="toggleOverlay()">+ MSTR price</span>
     </div>
-    <div class="modal-plot" id="modal-plot"></div>
-    <div class="modal-explanation">
-      <h3>What it is</h3>
-      <p id="modal-explanation"></p>
-      <h3>How to use it</h3>
-      <p id="modal-use"></p>
-      <h3>Regime bands</h3>
-      <div class="modal-bands" id="modal-bands"></div>
-    </div>
+    <div class="plot" id="mPlot" style="height:320px"></div>
+    <p id="mExpl"></p>
+    <p id="mUse" style="color:var(--accent)"></p>
   </div>
 </div>
 
 <script>
-// ----- Config -----
-const CATEGORIES = {
-  'Cycle Phase':    'cards-cycle',
-  'Macro Liquidity':'cards-macro',
-  'Risk Regime':    'cards-risk',
-  'MSTR-Specific':  'cards-mstr',
-  'Tactical':       'cards-tactical',
+const FMT=(v,fmt)=>{if(v===null||v===undefined||isNaN(v))return"—";const m=/\.(\d)f/.exec(fmt||".2f");const d=m?+m[1]:2;return (+v).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});};
+const zoneHex=z=>({LONG:"#16c784",SHORT:"#ea3943",NEUTRAL:"#f3c623"}[z]||"#8c98b8");
+const scoreColor=s=>s==null?"#8c98b8":(s>=15?"#16c784":s<=-15?"#ea3943":"#f3c623");
+const scoreLabel=s=>s==null?"—":(s>=15?"LONG":s<=-15?"SHORT":"NEUTRAL");
+let DATA=null, RANGE="all", curModalKey=null, overlayOn=false, pinned=null;
+const RANGES=[["6M",182],["1Y",365],["2Y",730],["4Y",1460],["All",99999]];
+
+const HOVER={bgcolor:"rgba(10,16,30,0.96)",bordercolor:"rgba(120,150,220,0.35)",font:{color:"#eaf0ff",family:"JetBrains Mono, monospace",size:12}};
+const PLOT_LAYOUT=extra=>Object.assign({
+  paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
+  font:{color:"#8c98b8",family:"JetBrains Mono, monospace",size:11},
+  margin:{l:46,r:46,t:10,b:28},showlegend:false,hovermode:"x unified",hoverlabel:HOVER,
+  xaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:false},
+  yaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:false},
+},extra||{});
+const PCONF={displayModeBar:false,responsive:true};
+
+function cutoff(){const days=(RANGES.find(r=>r[0]===RANGE)||["All",99999])[1];const dd=new Date();dd.setDate(dd.getDate()-days);return dd.toISOString().slice(0,10);}
+function slicePts(arr){if(RANGE==="All"||!arr)return arr;const c=cutoff();return arr.filter(p=>p.d>=c);}
+
+// ---- historical scrubber: recompute conviction + drivers for any pinned date ----
+function valAt(series,date){let pick=null;if(!series)return null;for(const p of series){if(p.d<=date)pick=p;else break;}return pick?pick.v:null;}
+function _signedJS(v,band){for(const b of band){if(b[0]===null||v<b[0])return b[1];}return band[band.length-1][1];}
+function zoneOf(net){const z=(DATA.scoring_config||{}).zones||{long_cap:65,long_local:28,short_local:-28,short_top:-65};
+  if(net==null)return{zone:"NEUTRAL",label:"UNKNOWN"};
+  if(net>=z.long_cap)return{zone:"LONG",label:"LONG-CAPITULATION"};
+  if(net>=z.long_local)return{zone:"LONG",label:"LONG-LOCAL"};
+  if(net>z.short_local)return{zone:"NEUTRAL",label:"NEUTRAL"};
+  if(net>z.short_top)return{zone:"SHORT",label:"SHORT-LOCAL"};
+  return{zone:"SHORT",label:"SHORT-TOP"};}
+function metersForDate(date){
+  const cfg=DATA.scoring_config; if(!cfg)return DATA.meters;
+  const bands=cfg.bands,coreW=cfg.core_w,macroW=cfg.macro_w,mk=new Set(cfg.macro_keys);
+  let num=0,den=0,mnum=0,mden=0;const contributions={};
+  for(const k in bands){const ind=DATA.indicators[k];if(!ind||!ind.series||!ind.series.length)continue;
+    const v=valAt(ind.series,date);if(v==null)continue;const sc=_signedJS(v,bands[k]);
+    if(mk.has(k)){const w=macroW[k]||0;mnum+=w*sc;mden+=w;}
+    else{const w=coreW[k]||0;num+=w*sc;den+=w;contributions[k]={value:v,score:Math.round(sc*10)/10,weight:w,contrib:Math.round(w*sc*100)/100};}}
+  const net=den?Math.round(num/den*10)/10:null;
+  for(const k in contributions)contributions[k].eff=den?contributions[k].weight/den:0;
+  const z=zoneOf(net),cs=Object.values(contributions);
+  return {net_conviction:net,zone:z.zone,label:z.label,verdict:z.label,read:z.label,
+    confidence:net==null?0:Math.round(Math.min(100,Math.abs(net))),contributions,
+    macro_score:mden?Math.round(mnum/mden*10)/10:null,
+    bull_sum:Math.round(cs.filter(c=>c.contrib>0).reduce((a,c)=>a+c.contrib,0)*10)/10,
+    bear_sum:Math.round(cs.filter(c=>c.contrib<0).reduce((a,c)=>a+c.contrib,0)*10)/10};
+}
+function currentMeters(){return pinned?metersForDate(pinned):DATA.meters;}
+function applyConviction(){
+  const m=currentMeters(); if(!m)return; const net=m.net_conviction, hex=zoneHex(m.zone);
+  const vb=document.getElementById("vbadge"); vb.textContent=m.verdict||m.label||"—";
+  vb.style.color=hex; vb.style.background=hex+"1f"; vb.style.border="1px solid "+hex+"66"; vb.style.boxShadow="0 0 30px "+hex+"55";
+  const nn=document.getElementById("netNum"); nn.textContent=(net>0?"+":"")+net; nn.style.color=hex; nn.style.textShadow=`0 0 36px ${hex}55`;
+  document.getElementById("netRead").textContent=m.read||m.label||"";
+  const cf=document.getElementById("confFill"); cf.style.width=Math.min(100,Math.abs(net))+"%"; cf.style.background=`linear-gradient(90deg, ${hex}, ${hex}aa)`; cf.style.boxShadow=`0 0 16px ${hex}88`;
+  const sub=document.getElementById("netSub");
+  if(pinned){sub.innerHTML=`<b style="color:#c9a4ff">📌 ${pinned}</b> — historical reading · Bull +${m.bull_sum} · Bear ${m.bear_sum} · <span class="rb" style="display:inline-block;padding:2px 9px" onclick="resetPin()">↺ Reset to live</span>`;}
+  else{const m0=DATA.meters,dl=DATA.net_delta_7d; sub.innerHTML=`Bull +${m0.bull_sum} · Bear ${m0.bear_sum}`+(dl!=null?` · 7d ${dl>0?"▲+":"▼"}${dl}`:"")+` · confidence ${m0.confidence} · <span style="color:var(--faint)">click the chart to inspect any past date</span>`;}
+  drawBreakdown(m);
+  drawOscillator(); // redraw to move/clear the pinned marker
+}
+function pinDate(date){pinned=(""+date).slice(0,10); applyConviction();}
+function resetPin(){pinned=null; applyConviction();}
+
+async function load(bust){const r=await fetch("./latest.json"+(bust?("?t="+Date.now()):""),{cache:"no-store"});DATA=await r.json();render();}
+
+function render(){
+  const d=DATA,s=d.strategy_state,m=d.meters,snap=d.snapshot;
+  const ts=new Date(d.timestamp),mins=Math.round((Date.now()-ts)/60000);
+  document.getElementById("ageTxt").textContent=(mins<1?"just now":mins<60?mins+"m ago":Math.round(mins/60)+"h ago");
+  document.getElementById("ageDot").className="dot2 "+((d.data_health||[]).some(h=>h.stale)?"stale":"ok");
+
+  // hero conviction (score + 5-label + drivers) is rendered by applyConviction() — pinned-aware
+  document.getElementById("px").textContent=`BTC $${FMT(snap.btc_price,".0f")}  ·  MSTR $${FMT(snap.mstr_price,".2f")}`;
+  const cflag=snap.mnav_confidence==="high"?"":` ⚠ ${snap.mnav_confidence}`;
+  document.getElementById("mnavTop").innerHTML=`mNAV ${FMT(snap.mnav,".2f")}x${cflag} · ${FMT(snap.mstr_btc_holdings,".0f")} BTC${snap.mstr_btc_holdings_stale?" ⚠":""}`;
+
+  drawRangeBar(); applyConviction(); drawSignalChart(); drawStrategy(s); drawMacro(m); drawTiles(d.indicators);
+  document.getElementById("foot").textContent=`Generated ${ts.toLocaleString()} · ${(d.data_health||[]).filter(h=>!h.stale).length}/${(d.data_health||[]).length} sources fresh`;
+}
+
+function drawRangeBar(){
+  document.getElementById("rangebar").innerHTML=RANGES.map(r=>`<span class="rb ${r[0]===RANGE?'on':''}" onclick="setRange('${r[0]}')">${r[0]}</span>`).join("")
+    +`<span style="font-size:11px;color:var(--faint);margin-left:6px">range applies to all charts</span>`;
+}
+function setRange(r){RANGE=r;drawRangeBar();drawOscillator();drawSignalChart();drawTiles(DATA.indicators);if(curModalKey)openModal(curModalKey,true);}
+
+// v8.5 backtest signal markers, plotted on a dedicated MSTR price chart (log).
+const SIGMETA={
+  V8_TIER1B_TRANCHE:{c:"#16c784",sym:"triangle-up",nm:"Q-fire long (t1b)",gly:"▲"},
+  V8_TIER1B_EXIT:{c:"#4aa8ff",sym:"circle",nm:"t1b exit / liq",gly:"●"},
+  MSTR_PUT_ENTRY:{c:"#f3c623",sym:"diamond",nm:"PUT hedge",gly:"◆"},
+  MSTR_SHORT_ENTRY:{c:"#ea3943",sym:"triangle-down",nm:"SHORT hedge",gly:"▼"},
 };
-
-// Per-indicator default window (override the global 2Y).
-// Spec: M2 + Net Liq = 12mo; Liveliness + SOPR + NUPL + MVRV = 2y.
-const PER_INDICATOR_DEFAULT = {
-  m2_trend: '1y',
-  netliq_trend: '1y',
-  liveliness: '2y',
-  lth_trend: '2y',
-  sopr: '2y',
-  nupl: '2y',
-  mvrv_z: '2y',
-};
-
-// Color palette
-const COLORS = {
-  bg: '#0F1419', panel: '#1A1F2E', text: '#E0E0E0',
-  muted: '#8A92A0', accent: '#4FC3F7', green: '#66BB6A',
-  red: '#EF5350', yellow: '#FFCA28', line: '#2A3142',
-  btcOverlay: '#9E9E9E', // muted gray BTC overlay (less visual competition)
-};
-
-// Plotly base layout
-const BASE_LAYOUT = {
-  paper_bgcolor: COLORS.panel,
-  plot_bgcolor: COLORS.panel,
-  font: { color: COLORS.text, family: 'inherit', size: 11 },
-  margin: { l: 45, r: 45, t: 10, b: 30 },
-  showlegend: false,
-  hovermode: 'x unified',
-  xaxis: {
-    gridcolor: 'rgba(122,128,144,0.10)',
-    linecolor: COLORS.line, zerolinecolor: COLORS.line,
-    color: COLORS.muted, tickfont: { size: 10 },
-  },
-  yaxis: {
-    gridcolor: 'rgba(122,128,144,0.12)',
-    linecolor: COLORS.line, zerolinecolor: COLORS.line,
-    color: COLORS.muted, tickfont: { size: 10 },
-  },
-  yaxis2: {
-    overlaying: 'y', side: 'right',
-    showgrid: false, color: COLORS.muted, tickfont: { size: 9 },
-    title: { text: 'BTC $', font: { color: COLORS.muted, size: 9 } },
-    type: 'log',  // BTC over years; log makes overlay correlation more visible
-  },
-};
-
-const PLOTLY_CONFIG = {
-  displayModeBar: false, responsive: true,
-};
-
-// ----- State -----
-let DATA = null;
-let BTC_OVERLAY = []; // [{d, v}]
-let CURRENT_RANGE = '2y'; // global override
-let CHARTS = {}; // key -> {div, native_default}
-
-// ----- Utilities -----
-function scoreColor(s) {
-  if (s == null) return '#808080';
-  if (s >= 80) return '#2E8B57';
-  if (s >= 60) return '#90EE90';
-  if (s >= 40) return '#F0E68C';
-  if (s >= 20) return '#FF8C00';
-  return '#B22222';
+function drawSignalChart(){
+  const ml=slicePts(DATA.mstr_line)||[]; if(!ml.length)return;
+  const sigs=(DATA.signals||[]).filter(s=>RANGE==="All"||s.date>=cutoff());
+  const traces=[{x:ml.map(p=>p.d),y:ml.map(p=>p.v),type:"scatter",mode:"lines",
+    line:{color:"#c9a4ff",width:1.6},name:"MSTR",hovertemplate:"MSTR $%{y:.2f}<extra></extra>"}];
+  Object.keys(SIGMETA).forEach(tp=>{
+    const g=sigs.filter(s=>s.type===tp); if(!g.length)return; const meta=SIGMETA[tp];
+    traces.push({x:g.map(s=>s.date),y:g.map(s=>s.price),type:"scatter",mode:"markers",name:meta.nm,
+      marker:{color:meta.c,symbol:meta.sym,size:13,line:{color:"#070b14",width:1.3}},
+      text:g.map(s=>s.pnl!=null?`PnL $${(s.pnl/1e6).toFixed(1)}M`:""),
+      hovertemplate:`${meta.nm}<br>$%{y:.2f} · %{x}<br>%{text}<extra></extra>`});
+  });
+  Plotly.react("sigchart",traces,PLOT_LAYOUT({
+    yaxis:{type:"log",gridcolor:"rgba(255,255,255,.05)",zeroline:false,tickprefix:"$"},
+    margin:{l:54,r:18,t:10,b:28}}),PCONF);
+  const present=Object.keys(SIGMETA).filter(tp=>sigs.some(s=>s.type===tp));
+  document.getElementById("siglegend").innerHTML=
+    present.map(tp=>`<span style="color:${SIGMETA[tp].c}">${SIGMETA[tp].gly} ${SIGMETA[tp].nm}</span>`).join("")
+    +`<span style="color:var(--faint)">${sigs.length} markers in range · from the locked v8.5 backtest</span>`;
 }
 
-function fmtValue(val, fmt, suffix) {
-  if (val == null || isNaN(val)) return 'N/A';
-  let str;
-  if (fmt === '.2f') str = val.toFixed(2);
-  else if (fmt === '.3f') str = val.toFixed(3);
-  else if (fmt === '.4f') str = val.toFixed(4);
-  else if (fmt === '+.2f') str = (val >= 0 ? '+' : '') + val.toFixed(2);
-  else if (fmt === '+.4f') str = (val >= 0 ? '+' : '') + val.toFixed(4);
-  else str = String(val);
-  return str + (suffix || '');
+function drawOscillator(){
+  const o=slicePts(DATA.oscillator),z=DATA.zones; if(!o||!o.length)return;
+  const x=o.map(p=>p.d),net=o.map(p=>p.net),sm=o.map(p=>p.smooth);
+  const ml=slicePts(DATA.mstr_line)||[];
+  // AXIS IS FLIPPED: high conviction (BUY) sits at the BOTTOM, low (SELL) at the TOP — so
+  // when MSTR price (overlaid, right axis) is low/in-the-basement it lands in the green BUY
+  // band, and when price is high it lands in the red SELL band. Lets you eyeball whether the
+  // score's buy-troughs actually lead price-troughs.
+  const shapes=[
+    {type:"rect",xref:"paper",x0:0,x1:1,yref:"y",y0:z.long,y1:100,fillcolor:"rgba(22,199,132,.10)",line:{width:0}},
+    {type:"rect",xref:"paper",x0:0,x1:1,yref:"y",y0:-100,y1:z.short,fillcolor:"rgba(234,57,67,.10)",line:{width:0}},
+    {type:"line",xref:"paper",x0:0,x1:1,yref:"y",y0:z.long,y1:z.long,line:{color:"rgba(22,199,132,.4)",width:1,dash:"dot"}},
+    {type:"line",xref:"paper",x0:0,x1:1,yref:"y",y0:z.short,y1:z.short,line:{color:"rgba(234,57,67,.4)",width:1,dash:"dot"}},
+  ];
+  if(pinned){shapes.push({type:"line",x0:pinned,x1:pinned,yref:"paper",y0:0,y1:1,line:{color:"#c9a4ff",width:1.6,dash:"dot"}});}
+  const traces=[
+    {x:ml.map(p=>p.d),y:ml.map(p=>p.v),type:"scatter",mode:"lines",yaxis:"y2",line:{color:"#c9a4ff",width:1.5},opacity:.65,name:"MSTR",hovertemplate:"MSTR $%{y:.0f}<extra></extra>"},
+    {x,y:net,type:"scatter",mode:"lines",line:{color:"#4aa8ff",width:1},opacity:.4,hovertemplate:"%{y:.0f}<extra>conviction</extra>"},
+    {x,y:sm,type:"scatter",mode:"lines",line:{color:"#eaf0ff",width:2.6},hovertemplate:"%{y:.0f}<extra>conviction (smoothed)</extra>"},
+  ];
+  Plotly.react("osc",traces,PLOT_LAYOUT({shapes,
+    yaxis:{range:[100,-100],gridcolor:"rgba(255,255,255,.05)",zeroline:false,tickvals:[-50,0,50]},
+    yaxis2:{overlaying:"y",side:"right",type:"log",showgrid:false,color:"#c9a4ff",tickprefix:"$"},
+  }),PCONF).then(gd=>{
+    if(gd && !gd._pinHooked){gd._pinHooked=true;
+      gd.on("plotly_click",ev=>{if(ev.points&&ev.points[0]&&ev.points[0].x)pinDate(ev.points[0].x);});
+      gd.style.cursor="crosshair";}
+  });
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function drawStrategy(s){
+  const cls=b=>b; // helper
+  const mriBadge=s.mri_below_12?'<span class="badge long">BELOW · Q-FIRE</span>':'<span class="badge neutral">above</span>';
+  const gateBadge=s.hedge_gate_open?'<span class="badge short">OPEN</span>':'<span class="badge neutral">closed</span>';
+  const chips=[
+    {k:"MRI vs 12",v:FMT(s.mri,".1f"),sub:mriBadge},
+    {k:"Hedge Gate (slope₅)",v:FMT(s.slope_5d,".2f")+"%",sub:gateBadge},
+    {k:"MSTR IV %ile",v:FMT(s.iv_pct*100,".0f"),sub:""},
+    {k:"mNAV",v:FMT(s.mnav,".2f")+"x",sub:s.mnav_confidence!=="high"?'<span class="badge neutral">'+s.mnav_confidence+'</span>':''},
+    {k:"Days since MRI<12",v:s.days_since_mri12==null?"—":s.days_since_mri12,sub:""},
+    {k:"Cohort",v:`<span style="font-size:13px;font-weight:600">${s.cohort_posture||"—"}</span>`,sub:""},
+  ];
+  document.getElementById("chips").innerHTML=chips.map(c=>`<div class="chip"><div class="k">${c.k}</div><div class="v">${c.v} ${c.sub}</div></div>`).join("");
+  document.getElementById("action").innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4aa8ff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${s.next_action}`;
 }
 
-function rangeToDates(range, seriesEnd) {
-  // Return [from, to] ISO date strings or null for 'all'
-  if (range === 'all') return null;
-  const end = seriesEnd ? new Date(seriesEnd) : new Date();
-  const start = new Date(end);
-  switch (range) {
-    case '1m': start.setMonth(start.getMonth() - 1); break;
-    case '3m': start.setMonth(start.getMonth() - 3); break;
-    case '6m': start.setMonth(start.getMonth() - 6); break;
-    case '1y': start.setFullYear(start.getFullYear() - 1); break;
-    case '2y': start.setFullYear(start.getFullYear() - 2); break;
-    case '5y': start.setFullYear(start.getFullYear() - 5); break;
-    default: return null;
-  }
-  return [start.toISOString().slice(0,10), end.toISOString().slice(0,10)];
+function drawBreakdown(m){
+  const labels=DATA.indicators;
+  const entries=Object.entries(m.contributions||{});
+  const den=entries.reduce((a,[,v])=>a+(v.weight||0),0)||1;
+  const rows=entries.map(([k,v])=>({k,sc:v.score,contrib:v.contrib,wt:(v.eff!=null?v.eff:(v.weight||0)/den),lbl:(labels[k]&&labels[k].label)||k}))
+    .sort((a,b)=>Math.abs(b.contrib)-Math.abs(a.contrib));
+  const head=`<div class="brkrow" style="margin-bottom:2px;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px"><span class="nm">Driver · weight</span><span class="bar" style="background:none">SHORT ◀ ▶ LONG</span><span class="sc">score</span></div>`;
+  document.getElementById("brk").innerHTML=head+rows.map(r=>{
+    const pos=r.sc>=0, w=Math.min(50,Math.abs(r.sc)/2);
+    const bar=pos?`<i style="left:50%;width:${w}%;background:var(--long)"></i>`:`<i style="right:50%;width:${w}%;background:var(--short)"></i>`;
+    return `<div class="brkrow"><span class="nm">${r.lbl} <b style="color:var(--accent);font-weight:600">${Math.round(r.wt*100)}%</b></span><span class="bar"><span class="mid"></span>${bar}</span><span class="sc" style="color:${scoreColor(r.sc)}">${r.sc>0?"+":""}${Math.round(r.sc)}</span></div>`;
+  }).join("");
 }
 
-// Clip overlay to a date window — also rebases price scale to overlap
-function clipSeries(arr, fromIso, toIso) {
-  if (!arr) return [];
-  if (!fromIso) return arr;
-  return arr.filter(p => p.d >= fromIso && (!toIso || p.d <= toIso));
-}
-
-// Compute [min,max] over a numeric array, ignoring null/NaN
-function minMax(arr) {
-  let lo = Infinity, hi = -Infinity;
-  for (const v of arr) {
-    if (v == null || !isFinite(v)) continue;
-    if (v < lo) lo = v;
-    if (v > hi) hi = v;
-  }
-  if (!isFinite(lo)) return null;
-  return [lo, hi];
-}
-
-// Padded y-range from data (small headroom for bands)
-function paddedRange(lo, hi, pad=0.08) {
-  if (lo === hi) { const e = Math.max(Math.abs(lo)*0.05, 1e-6); return [lo-e, hi+e]; }
-  const span = hi - lo;
-  return [lo - span*pad, hi + span*pad];
-}
-
-// ----- Chart building -----
-function buildBandShapes(meta, ymin, ymax) {
-  if (!meta.regime_bands) return [];
-  // Render bands using xref:paper so they span the full plot horizontally
-  // regardless of x-axis range. Clip each band's y0/y1 to the visible y-range
-  // so they never force the y-axis to expand beyond the data window.
-  const shapes = [];
-  for (const b of meta.regime_bands) {
-    // Skip bands entirely outside the visible y-range
-    if (ymax != null && b.lo >= ymax) continue;
-    if (ymin != null && b.hi <= ymin) continue;
-    const y0 = (ymin != null) ? Math.max(b.lo, ymin) : b.lo;
-    const y1 = (ymax != null) ? Math.min(b.hi, ymax) : b.hi;
-    if (y1 <= y0) continue;
-    shapes.push({
-      type: 'rect', xref: 'paper', yref: 'y',
-      x0: 0, x1: 1, y0, y1,
-      fillcolor: b.color, opacity: 0.13,
-      line: { width: 0 }, layer: 'below',
-    });
-  }
-  return shapes;
-}
-
-function buildBandAnnotations(meta, ymin, ymax) {
-  if (!meta.regime_bands) return [];
-  const out = [];
-  for (const b of meta.regime_bands) {
-    if (ymax != null && b.lo >= ymax) continue;
-    if (ymin != null && b.hi <= ymin) continue;
-    const lo = (ymin != null) ? Math.max(b.lo, ymin) : b.lo;
-    const hi = (ymax != null) ? Math.min(b.hi, ymax) : b.hi;
-    out.push({
-      xref: 'paper', yref: 'y', x: 1.0, y: (lo + hi) / 2,
-      xanchor: 'left', yanchor: 'middle',
-      text: ' ' + b.label,
-      showarrow: false,
-      font: { size: 8, color: COLORS.muted },
-    });
-  }
-  return out;
-}
-
-function buildTraces(meta, overlayOn) {
-  const xs = (meta.series || []).map(p => p.d);
-  const ys = (meta.series || []).map(p => p.v);
-  const traces = [];
-
-  if (xs.length > 0) {
-    traces.push({
-      x: xs, y: ys,
-      type: 'scatter', mode: 'lines',
-      line: { color: COLORS.accent, width: 2 },
-      name: meta.label,
-      hovertemplate: '%{x|%b %d, %Y}<br>' + meta.label + ': <b>%{y:.4f}</b><extra></extra>',
-    });
-  }
-
-  if (overlayOn && BTC_OVERLAY.length > 0) {
-    traces.push({
-      x: BTC_OVERLAY.map(p => p.d),
-      y: BTC_OVERLAY.map(p => p.v),
-      type: 'scatter', mode: 'lines',
-      line: { color: COLORS.btcOverlay, width: 1.0 },
-      opacity: 0.28,
-      yaxis: 'y2',
-      hoverinfo: 'skip',  // don't clutter primary indicator hover
-      name: 'BTC',
-      hovertemplate: 'BTC: $%{y:,.0f}<extra></extra>',
-    });
-  }
-  return traces;
-}
-
-function plotCard(key, meta) {
-  const divId = 'plot-' + key;
-  const div = document.getElementById(divId);
-  if (!div) return;
-
-  const overlayOn = document.getElementById('btc-overlay-toggle').checked;
-
-  // Determine initial range: per-indicator default if it exists, else global current
-  // Range priority: explicit custom > global override > per-indicator default
-  const endDate = meta.series && meta.series.length ? meta.series[meta.series.length-1].d : null;
-  let range = null;
-  let initialRange = '2y';
-  if (CUSTOM_RANGE_OVERRIDE) {
-    range = CUSTOM_RANGE_OVERRIDE;
-    initialRange = 'custom';
-  } else if (GLOBAL_RANGE_OVERRIDE) {
-    initialRange = GLOBAL_RANGE_OVERRIDE;
-    range = rangeToDates(initialRange, endDate);
-  } else {
-    initialRange = PER_INDICATOR_DEFAULT[key] || CURRENT_RANGE;
-    range = rangeToDates(initialRange, endDate);
-  }
-  const fromIso = range ? range[0] : null;
-  const toIso = range ? range[1] : null;
-
-  // Clip the indicator series to the visible window so y-axis can be tightened
-  const visiblePts = (meta.series || []).filter(p => (!fromIso || p.d >= fromIso) && (!toIso || p.d <= toIso));
-  const visYs = visiblePts.map(p => p.v);
-  const dataRange = minMax(visYs) || minMax((meta.series||[]).map(p=>p.v));
-  let yRange = null;
-  if (dataRange) {
-    yRange = paddedRange(dataRange[0], dataRange[1], 0.10);
-  }
-
-  // Build traces, clipping BTC overlay to the visible window
-  const traces = [];
-  if (visiblePts.length > 0) {
-    traces.push({
-      x: visiblePts.map(p=>p.d), y: visiblePts.map(p=>p.v),
-      type: 'scatter', mode: 'lines',
-      line: { color: COLORS.accent, width: 2 },
-      name: meta.label,
-      hovertemplate: '%{x|%b %d, %Y}<br>' + meta.label + ': <b>%{y:.4f}</b><extra></extra>',
-    });
-  }
-  if (overlayOn && BTC_OVERLAY.length > 0) {
-    const btcVis = clipSeries(BTC_OVERLAY, fromIso, toIso);
-    if (btcVis.length > 0) {
-      traces.push({
-        x: btcVis.map(p=>p.d), y: btcVis.map(p=>p.v),
-        type: 'scatter', mode: 'lines',
-        line: { color: COLORS.btcOverlay, width: 1.0 },
-        opacity: 0.28, yaxis: 'y2',
-        hoverinfo: 'skip', name: 'BTC',
-      });
-    }
-  }
-
-  const layout = JSON.parse(JSON.stringify(BASE_LAYOUT));
-  layout.height = 220;
-  layout.margin = { l: 45, r: 28, t: 8, b: 28 };
-  layout.shapes = buildBandShapes(meta, yRange ? yRange[0] : null, yRange ? yRange[1] : null);
-  if (range) {
-    layout.xaxis.range = range;
-    layout.xaxis.autorange = false;
-  } else {
-    layout.xaxis.autorange = true;
-  }
-  if (yRange) {
-    layout.yaxis.range = yRange;
-    layout.yaxis.autorange = false;
-  }
-  if (meta.value_suffix === '%') layout.yaxis.ticksuffix = '%';
-  layout.yaxis2.showticklabels = false;
-  layout.yaxis2.title = null;
-  layout.yaxis2.autorange = true; // log axis on visible BTC subset → tight scale
-  layout.showlegend = false;
-
-  Plotly.react(div, traces, layout, PLOTLY_CONFIG);
-  CHARTS[key] = { div, defaultRange: initialRange };
-}
-
-function renderCard(key, meta) {
-  const container = document.getElementById(CATEGORIES[meta.category]);
-  if (!container) return;
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.id = 'card-' + key;
-
-  const valStr = fmtValue(meta.value, meta.value_fmt, meta.value_suffix);
-  const valClass = meta.value == null ? ' na' : '';
-  const subScore = meta.sub_score == null ? '—' : Math.round(meta.sub_score);
-  const chipColor = scoreColor(meta.sub_score);
-  card.innerHTML = `
-    <div class="card-head">
-      <div class="card-title" onclick="openModal('${key}')" tabindex="0"
-           onkeydown="if(event.key==='Enter')openModal('${key}')"
-           role="button" aria-label="${escapeHtml(meta.label)} details">${escapeHtml(meta.label)}</div>
-      <div class="chip" style="background:${chipColor};" title="Sub-score: ${subScore}">${subScore}</div>
+function drawMacro(m){
+  const el=document.getElementById("macroCard"); if(!el)return;
+  const s=m.macro_score, hex=s==null?"#8c98b8":(s>=30?"#16c784":s>-30?"#f3c623":"#ea3943");
+  const lbl=m.macro_label||"—";
+  const contribs=m.macro_contributions||{};
+  const labels=DATA.indicators||{};
+  const rows=Object.entries(contribs).map(([k,v])=>({k,sc:v.score,lbl:(labels[k]&&labels[k].label)||k}))
+    .sort((a,b)=>Math.abs(b.sc)-Math.abs(a.sc));
+  const bars=rows.map(r=>{
+    const pos=r.sc>=0, w=Math.min(50,Math.abs(r.sc)/2);
+    const bar=pos?`<i style="left:50%;width:${w}%;background:var(--long)"></i>`:`<i style="right:50%;width:${w}%;background:var(--short)"></i>`;
+    return `<div class="brkrow"><span class="nm">${r.lbl}</span><span class="bar"><span class="mid"></span>${bar}</span><span class="sc" style="color:${scoreColor(r.sc)}">${r.sc>0?"+":""}${Math.round(r.sc)}</span></div>`;
+  }).join("");
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:14px">
+      <div>
+        <div class="cat">Macro Score</div>
+        <div class="mono" style="font:800 38px var(--mono);color:${hex};text-shadow:0 0 26px ${hex}55">${s==null?"—":(s>0?"+":"")+s}</div>
+      </div>
+      <div><span class="badge" style="color:${hex};background:${hex}1f;border:1px solid ${hex}55">${lbl}</span>
+        <div class="cat" style="margin-top:6px;max-width:240px">backdrop only — does NOT move the headline conviction</div>
+      </div>
+      <div style="flex:1;min-width:160px">
+        <div class="brkrow" style="opacity:.55"><span class="nm">TBL Liquidity</span><span class="bar"><span class="mid"></span></span><span class="sc" style="color:var(--faint)">soon</span></div>
+        <div class="cat" style="text-align:right">the bitcoin layer supertrend — not yet wired</div>
+      </div>
     </div>
-    <div class="card-value-row"><div class="card-value${valClass}">${valStr}</div></div>
-    <div class="card-direction">${escapeHtml(meta.direction || '')}</div>
-    <div class="card-plot" id="plot-${key}"></div>
-  `;
-  container.appendChild(card);
-  // Plot after DOM is attached
-  requestAnimationFrame(() => plotCard(key, meta));
+    <div class="brk">${bars}</div>`;
 }
 
-// ----- Global range control -----
-// Override per-indicator defaults so plotCard uses the user-selected range
-let GLOBAL_RANGE_OVERRIDE = null;
-let CUSTOM_RANGE_OVERRIDE = null; // [from, to] explicit dates
-
-function applyGlobalRange(range) {
-  CURRENT_RANGE = range;
-  GLOBAL_RANGE_OVERRIDE = range;
-  CUSTOM_RANGE_OVERRIDE = null;
-  document.querySelectorAll('.range-btn[data-range]').forEach(b => {
-    b.classList.toggle('active', b.dataset.range === range);
-  });
-  // Re-plot every chart so y-axis + bands recalculate for the new window
-  for (const key of Object.keys(CHARTS)) {
-    plotCard(key, DATA.indicators[key]);
-  }
+function sparkSVG(series,color){
+  if(!series||series.length<2)return"";
+  const ys=series.map(p=>p.v),mn=Math.min(...ys),mx=Math.max(...ys),rng=(mx-mn)||1,n=series.length,W=240,H=42;
+  const pts=series.map((p,i)=>`${(i/(n-1)*W).toFixed(1)},${(H-((p.v-mn)/rng)*H).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/></svg>`;
 }
 
-function applyCustomRange() {
-  const from = document.getElementById('custom-from').value;
-  const to = document.getElementById('custom-to').value;
-  if (!from || !to) return;
-  document.querySelectorAll('.range-btn[data-range]').forEach(b => b.classList.remove('active'));
-  CUSTOM_RANGE_OVERRIDE = [from, to];
-  GLOBAL_RANGE_OVERRIDE = null;
-  for (const key of Object.keys(CHARTS)) {
-    plotCard(key, DATA.indicators[key]);
-  }
-}
-
-function toggleBtcOverlay() {
-  for (const key of Object.keys(CHARTS)) {
-    plotCard(key, DATA.indicators[key]);
-  }
-}
-
-// ----- Modal -----
-function openModal(key) {
-  const meta = DATA.indicators[key];
-  if (!meta) return;
-  document.getElementById('modal-title').textContent = meta.label;
-  document.getElementById('modal-category').textContent = meta.category;
-  document.getElementById('modal-value').textContent = fmtValue(meta.value, meta.value_fmt, meta.value_suffix);
-  document.getElementById('modal-direction').textContent = meta.direction || '';
-  const chip = document.getElementById('modal-chip');
-  chip.textContent = meta.sub_score == null ? '—' : Math.round(meta.sub_score);
-  chip.style.background = scoreColor(meta.sub_score);
-  document.getElementById('modal-explanation').textContent = meta.explanation || '';
-  document.getElementById('modal-use').textContent = meta.use || '';
-
-  const bandsEl = document.getElementById('modal-bands');
-  bandsEl.innerHTML = '';
-  (meta.regime_bands || []).forEach(b => {
-    const span = document.createElement('span');
-    span.className = 'modal-band';
-    span.style.background = b.color;
-    span.textContent = `${b.lo}${meta.value_suffix || ''} – ${b.hi}${meta.value_suffix || ''}: ${b.label}`;
-    bandsEl.appendChild(span);
-  });
-
-  // Modal plot — bigger, with rangeslider + rangeselector + always-visible bands + BTC overlay
-  const overlayOn = document.getElementById('btc-overlay-toggle').checked;
-  const traces = buildTraces(meta, overlayOn);
-  const layout = JSON.parse(JSON.stringify(BASE_LAYOUT));
-  layout.height = 500;
-  layout.margin = { l: 60, r: 60, t: 30, b: 60 };
-  // Compute y-range from full series for modal (modal lets user explore all data via rangeslider)
-  const allYs = (meta.series||[]).map(p=>p.v);
-  const modalDataRange = minMax(allYs);
-  const modalYRange = modalDataRange ? paddedRange(modalDataRange[0], modalDataRange[1], 0.10) : null;
-  layout.shapes = buildBandShapes(meta, modalYRange ? modalYRange[0] : null, modalYRange ? modalYRange[1] : null);
-  layout.annotations = buildBandAnnotations(meta, modalYRange ? modalYRange[0] : null, modalYRange ? modalYRange[1] : null);
-  if (modalYRange) { layout.yaxis.range = modalYRange; layout.yaxis.autorange = false; }
-  layout.showlegend = true;
-  layout.legend = { orientation: 'h', x: 0, y: 1.08, font: { color: COLORS.muted, size: 10 } };
-  layout.xaxis.rangeslider = { visible: true, thickness: 0.06, bgcolor: '#161B2A' };
-  layout.xaxis.rangeselector = {
-    buttons: [
-      { count: 1,  label: '1M', step: 'month', stepmode: 'backward' },
-      { count: 3,  label: '3M', step: 'month', stepmode: 'backward' },
-      { count: 6,  label: '6M', step: 'month', stepmode: 'backward' },
-      { count: 1,  label: '1Y', step: 'year',  stepmode: 'backward' },
-      { count: 2,  label: '2Y', step: 'year',  stepmode: 'backward' },
-      { count: 5,  label: '5Y', step: 'year',  stepmode: 'backward' },
-      { step: 'all', label: 'All' },
-    ],
-    bgcolor: '#232940', activecolor: COLORS.accent,
-    font: { color: COLORS.text, size: 10 },
-    x: 0, y: 1.0, xanchor: 'left',
-  };
-  if (meta.value_suffix === '%') layout.yaxis.ticksuffix = '%';
-  layout.yaxis2.title = { text: 'BTC ($, log)', font: { color: COLORS.muted, size: 10 } };
-  layout.yaxis2.showticklabels = true;
-
-  // Default to 2Y window in modal
-  const endDate = meta.series && meta.series.length ? meta.series[meta.series.length-1].d : null;
-  const defaultRange = PER_INDICATOR_DEFAULT[key] || '2y';
-  const r = rangeToDates(defaultRange, endDate);
-  if (r) {
-    layout.xaxis.range = r;
-    layout.xaxis.autorange = false;
-  }
-
-  document.getElementById('modal-backdrop').classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  // Plot after modal display takes effect
-  requestAnimationFrame(() => {
-    Plotly.newPlot('modal-plot', traces, layout, {
-      displayModeBar: true, responsive: true,
-      modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-    });
+function drawTiles(ind){
+  const order=["mri","mvrv_z","nupl","sth_sopr","sth_mvrv","feargreed","rsi","mnav","slope_5d","mstr_btc_trend","hy_oas","funding","netliq_trend","m2_trend"];
+  const el=document.getElementById("tiles"); el.innerHTML="";
+  order.forEach(k=>{const t=ind[k]; if(!t)return;
+    const sc=t.score, col=scoreColor(sc);
+    const div=document.createElement("div"); div.className="card tile"; div.onclick=()=>openModal(k);
+    div.innerHTML=`<div class="lab"><span>${t.label}</span><span class="cat">${t.category||""}</span></div>
+      <div class="val">${FMT(t.value,t.value_fmt)}${t.value_suffix||""}</div>
+      <span class="scorechip" style="background:${col}22;color:${col}">${scoreLabel(sc)} ${sc==null?"":(sc>0?"+":"")+Math.round(sc)}</span>
+      ${sparkSVG(slicePts(t.series),col)}`;
+    el.appendChild(div);
   });
 }
 
-function closeModal(e) {
-  if (e && e.target !== document.getElementById('modal-backdrop')) return;
-  document.getElementById('modal-backdrop').classList.remove('open');
-  document.body.style.overflow = '';
-  Plotly.purge('modal-plot');
+function toggleOverlay(){overlayOn=!overlayOn;document.getElementById("mOverlayBtn").classList.toggle("on",overlayOn);if(curModalKey)openModal(curModalKey,true);}
+
+function openModal(k,keepOpen){
+  const t=DATA.indicators[k]; if(!t)return; curModalKey=k;
+  document.getElementById("mCat").textContent=t.category||"";
+  document.getElementById("mTitle").textContent=t.label;
+  document.getElementById("mVal").textContent=FMT(t.value,t.value_fmt)+(t.value_suffix||"");
+  const sc=t.score,col=scoreColor(sc);
+  const ms=document.getElementById("mScore"); ms.textContent=`${scoreLabel(sc)} ${sc==null?"":(sc>0?"+":"")+Math.round(sc)}`; ms.style.background=col+"22"; ms.style.color=col;
+  document.getElementById("mExpl").textContent=t.explanation||"";
+  document.getElementById("mUse").textContent=t.use||"";
+  document.getElementById("mOverlayBtn").classList.toggle("on",overlayOn);
+  if(!keepOpen){document.getElementById("modalBg").classList.add("on");}
+  const s=slicePts(t.series)||[],x=s.map(p=>p.d),y=s.map(p=>p.v);
+  // autoscale Y to the data (with padding); clip regime bands to that range so they don't blow up the axis
+  let ymin=Math.min(...y),ymax=Math.max(...y);const pad=((ymax-ymin)||1)*0.08;ymin-=pad;ymax+=pad;
+  const shapes=(t.regime_bands||[]).filter(b=>b.hi>=ymin&&b.lo<=ymax).map(b=>({type:"rect",xref:"paper",x0:0,x1:1,yref:"y",y0:Math.max(b.lo,ymin),y1:Math.min(b.hi,ymax),fillcolor:b.color+"18",line:{width:0}}));
+  const traces=[{x,y,type:"scatter",mode:"lines",line:{color:col,width:1.8},hovertemplate:"%{y}<extra></extra>"}];
+  const layout=PLOT_LAYOUT({shapes,yaxis:{range:[ymin,ymax],gridcolor:"rgba(255,255,255,.05)",zeroline:false}});
+  if(overlayOn&&DATA.mstr_line){const ol=slicePts(DATA.mstr_line);
+    traces.push({x:ol.map(p=>p.d),y:ol.map(p=>p.v),type:"scatter",mode:"lines",yaxis:"y2",line:{color:"#7c5cff",width:1.2},opacity:.55,hovertemplate:"MSTR $%{y:.0f}<extra></extra>"});
+    layout.yaxis2={overlaying:"y",side:"right",type:"log",showgrid:false,color:"#7c5cff"};}
+  setTimeout(()=>Plotly.newPlot("mPlot",traces,layout,PCONF),20);
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function closeModal(){document.getElementById("modalBg").classList.remove("on");curModalKey=null;}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 
-// ----- Load -----
-async function load() {
-  try {
-    DATA = await fetch('latest.json', {cache: 'no-store'}).then(r => r.json());
-  } catch (e) {
-    document.getElementById('synthesis').textContent = 'Failed to load latest.json: ' + e;
-    return;
-  }
-  BTC_OVERLAY = DATA.btc_overlay || [];
-
-  // Score block
-  const composite = DATA.composite;
-  const color = scoreColor(composite);
-  document.getElementById('score-num').textContent = composite != null ? composite : 'N/A';
-  document.getElementById('score-num').style.color = color;
-  document.getElementById('score-label').textContent = DATA.regime_label || '';
-  document.getElementById('score-label').style.color = color;
-  document.getElementById('last-updated').textContent = new Date(DATA.timestamp).toLocaleString();
-  const snap = DATA.snapshot;
-  document.getElementById('snapshot').innerHTML =
-    `BTC <strong>$${snap.btc_price?.toLocaleString(undefined,{maximumFractionDigits:0})}</strong> · ` +
-    `MSTR <strong>$${snap.mstr_price?.toFixed(2)}</strong> · ` +
-    `mNAV <strong>${snap.mnav?.toFixed(2)}x</strong> · ` +
-    `Holdings <strong>${snap.mstr_btc_holdings?.toLocaleString(undefined,{maximumFractionDigits:0})}</strong> BTC` +
-    (snap.mstr_btc_holdings_stale ? ' <span style="color:var(--yellow)">⚠ stale</span>' : '');
-
-  const delta = DATA.delta_1w;
-  const deltaEl = document.getElementById('score-delta');
-  if (delta != null) {
-    const sign = delta >= 0 ? '+' : '';
-    deltaEl.textContent = `${sign}${delta.toFixed(1)}`;
-    deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
-  } else {
-    deltaEl.textContent = 'first run';
-    deltaEl.style.color = 'var(--muted)';
-  }
-
-  document.getElementById('synthesis').innerHTML =
-    DATA.synthesis.map(l => `<p>${escapeHtml(l)}</p>`).join('');
-
-  if (DATA.missing && DATA.missing.length) {
-    const banner = document.getElementById('missing-banner');
-    banner.style.display = 'block';
-    banner.textContent = `⚠ Missing data this run (reweighted across available): ${DATA.missing.join(', ')}`;
-  }
-
-  // Render cards in order specified by INDICATOR_META
-  for (const [key, meta] of Object.entries(DATA.indicators)) {
-    renderCard(key, meta);
-  }
-
-  // Wire range controls (after cards exist)
-  document.querySelectorAll('.range-btn[data-range]').forEach(btn => {
-    btn.addEventListener('click', () => applyGlobalRange(btn.dataset.range));
-  });
-  document.getElementById('custom-apply').addEventListener('click', applyCustomRange);
-  document.getElementById('btc-overlay-toggle').addEventListener('change', toggleBtcOverlay);
-
-  // Load history table
-  try {
-    const csv = await fetch('history.csv', {cache: 'no-store'}).then(r => r.text());
-    const rows = parseCSV(csv).slice(-12).reverse();
-    const tbody = document.querySelector('#history-table tbody');
-    rows.forEach((row, i) => {
-      const tr = document.createElement('tr');
-      const composite = parseFloat(row.composite);
-      const priorRow = rows[i+1];
-      const priorComp = priorRow ? parseFloat(priorRow.composite) : null;
-      const delta = priorComp != null && !isNaN(priorComp) ? (composite - priorComp).toFixed(1) : '—';
-      const sign = delta !== '—' && parseFloat(delta) >= 0 ? '+' : '';
-      const btc = parseFloat(row.btc_price);
-      const mstr = parseFloat(row.mstr_price);
-      tr.innerHTML = `
-        <td>${new Date(row.timestamp).toLocaleString()}</td>
-        <td class="score-cell" style="color:${scoreColor(composite)}">${isNaN(composite) ? '—' : composite.toFixed(1)}</td>
-        <td>${delta === '—' ? '—' : sign + delta}</td>
-        <td>$${isNaN(btc) ? '—' : btc.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
-        <td>$${isNaN(mstr) ? '—' : mstr.toFixed(2)}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  } catch (e) { console.error('history fail', e); }
+async function liveTiles(){
+  try{
+    const [cg,fg]=await Promise.allSettled([
+      fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd").then(r=>r.json()),
+      fetch("https://api.alternative.me/fng/?limit=1").then(r=>r.json())]);
+    if(cg.status==="fulfilled"&&cg.value?.bitcoin?.usd){const p=cg.value.bitcoin.usd,cur=document.getElementById("px");
+      cur.innerHTML=cur.innerHTML.replace(/BTC \$[\d,]+/,`BTC $${FMT(p,".0f")}`);cur.style.transition="color .3s";cur.style.color="#4aa8ff";setTimeout(()=>cur.style.color="",450);}
+    if(fg.status==="fulfilled"&&fg.value?.data?.[0]&&DATA.indicators.feargreed){DATA.indicators.feargreed.value=+fg.value.data[0].value;drawTiles(DATA.indicators);}
+  }catch(e){}
 }
-
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const vals = line.split(',');
-    const row = {};
-    headers.forEach((h, i) => { row[h] = vals[i]; });
-    return row;
-  });
-}
-
-window.openModal = openModal;
-window.closeModal = closeModal;
-
-load();
+async function refresh(){const b=document.getElementById("refreshBtn");b.classList.add("spin");try{await load(true);await liveTiles();}catch(e){console.error(e);}b.classList.remove("spin");}
+load(false).then(liveTiles);
+setInterval(()=>load(true).then(liveTiles),5*60*1000);
 </script>
 </body>
 </html>

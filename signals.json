@@ -1,0 +1,80 @@
+[
+  {
+    "type": "MSTR_SHORT_ENTRY",
+    "date": "2021-12-20",
+    "price": 54.64,
+    "pnl": null
+  },
+  {
+    "type": "MSTR_PUT_ENTRY",
+    "date": "2022-03-28",
+    "price": 51.0,
+    "pnl": null
+  },
+  {
+    "type": "V8_TIER1B_TRANCHE",
+    "date": "2022-06-13",
+    "price": 15.22,
+    "pnl": null
+  },
+  {
+    "type": "MSTR_PUT_ENTRY",
+    "date": "2022-08-12",
+    "price": 35.28,
+    "pnl": null
+  },
+  {
+    "type": "V8_TIER1B_EXIT",
+    "date": "2022-08-12",
+    "price": 35.28,
+    "pnl": 4891569.23
+  },
+  {
+    "type": "V8_TIER1B_TRANCHE",
+    "date": "2022-09-20",
+    "price": 19.66,
+    "pnl": null
+  },
+  {
+    "type": "MSTR_PUT_ENTRY",
+    "date": "2022-10-25",
+    "price": 26.87,
+    "pnl": null
+  },
+  {
+    "type": "V8_TIER1B_EXIT",
+    "date": "2022-10-25",
+    "price": 26.87,
+    "pnl": 4619643.92
+  },
+  {
+    "type": "V8_TIER1B_TRANCHE",
+    "date": "2022-12-28",
+    "price": 13.81,
+    "pnl": null
+  },
+  {
+    "type": "MSTR_SHORT_ENTRY",
+    "date": "2025-11-17",
+    "price": 195.42,
+    "pnl": null
+  },
+  {
+    "type": "V8_TIER1B_TRANCHE",
+    "date": "2026-02-05",
+    "price": 106.99,
+    "pnl": null
+  },
+  {
+    "type": "MSTR_PUT_ENTRY",
+    "date": "2026-05-11",
+    "price": 195.94,
+    "pnl": null
+  },
+  {
+    "type": "V8_TIER1B_EXIT",
+    "date": "2026-05-11",
+    "price": 195.94,
+    "pnl": 1181559928.83
+  }
+]
