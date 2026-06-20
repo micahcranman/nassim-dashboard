@@ -1,0 +1,34 @@
+{
+  "_generated_by": "scripts/calibrate_weights.py",
+  "panel_start": "2020-08-01",
+  "panel_end": "2026-06-20",
+  "panel_days": 2150,
+  "near_top_days": 607,
+  "near_bottom_days": 1052,
+  "shrink": 0.45,
+  "cluster_cap": 0.42,
+  "core": [
+    {"key": "mri", "top_auc": 0.588, "bot_auc": 0.595, "skill": 0.183, "prior_w": 0.1, "empirical_w": 0.102, "final_w": 0.101, "cluster": 1},
+    {"key": "mvrv_z", "top_auc": 0.58, "bot_auc": 0.589, "skill": 0.169, "prior_w": 0.15, "empirical_w": 0.095, "final_w": 0.12, "cluster": 1},
+    {"key": "nupl", "top_auc": 0.558, "bot_auc": 0.579, "skill": 0.136, "prior_w": 0.08, "empirical_w": 0.076, "final_w": 0.078, "cluster": 1},
+    {"key": "sth_sopr", "top_auc": 0.575, "bot_auc": 0.579, "skill": 0.154, "prior_w": 0.06, "empirical_w": 0.122, "final_w": 0.094, "cluster": 2},
+    {"key": "sth_mvrv", "top_auc": 0.588, "bot_auc": 0.6, "skill": 0.188, "prior_w": 0.1, "empirical_w": 0.105, "final_w": 0.103, "cluster": 1},
+    {"key": "feargreed", "top_auc": 0.595, "bot_auc": 0.617, "skill": 0.211, "prior_w": 0.07, "empirical_w": 0.118, "final_w": 0.096, "cluster": 1},
+    {"key": "rsi", "top_auc": 0.606, "bot_auc": 0.617, "skill": 0.223, "prior_w": 0.06, "empirical_w": 0.177, "final_w": 0.124, "cluster": 2},
+    {"key": "mnav", "top_auc": 0.503, "bot_auc": 0.608, "skill": 0.111, "prior_w": 0.17, "empirical_w": 0.088, "final_w": 0.125, "cluster": 3},
+    {"key": "mstr_btc_trend", "top_auc": 0.582, "bot_auc": 0.551, "skill": 0.133, "prior_w": 0.11, "empirical_w": 0.105, "final_w": 0.107, "cluster": 4},
+    {"key": "slope_5d", "top_auc": 0.522, "bot_auc": 0.487, "skill": 0.022, "prior_w": 0.1, "empirical_w": 0.013, "final_w": 0.052, "cluster": 1}
+  ],
+  "macro": [
+    {"key": "hy_oas", "top_auc": 0.401, "bot_auc": 0.396, "weight": 0.16},
+    {"key": "funding", "top_auc": 0.692, "bot_auc": null, "weight": 0.632},
+    {"key": "netliq_trend", "top_auc": 0.452, "bot_auc": 0.411, "weight": 0.115},
+    {"key": "m2_trend", "top_auc": 0.469, "bot_auc": 0.397, "weight": 0.093}
+  ],
+  "clusters": [
+    {"id": 1, "members": ["mri", "mvrv_z", "nupl", "sth_mvrv", "feargreed", "slope_5d"]},
+    {"id": 2, "members": ["sth_sopr", "rsi"]},
+    {"id": 3, "members": ["mnav"]},
+    {"id": 4, "members": ["mstr_btc_trend"]}
+  ]
+}

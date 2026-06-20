@@ -105,7 +105,52 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
 .modal p{color:var(--muted);font-size:13.5px;line-height:1.6}
 .modal .x{position:absolute;top:14px;right:18px;cursor:pointer;color:var(--muted);font-size:24px;line-height:1}
 .foot{color:var(--faint);font-size:11px;text-align:center;margin-top:30px}
-@media(max-width:720px){.netnum{font-size:48px}.vbadge{font-size:24px}.chart .plot{height:300px}.brkrow{grid-template-columns:96px 1fr 40px}}
+
+/* simulator */
+.simctl{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.simfield{display:flex;flex-direction:column;gap:5px}
+.simfield label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);font-weight:600}
+.simfield input{font:600 15px var(--mono);color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--glass-brd);border-radius:10px;padding:9px 12px;width:160px}
+.simfield input:focus{outline:none;border-color:rgba(74,168,255,.5);box-shadow:0 0 14px rgba(74,168,255,.2)}
+.simpresets{display:flex;gap:6px;flex-wrap:wrap}
+.simpresets .rb{font:600 11px var(--mono);color:var(--muted);cursor:pointer;padding:6px 11px;border-radius:9px;border:1px solid transparent;background:rgba(255,255,255,.04)}
+.simpresets .rb.on{color:var(--ink);border-color:rgba(74,168,255,.4);background:rgba(74,168,255,.14)}
+.simsummary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+.simstat{padding:13px 15px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.simstat .k{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600}
+.simstat .v{font:800 24px var(--mono);margin-top:4px}
+.simtrades{display:flex;flex-direction:column;gap:7px}
+.trow{display:grid;grid-template-columns:104px 132px 1fr auto;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .18s,transform .12s}
+.trow:hover{border-color:rgba(120,150,220,.34);transform:translateX(2px)}
+.trow .tdate{font:600 12px var(--mono);color:var(--muted)}
+.trow .ttype{font:700 11px var(--mono);padding:4px 9px;border-radius:7px;text-align:center;white-space:nowrap}
+.trow .tgates{display:flex;gap:6px;flex-wrap:wrap}
+.gchip{font:600 10px var(--mono);padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.07)}
+.gchip.hit{color:var(--long);border-color:rgba(22,199,132,.3);background:rgba(22,199,132,.1)}
+.gchip.warn{color:var(--short);border-color:rgba(234,57,67,.3);background:rgba(234,57,67,.1)}
+.trow .tpnl{font:700 15px var(--mono);text-align:right;white-space:nowrap}
+.trow .tpct{font:600 11px var(--mono);color:var(--faint)}
+.openpos{padding:11px 14px;border-radius:12px;background:rgba(74,168,255,.08);border:1px solid rgba(74,168,255,.25);margin-bottom:6px;font-size:12.5px}
+
+/* calibration panel */
+.calzones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 18px}
+.calzone{padding:11px 13px;border-radius:12px;border:1px solid;font-size:11.5px}
+.calzone .zlab{font:800 12px var(--mono);letter-spacing:.4px}
+.calzone .zrange{font:600 11px var(--mono);opacity:.85;margin:3px 0}
+.calzone .zdesc{color:var(--muted);font-size:10.5px;line-height:1.4}
+.caltable{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.caltable th{text-align:right;font:600 10px var(--mono);text-transform:uppercase;letter-spacing:.5px;color:var(--faint);padding:6px 8px;border-bottom:1px solid var(--glass-brd)}
+.caltable th:first-child{text-align:left}
+.caltable td{padding:7px 8px;text-align:right;font-family:var(--mono);border-bottom:1px solid rgba(255,255,255,.04)}
+.caltable td:first-child{text-align:left;font-weight:600}
+.caltable .aucbar{display:inline-block;height:8px;border-radius:4px;vertical-align:middle;margin-left:6px}
+.calnote{color:var(--muted);font-size:12px;line-height:1.6;margin-top:14px;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.calband{font:600 10px var(--mono);color:var(--faint)}
+
+@media(max-width:720px){.netnum{font-size:48px}.vbadge{font-size:24px}.chart .plot{height:300px}.brkrow{grid-template-columns:96px 1fr 40px}
+  .trow{grid-template-columns:1fr auto;gap:8px}.trow .tgates{display:none}.trow .tdate{grid-row:2}
+  .caltable th:nth-child(2),.caltable td:nth-child(2),.caltable th:nth-child(3),.caltable td:nth-child(3){display:none}}
 </style>
 </head>
 <body>
@@ -160,6 +205,20 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
     <div class="legend" id="siglegend"></div>
   </div>
 
+  <div class="sec">v8.5 Strategy Simulator <span class="hint">— replay the locked backtest from any start date & capital · open positions marked to the live price</span></div>
+  <div class="card" id="simCard" style="padding:18px">
+    <div class="simctl">
+      <div class="simfield"><label>Start date</label><input type="date" id="simStart" onchange="onSimInput()"></div>
+      <div class="simfield"><label>Starting capital ($)</label><input type="number" id="simCap" min="100" step="1000" value="100000" onchange="onSimInput()"></div>
+      <div class="simpresets" id="simPresets"></div>
+    </div>
+    <div class="simsummary" id="simSummary"></div>
+    <div class="chart" style="padding:8px 0 0"><div class="plot" id="simEquity" style="height:240px"></div></div>
+    <div id="simOpen" style="margin-top:6px"></div>
+    <div class="sec" style="font-size:13px;margin:18px 2px 8px">Trade Log <span class="hint" id="simTradeCount"></span></div>
+    <div id="simTrades" class="simtrades"></div>
+  </div>
+
   <div class="sec">Conviction Drivers <span class="hint">— what's pulling the score, signed (green = LONG, red = SHORT)</span></div>
   <div class="card brk" id="brk"></div>
 
@@ -169,7 +228,21 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
   <div class="sec">Indicators <span class="hint">— one signed score each · tap for detail</span></div>
   <div class="tiles" id="tiles"></div>
 
+  <div class="sec">Calibration Methodology <span class="hint">— how the 5 zones & weights are set (empirically measured skill, not intuition)</span>
+    <span class="chip-toggle" id="calToggle" onclick="toggleCal()" style="margin-left:auto">show</span></div>
+  <div class="card" id="calCard" style="padding:18px;display:none"></div>
+
   <div class="foot" id="foot"></div>
+</div>
+
+<div class="modal-bg" id="tradeBg" onclick="if(event.target===this)closeTrade()">
+  <div class="card modal" id="tradeModal">
+    <div class="x" onclick="closeTrade()">×</div>
+    <div class="cat" id="trCat"></div>
+    <h3 id="trTitle"></h3>
+    <div class="mval mono" id="trPnl"></div>
+    <div id="trBody"></div>
+  </div>
 </div>
 
 <div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
@@ -267,6 +340,7 @@ function render(){
   document.getElementById("mnavTop").innerHTML=`mNAV ${FMT(snap.mnav,".2f")}x${cflag} · ${FMT(snap.mstr_btc_holdings,".0f")} BTC${snap.mstr_btc_holdings_stale?" ⚠":""}`;
 
   drawRangeBar(); applyConviction(); drawSignalChart(); drawStrategy(s); drawMacro(m); drawTiles(d.indicators);
+  initSim(); if(calShown)drawCalibration();
   document.getElementById("foot").textContent=`Generated ${ts.toLocaleString()} · ${(d.data_health||[]).filter(h=>!h.stale).length}/${(d.data_health||[]).length} sources fresh`;
 }
 
@@ -297,11 +371,14 @@ function drawSignalChart(){
   });
   Plotly.react("sigchart",traces,PLOT_LAYOUT({
     yaxis:{type:"log",gridcolor:"rgba(255,255,255,.05)",zeroline:false,tickprefix:"$"},
-    margin:{l:54,r:18,t:10,b:28}}),PCONF);
+    margin:{l:54,r:18,t:10,b:28}}),PCONF).then(gd=>{
+    if(gd && !gd._sigHooked){gd._sigHooked=true;gd.style.cursor="pointer";
+      gd.on("plotly_click",ev=>{const p=ev.points&&ev.points[0];if(p&&p.data&&p.data.mode==="markers"&&p.x){const t=tradeByDate((""+p.x).slice(0,10));if(t)openTrade(t.id);}});}
+  });
   const present=Object.keys(SIGMETA).filter(tp=>sigs.some(s=>s.type===tp));
   document.getElementById("siglegend").innerHTML=
     present.map(tp=>`<span style="color:${SIGMETA[tp].c}">${SIGMETA[tp].gly} ${SIGMETA[tp].nm}</span>`).join("")
-    +`<span style="color:var(--faint)">${sigs.length} markers in range · from the locked v8.5 backtest</span>`;
+    +`<span style="color:var(--faint)">${sigs.length} markers in range · click a marker for trade detail · from the locked v8.5 backtest</span>`;
 }
 
 function drawOscillator(){
@@ -394,6 +471,130 @@ function drawMacro(m){
     <div class="brk">${bars}</div>`;
 }
 
+// ================= v8.5 STRATEGY SIMULATOR =================
+const TYPE_COLOR={"t1-BULL long":"#16c784","t1b Q-fire long":"#16c784","t2a PUT hedge":"#f3c623","t2b SHORT hedge":"#ea3943","ENV BTC short":"#7c5cff"};
+let SIM_PRESET="era";
+const SIM_PRESETS=[["Full","full"],["MSTR era","era"],["3Y","3y"],["1Y","1y"]];
+function simData(){return DATA.simulator||{trades:[],equity_curve:[],backtest:{}};}
+function curveNAVat(date){const c=simData().equity_curve;if(!c.length)return null;let pick=c[0];for(const p of c){if(p.d<=date)pick=p;else break;}return pick.v;}
+function fmtUSD(v){if(v==null||isNaN(v))return"—";const a=Math.abs(v),s=v<0?"-":"";
+  if(a>=1e9)return s+"$"+(a/1e9).toFixed(2)+"B";if(a>=1e6)return s+"$"+(a/1e6).toFixed(2)+"M";if(a>=1e3)return s+"$"+(a/1e3).toFixed(1)+"K";return s+"$"+a.toFixed(0);}
+function presetStart(p){const c=simData().equity_curve;if(!c.length)return"";const last=c[c.length-1].d,end=new Date(last);
+  const back=d=>{const x=new Date(end);x.setDate(x.getDate()-d);return x.toISOString().slice(0,10);};
+  if(p==="full")return c[0].d;
+  if(p==="era")return c[0].d>"2020-08-12"?c[0].d:"2020-08-12";
+  if(p==="3y")return back(365*3);if(p==="1y")return back(365);return c[0].d;}
+function drawPresets(){document.getElementById("simPresets").innerHTML=SIM_PRESETS.map(([l,k])=>`<span class="rb ${k===SIM_PRESET?'on':''}" onclick="setPreset('${k}')">${l}</span>`).join("");}
+function setPreset(k){SIM_PRESET=k;document.getElementById("simStart").value=presetStart(k);drawPresets();drawSimulator();}
+function initSim(){const c=simData().equity_curve;const card=document.getElementById("simCard");
+  if(!c.length){card.style.display="none";return;}card.style.display="";
+  const start=document.getElementById("simStart");start.min=c[0].d;start.max=c[c.length-1].d;
+  if(!start.value)start.value=presetStart(SIM_PRESET);
+  drawPresets();drawSimulator();}
+function onSimInput(){const sd=document.getElementById("simStart").value;
+  if(presetStart(SIM_PRESET)!==sd){SIM_PRESET=null;drawPresets();}drawSimulator();}
+function drawSimulator(){
+  const sim=simData(),c=sim.equity_curve;if(!c.length)return;
+  const sd=document.getElementById("simStart").value||c[0].d;
+  const cap=Math.max(1,+document.getElementById("simCap").value||100000);
+  const nav0=curveNAVat(sd)||c[0].v,scale=cap/nav0,navEnd=c[c.length-1].v,finalEq=navEnd*scale;
+  const curMstr=DATA.snapshot.mstr_price,curBtc=DATA.snapshot.btc_price;
+  const openTrades=sim.trades.filter(t=>t.open&&t.entry_date>=sd);let openMTM=0;
+  openTrades.forEach(t=>{const px=t.family==="ENV"?curBtc:curMstr,sz=t.size_usd*scale;
+    const mv=t.direction==="long"?(px/t.entry_price-1):(1-px/t.entry_price);t._mtm=sz*mv;openMTM+=t._mtm;});
+  const finalWO=finalEq+openMTM,ret=(finalWO/cap-1)*100;
+  const yrs=(new Date(c[c.length-1].d)-new Date(sd))/864e5/365.25;
+  const cagr=yrs>0.2?(Math.pow(finalWO/cap,1/yrs)-1)*100:null;
+  const realized=sim.trades.filter(t=>!t.open&&t.entry_date>=sd).reduce((a,t)=>a+(t.pnl||0)*scale,0);
+  const col=ret>=0?"#16c784":"#ea3943";
+  document.getElementById("simSummary").innerHTML=[
+    ["Final equity",fmtUSD(finalWO),"#eaf0ff"],["Total return",(ret>=0?"+":"")+ret.toFixed(0)+"%",col],
+    ["Realized P&L",fmtUSD(realized),realized>=0?"#16c784":"#ea3943"],
+    ["CAGR",cagr==null?"—":(cagr>=0?"+":"")+cagr.toFixed(0)+"%",col],
+    ["Trades",""+sim.trades.filter(t=>t.entry_date>=sd).length,"#8c98b8"],
+  ].map(([k,v,c2])=>`<div class="simstat"><div class="k">${k}</div><div class="v" style="color:${c2}">${v}</div></div>`).join("");
+  const pts=c.filter(p=>p.d>=sd),xs=[sd,...pts.map(p=>p.d)],ys=[cap,...pts.map(p=>p.v*scale)];
+  Plotly.react("simEquity",[{x:xs,y:ys,type:"scatter",mode:"lines",line:{color:col,width:2},fill:"tozeroy",fillcolor:col+"14",hovertemplate:"%{x}<br>$%{y:,.0f}<extra></extra>"}],
+    PLOT_LAYOUT({yaxis:{type:"log",gridcolor:"rgba(255,255,255,.05)",zeroline:false,tickprefix:"$"},margin:{l:64,r:14,t:8,b:26}}),PCONF);
+  const op=document.getElementById("simOpen");
+  op.innerHTML=openTrades.length?openTrades.map(t=>`<div class="openpos">⚡ OPEN · ${t.type} since ${t.entry_date} @ $${t.entry_price} → mark-to-market ${fmtUSD(t._mtm)} at live $${FMT(t.family==="ENV"?curBtc:curMstr,".2f")}</div>`).join(""):"";
+  renderTrades(sd,scale);
+}
+function renderTrades(sd,scale){
+  const trs=simData().trades.filter(t=>t.entry_date>=sd).slice().reverse();
+  document.getElementById("simTradeCount").textContent=`— ${trs.length} trades from ${sd} · click any row for full detail`;
+  document.getElementById("simTrades").innerHTML=trs.map(t=>{
+    const col=TYPE_COLOR[t.type]||"#8c98b8",pnl=t.pnl!=null?t.pnl*scale:null,pc=t.open?"#4aa8ff":(pnl>=0?"#16c784":"#ea3943"),g=t.gates||{},gc=[];
+    if(g.mri!=null)gc.push(`<span class="gchip ${g.mri_below_12?'hit':''}">MRI ${g.mri.toFixed(1)}${g.mri_below_12?' &lt;12':''}</span>`);
+    if(g.slope_5d!=null)gc.push(`<span class="gchip ${g.slope_5d<0?'warn':''}">slope₅ ${g.slope_5d>0?'+':''}${g.slope_5d.toFixed(2)}%</span>`);
+    if(g.rvol_pct!=null)gc.push(`<span class="gchip">IVp ${g.rvol_pct.toFixed(0)}</span>`);
+    const ex=t.open?'<span style="color:#4aa8ff">OPEN</span>':t.exit_date;
+    return `<div class="trow" onclick="openTrade(${t.id})">
+      <div><div class="ttype" style="background:${col}22;color:${col}">${t.type}</div><div class="tdate" style="margin-top:4px">${t.entry_date}</div></div>
+      <div class="tdate">→ ${ex}</div>
+      <div class="tgates">${gc.join("")}</div>
+      <div><div class="tpnl" style="color:${pc}">${t.open?"MTM "+fmtUSD(t._mtm||0):(pnl>=0?"+":"")+fmtUSD(pnl)}</div>${t.pnl_pct!=null?`<div class="tpct">${t.pnl_pct>=0?'+':''}${t.pnl_pct.toFixed(1)}%</div>`:''}</div></div>`;
+  }).join("")||`<div style="color:var(--faint);font-size:13px">No trades after ${sd}.</div>`;
+}
+function openTrade(id){
+  const t=simData().trades.find(x=>x.id===id);if(!t)return;
+  const sd=document.getElementById("simStart").value,cap=+document.getElementById("simCap").value||100000,scale=cap/(curveNAVat(sd)||100000);
+  const pnl=t.pnl!=null?t.pnl*scale:null;
+  document.getElementById("trCat").textContent=`v8.5 · ${t.raw_entry_type} · ${t.direction.toUpperCase()}`;
+  document.getElementById("trTitle").textContent=t.type;
+  const pe=document.getElementById("trPnl");
+  pe.textContent=t.open?"OPEN position":((pnl>=0?"+":"")+fmtUSD(pnl)+(t.pnl_pct!=null?`  (${t.pnl_pct>=0?'+':''}${t.pnl_pct.toFixed(1)}%)`:""));
+  pe.style.color=t.open?"#4aa8ff":(pnl>=0?"#16c784":"#ea3943");
+  const g=t.gates||{},row=(k,v)=>`<tr><td style="color:var(--muted);text-align:left;padding:5px 0">${k}</td><td style="text-align:right;font-family:var(--mono);padding:5px 0">${v}</td></tr>`,
+    gr=(k,v,hit)=>`<tr><td style="color:var(--muted);text-align:left;padding:5px 0">${k}</td><td style="text-align:right;font-family:var(--mono);padding:5px 0;color:${hit?'#16c784':'var(--ink)'}">${v}</td></tr>`;
+  document.getElementById("trBody").innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
+      ${row("Entry",`${t.entry_date} @ $${t.entry_price}`)}${row("Exit",t.open?'<span style="color:#4aa8ff">open</span>':`${t.exit_date} @ $${t.exit_price}`)}
+      ${row("Holding",t.days!=null?t.days+" days":"—")}${row("Capital committed (scaled)",fmtUSD(t.size_usd*scale))}${row("Exit reason",t.exit_reason||"—")}</table>
+    <div class="cat" style="margin:16px 0 4px">Signals / gates that fired at entry</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      ${gr("MRI",g.mri!=null?g.mri.toFixed(2):"—",g.mri_below_12)}
+      ${gr("MRI &lt; 12 (Q-fire gate)",g.mri_below_12?"YES — armed":"no",g.mri_below_12)}
+      ${gr("MSTR MA200 5-day slope (hedge gate)",g.slope_5d!=null?(g.slope_5d>0?'+':'')+g.slope_5d.toFixed(3)+"%":"—",g.slope_5d!=null&&g.slope_5d<0)}
+      ${gr("Realized-vol %ile (IV proxy, 252d)",g.rvol_pct!=null?g.rvol_pct.toFixed(0):"—")}
+      ${row("Days since last Q-fire",g.days_since_qfire!=null?g.days_since_qfire:"—")}
+      ${g.rsi!=null?row("RSI (entry bar)",g.rsi.toFixed(1)):""}${g.ext!=null?row("Extension vs MA",(g.ext*100).toFixed(1)+"%"):""}${g.mayer!=null?row("Mayer multiple",g.mayer.toFixed(3)):""}</table>`;
+  document.getElementById("tradeBg").classList.add("on");
+}
+function closeTrade(){document.getElementById("tradeBg").classList.remove("on");}
+function tradeByDate(date){const ts=simData().trades;return ts.find(t=>t.entry_date===date)||ts.find(t=>t.exit_date===date);}
+
+// ================= CALIBRATION METHODOLOGY PANEL =================
+let calShown=false;
+function toggleCal(){calShown=!calShown;document.getElementById("calToggle").textContent=calShown?"hide":"show";
+  document.getElementById("calCard").style.display=calShown?"block":"none";if(calShown)drawCalibration();}
+function drawCalibration(){
+  const cal=DATA.calibration;if(!cal){document.getElementById("calCard").innerHTML="<div style='color:var(--faint)'>Calibration data unavailable.</div>";return;}
+  const zc={LONG:"#16c784",SHORT:"#ea3943",NEUTRAL:"#f3c623"};
+  const zones=cal.zone_defs.map(z=>{const c=zc[z.zone];return `<div class="calzone" style="border-color:${c}55;background:${c}10">
+    <div class="zlab" style="color:${c}">${z.label}</div><div class="zrange">net ${z.min} … ${z.max}</div><div class="zdesc">${z.desc}</div></div>`;}).join("");
+  const a=cal.audit,labels=DATA.indicators||{};
+  const bandStr=b=>!b?"—":b.slice(0,3).map(x=>x[1]).join("/")+"…";
+  const aucBar=v=>{const w=Math.max(0,(v-0.5))*200,c=v>=0.55?"#16c784":v>=0.52?"#f3c623":"#586187";
+    return `${v.toFixed(3)}<span class="aucbar" style="width:${w.toFixed(0)}px;background:${c}"></span>`;};
+  const rows=a.core.map(r=>{const lbl=(labels[r.key]&&labels[r.key].label)||r.key;
+    return `<tr><td>${lbl}<div class="calband">band ${bandStr(r.band)} · cluster ${r.cluster}</div></td>
+      <td>${aucBar(r.top_auc)}</td><td>${aucBar(r.bot_auc)}</td><td>${r.skill.toFixed(3)}</td>
+      <td style="color:var(--accent);font-weight:700">${(r.final_w*100).toFixed(1)}%</td></tr>`;}).join("");
+  const macroRows=a.macro.map(r=>{const lbl=(labels[r.key]&&labels[r.key].label)||r.key;
+    return `<tr><td>${lbl}</td><td>${r.top_auc!=null?aucBar(r.top_auc):"—"}</td><td>${r.bot_auc!=null?aucBar(r.bot_auc):"—"}</td><td>—</td>
+      <td style="color:var(--accent);font-weight:700">${(r.weight*100).toFixed(1)}%</td></tr>`;}).join("");
+  document.getElementById("calCard").innerHTML=`
+    <div class="cat">The 5 zones — net-conviction thresholds</div>
+    <div class="calzones">${zones}</div>
+    <div class="calnote"><b>Local vs cycle extremes.</b> ${cal.local_vs_cycle}</div>
+    <div class="cat" style="margin:20px 0 2px">Per-indicator measured skill — core net (AUC 0.50 = no skill, higher = sharper)</div>
+    <table class="caltable"><tr><th>Indicator</th><th>Top AUC</th><th>Bottom AUC</th><th>Skill</th><th>Weight</th></tr>${rows}</table>
+    <div class="cat" style="margin:20px 0 2px">Macro panel — separate backdrop, not in the core net</div>
+    <table class="caltable"><tr><th>Indicator</th><th>Top AUC</th><th>Bottom AUC</th><th>Skill</th><th>Weight</th></tr>${macroRows}</table>
+    <div class="calnote">Panel ${a.panel_start} → ${a.panel_end} (${a.panel_days} days · ${a.near_top_days} near-top, ${a.near_bottom_days} near-bottom labels). Weights = empirical skill (correlated signals cluster-capped at ${a.cluster_cap} of the budget) shrunk ${(a.shrink*100).toFixed(0)}% toward the hand-tuned priors so a noisy fit on few absolute extrema can't wreck the validated turning points. mNAV &amp; MSTR/BTC measure weak <i>general</i> top-AUC (~0.50) — they're specialist top-catchers whose signal lives in their asymmetric bands, not their weight.</div>`;
+}
+
 function sparkSVG(series,color){
   if(!series||series.length<2)return"";
   const ys=series.map(p=>p.v),mn=Math.min(...ys),mx=Math.max(...ys),rng=(mx-mn)||1,n=series.length,W=240,H=42;
@@ -440,7 +641,7 @@ function openModal(k,keepOpen){
   setTimeout(()=>Plotly.newPlot("mPlot",traces,layout,PCONF),20);
 }
 function closeModal(){document.getElementById("modalBg").classList.remove("on");curModalKey=null;}
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeTrade();}});
 
 async function liveTiles(){
   try{

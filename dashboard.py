@@ -200,6 +200,28 @@ def compute_derived(results: dict, logger):
         derived["mnav_confidence"] = "low" if (shares_conf.startswith("low") or holdings_stale) else "high"
         logger.info(f"  Derived: mNAV = {mnav:.3f}  (shares {shares_src}, holdings stale={holdings_stale})")
 
+        # mNAV cross-check / divergence flag. BMP cannot serve a published mNAV (404 + absent
+        # from /metrics — see fetchers/bmp.mstr_mnav_available), EODHD fundamentals 403, and
+        # bitcointreasuries is an unstable SvelteKit scrape — so there is no free published-mNAV
+        # API to diff against. The available authoritative cross-check is the share-count
+        # convention: recompute mNAV on yfinance BASIC shares and flag when it diverges >5% from
+        # the diluted-convention figure (a large gap = dilution materially moves the read, i.e. a
+        # stale/under-counted share figure would be visible rather than silent).
+        derived["mnav_xcheck"] = None
+        if basic and shares and btc_px and btc_holdings:
+            mnav_basic = (mstr_px * basic) / (btc_holdings * btc_px)
+            div = abs(mnav - mnav_basic) / mnav if mnav else None
+            derived["mnav_xcheck"] = {
+                "diluted": round(mnav, 4), "basic_shares": round(mnav_basic, 4),
+                "divergence_pct": (round(div * 100, 2) if div is not None else None),
+                "flag": bool(div is not None and div > 0.05),
+                "published_source": None,  # no free published-mNAV API; see note above
+                "note": "diluted vs basic-shares convention (no external published mNAV available)",
+            }
+            if derived["mnav_xcheck"]["flag"]:
+                logger.warning(f"  mNAV cross-check: diluted {mnav:.3f} vs basic {mnav_basic:.3f} "
+                               f"→ {derived['mnav_xcheck']['divergence_pct']}% divergence (>5%)")
+
         # TRUE historical mNAV series, using:
         #   - daily MSTR close (yfinance)
         #   - daily BTC close (coingecko)
@@ -626,24 +648,72 @@ def main():
         health.append({"name": name, "stale": bool(r.get("stale")),
                        "source": r.get("source", ""), "error": r.get("error")})
 
-    # v8.5 backtest signal markers (Phase 3): committed docs/signals.json from the backtest.
-    # Plotted on the MSTR price chart — Q-fire long entries, PUT/SHORT hedges, t1b exits.
-    signals = []
+    # v8.5 backtest signals (Phase 3 + simulator): committed docs/signals.json from the
+    # backtest (scripts/build_signals.py). Enriched object: {markers, trades, equity_curve,
+    # backtest}. markers → the MSTR signal chart (Q-fire longs, PUT/SHORT hedges, t1b exits);
+    # the rest → latest.simulator for the client-side v8.5 STRATEGY SIMULATOR (replay any
+    # start date / starting capital, mark open positions to market at the live price).
+    signals, simulator = [], None
     for sp in (REPO_ROOT / "docs" / "signals.json", REPO_ROOT / "signals.json"):
         try:
             if sp.exists():
-                signals = json.loads(sp.read_text())
-                logger.info(f"  Loaded {len(signals)} v8.5 signal markers from {sp.name}")
+                obj = json.loads(sp.read_text())
+                if isinstance(obj, dict):  # enriched schema
+                    signals = obj.get("markers", [])
+                    simulator = {"trades": obj.get("trades", []),
+                                 "equity_curve": obj.get("equity_curve", []),
+                                 "backtest": obj.get("backtest", {})}
+                    logger.info(f"  Loaded v8.5 signals from {sp.name}: {len(signals)} markers, "
+                                f"{len(simulator['trades'])} trades, "
+                                f"{len(simulator['equity_curve'])} equity pts")
+                else:  # legacy flat array
+                    signals = obj
+                    logger.info(f"  Loaded {len(signals)} v8.5 signal markers from {sp.name} (legacy)")
                 break
         except Exception as e:
             logger.warning(f"  signals.json load failed ({sp}): {e}")
+
+    # Calibration methodology (Phase 2 panel): measured top/bottom skill per indicator +
+    # zone thresholds + each indicator's signed band & current weight, so the in-app
+    # CALIBRATION panel can render the whole methodology (the .md won't open for Micah).
+    scoring_cfg = scoring.export_config()
+    calibration = None
+    try:
+        audit = json.loads((REPO_ROOT / "calibration_audit.json").read_text())
+        # tag each core/macro row with its live band + zone thresholds so the panel is self-contained
+        bands = scoring_cfg.get("bands", {})
+        for row in audit.get("core", []) + audit.get("macro", []):
+            row["band"] = bands.get(row["key"])
+        calibration = {
+            "audit": audit,
+            "zones": scoring_cfg.get("zones"),
+            "zone_defs": [
+                {"label": "LONG-CAPITULATION", "min": 65, "max": 100, "zone": "LONG",
+                 "desc": "cycle bottom — value clusters saturate together"},
+                {"label": "LONG-LOCAL", "min": 28, "max": 64, "zone": "LONG",
+                 "desc": "local oversold / a lone bottom-caller firing"},
+                {"label": "NEUTRAL", "min": -27, "max": 27, "zone": "NEUTRAL",
+                 "desc": "mid-cycle, no directional edge"},
+                {"label": "SHORT-LOCAL", "min": -64, "max": -28, "zone": "SHORT",
+                 "desc": "local top / a lone top-caller firing"},
+                {"label": "SHORT-TOP", "min": -100, "max": -65, "zone": "SHORT",
+                 "desc": "cycle top — BTC-cycle + MSTR-structural clusters align"},
+            ],
+            "local_vs_cycle": ("LOCAL vs CYCLE: a lone signal saturating reads as a LOCAL extreme "
+                               "(score lands ~±40/60); a CYCLE extreme requires multiple correlated "
+                               "callers saturating together so the weighted net pushes past ±65."),
+        }
+    except Exception as e:
+        logger.warning(f"  calibration_audit.json load failed (non-fatal): {e}")
 
     latest = {
         "timestamp": ts_now.isoformat(),
         "strategy_state": strat,
         "meters": meters,
         "signals": signals,
-        "scoring_config": scoring.export_config(),
+        "simulator": simulator,
+        "scoring_config": scoring_cfg,
+        "calibration": calibration,
         "net_delta_7d": delta_7d,
         "zones": {"long": scoring.LONG_ZONE, "short": -scoring.SHORT_ZONE},
         "oscillator": oscillator,
@@ -656,6 +726,7 @@ def main():
             "mnav": derived.get("mnav"),
             "mnav_confidence": derived.get("mnav_confidence"),
             "mnav_shares_source": derived.get("mnav_shares_source"),
+            "mnav_xcheck": derived.get("mnav_xcheck"),
             "mstr_btc_holdings": (results.get("mstr_history", {}).get("value")
                                   or results["mstr_btc_holdings"]["value"]),
             "mstr_btc_holdings_stale": derived.get("mnav_holdings_stale"),

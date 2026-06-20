@@ -42,6 +42,7 @@ import scoring
 
 OUT_CONFIG = Path(__file__).resolve().parent.parent / "calibration_config.json"
 OUT_REPORT = Path(__file__).resolve().parent.parent / "calibration_audit_report.md"
+OUT_AUDIT_JSON = Path(__file__).resolve().parent.parent / "calibration_audit.json"
 
 # Curated absolute cycle extrema (sanity anchors; tiny N — not the fit set).
 ABS_TOPS = ["2021-11-09", "2024-11-21", "2025-07-25"]
@@ -273,7 +274,30 @@ def main():
               "  the validated turning-point reads. Verified: all 4 zones hold after applying.", ""]
     OUT_REPORT.write_text("\n".join(lines))
 
-    print(f"Wrote {OUT_CONFIG.name} and {OUT_REPORT.name}")
+    # ---- structured audit JSON (consumed by dashboard.py → latest.calibration → in-app panel) ----
+    cluster_of = {}
+    for i, grp in enumerate(clusters, 1):
+        for k in grp:
+            cluster_of[k] = i
+    audit = {
+        "_generated_by": "scripts/calibrate_weights.py",
+        "panel_start": str(df.index.min().date()), "panel_end": str(df.index.max().date()),
+        "panel_days": int(len(df)),
+        "near_top_days": int(near_top.sum()), "near_bottom_days": int(near_bottom.sum()),
+        "shrink": SHRINK, "cluster_cap": CLUSTER_CAP,
+        "core": [{"key": k, "top_auc": round(float(skill.loc[k, "top_auc"]), 3),
+                  "bot_auc": round(float(skill.loc[k, "bot_auc"]), 3),
+                  "skill": round(float(skill.loc[k, "skill"]), 3),
+                  "prior_w": round(float(prior[k]), 3), "empirical_w": round(float(emp[k]), 3),
+                  "final_w": round(float(core_w[k]), 3), "cluster": cluster_of.get(k)} for k in core],
+        "macro": [{"key": k, "top_auc": round(float(skill.loc[k, "top_auc"]), 3),
+                   "bot_auc": round(float(skill.loc[k, "bot_auc"]), 3),
+                   "weight": round(float(macro_w[k]), 3)} for k in macro],
+        "clusters": [{"id": i, "members": grp} for i, grp in enumerate(clusters, 1)],
+    }
+    OUT_AUDIT_JSON.write_text(json.dumps(audit, indent=2))
+
+    print(f"Wrote {OUT_CONFIG.name}, {OUT_REPORT.name} and {OUT_AUDIT_JSON.name}")
     print("\ncore_w:", json.dumps(config["core_w"]))
     print("macro_w:", json.dumps(config["macro_w"]))
     print("\nSkill table:")
