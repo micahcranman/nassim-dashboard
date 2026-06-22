@@ -1,34 +1,6 @@
 {
-  "timestamp": "2026-06-15T17:31:16.240733",
+  "timestamp": "2026-06-22T17:16:42.753603",
   "btc_overlay": [
-    {
-      "d": "2020-06-17",
-      "v": 9480.25
-    },
-    {
-      "d": "2020-06-18",
-      "v": 9411.84
-    },
-    {
-      "d": "2020-06-19",
-      "v": 9288.02
-    },
-    {
-      "d": "2020-06-20",
-      "v": 9332.34
-    },
-    {
-      "d": "2020-06-21",
-      "v": 9303.63
-    },
-    {
-      "d": "2020-06-22",
-      "v": 9648.72
-    },
-    {
-      "d": "2020-06-23",
-      "v": 9629.66
-    },
     {
       "d": "2020-06-24",
       "v": 9313.61
@@ -8759,12 +8731,40 @@
     },
     {
       "d": "2026-06-15",
-      "v": 66816.7
+      "v": 66289.5
+    },
+    {
+      "d": "2026-06-16",
+      "v": 65600.64
+    },
+    {
+      "d": "2026-06-17",
+      "v": 64418.45
+    },
+    {
+      "d": "2026-06-18",
+      "v": 62896.47
+    },
+    {
+      "d": "2026-06-19",
+      "v": 63540.84
+    },
+    {
+      "d": "2026-06-20",
+      "v": 64239.68
+    },
+    {
+      "d": "2026-06-21",
+      "v": 63237.54
+    },
+    {
+      "d": "2026-06-22",
+      "v": 64582.17
     }
   ],
-  "composite": 79.2,
-  "regime_label": "BULL \u2014 confidence supported",
-  "delta_1w": 5.0,
+  "composite": 81.1,
+  "regime_label": "STRONG BULL \u2014 high confidence",
+  "delta_1w": 0.0,
   "sub_scores": {
     "mvrv_z": 85.0,
     "nupl": 85.0,
@@ -8776,24 +8776,24 @@
     "hy_oas": null,
     "real_yield": null,
     "mnav": 100.0,
-    "mstr_btc_trend": 65.0,
-    "funding": 100.0,
-    "ssr": 75.0
+    "mstr_btc_trend": 90.0,
+    "funding": 80.0,
+    "ssr": 100.0
   },
   "raw_values": {
-    "mvrv_z": 0.3786,
-    "nupl": 0.1911,
-    "lth_trend": -0.7379873926755477,
-    "sopr": 0.992442857142857,
+    "mvrv_z": 0.3782,
+    "nupl": 0.163,
+    "lth_trend": -0.7309990122750554,
+    "sopr": 0.9976857142857144,
     "m2_trend": null,
     "netliq_trend": null,
-    "dxy_trend": 1.0932857844424637,
+    "dxy_trend": 2.831685425013057,
     "hy_oas": null,
     "real_yield": null,
-    "mnav": 0.7890418143065565,
-    "mstr_btc_trend": -9.30666377961879,
-    "funding": -8.92955772358425,
-    "ssr": 5.042996139757592
+    "mnav": 0.675582537887637,
+    "mstr_btc_trend": -24.68744425504704,
+    "funding": 4.58653742892225,
+    "ssr": 4.8790139686467775
   },
   "missing": [
     "m2_trend",
@@ -8815,7 +8815,7 @@
   "synthesis": [
     "Cycle phase: ACCUMULATION \u00b7 Macro liquidity: contracting \u00b7 Risk regime: HY n/a",
     "Strongest signals: MVRV Z(85), MNAV(100), NUPL(85)",
-    "Weakest signals: SSR(75), DXY TREND(40), LTH TREND(50)"
+    "Weakest signals: SSR(100), DXY TREND(40), FUNDING(80)"
   ],
   "indicators": {
     "mvrv_z": {
@@ -8858,37 +8858,9 @@
       ],
       "explanation": "MVRV Z-Score = (Market Cap \u2212 Realized Cap) / \u03c3(Market Cap). It measures how far BTC's market price sits above or below the aggregate cost basis of all coins, scaled by historical volatility. Historically: above 7 marks cycle tops; below 0 marks deep bottoms. The bands shown reflect the historical regime mapping. Current readings near 0\u20132 are in the accumulation zone \u2014 most coins are held near or below their cost basis.",
       "use": "At a strategy entry signal, MVRV-Z deep in the accumulation band is supportive (implies the upside path is structurally still ahead). Above 6 should make you scale size DOWN: the strategy may still fire, but historically you're entering near a euphoric top.",
-      "value": 0.3786,
+      "value": 0.3782,
       "sub_score": 85.0,
       "series": [
-        {
-          "d": "2020-06-15",
-          "v": 1.0591
-        },
-        {
-          "d": "2020-06-16",
-          "v": 1.0806
-        },
-        {
-          "d": "2020-06-17",
-          "v": 1.0593
-        },
-        {
-          "d": "2020-06-18",
-          "v": 1.0378
-        },
-        {
-          "d": "2020-06-19",
-          "v": 1.0075
-        },
-        {
-          "d": "2020-06-20",
-          "v": 1.0273
-        },
-        {
-          "d": "2020-06-21",
-          "v": 1.0056
-        },
         {
           "d": "2020-06-22",
           "v": 1.119
@@ -17620,6 +17592,34 @@
         {
           "d": "2026-06-14",
           "v": 0.3786
+        },
+        {
+          "d": "2026-06-15",
+          "v": 0.4178
+        },
+        {
+          "d": "2026-06-16",
+          "v": 0.444
+        },
+        {
+          "d": "2026-06-17",
+          "v": 0.4234
+        },
+        {
+          "d": "2026-06-18",
+          "v": 0.3826
+        },
+        {
+          "d": "2026-06-19",
+          "v": 0.333
+        },
+        {
+          "d": "2026-06-20",
+          "v": 0.3536
+        },
+        {
+          "d": "2026-06-21",
+          "v": 0.3782
         }
       ]
     },
@@ -17663,37 +17663,9 @@
       ],
       "explanation": "NUPL = (Market Cap \u2212 Realized Cap) / Market Cap. Sister metric to MVRV-Z, but expressed as the proportion of the market in unrealized profit. Range \u22121 to 1. Mapped to Glassnode's named bands: Capitulation (<0), Hope/Fear (0\u20130.25), Optimism (0.25\u20130.5), Belief (0.5\u20130.75), Euphoria (>0.75).",
       "use": "Cleaner band-mapping than MVRV-Z for cycle-phase narrative. Use as a confirmation of MVRV: when both agree, the cycle phase read has higher confidence.",
-      "value": 0.1911,
+      "value": 0.163,
       "sub_score": 85.0,
       "series": [
-        {
-          "d": "2020-06-16",
-          "v": 0.3947
-        },
-        {
-          "d": "2020-06-17",
-          "v": 0.3901
-        },
-        {
-          "d": "2020-06-18",
-          "v": 0.3831
-        },
-        {
-          "d": "2020-06-19",
-          "v": 0.3793
-        },
-        {
-          "d": "2020-06-20",
-          "v": 0.3815
-        },
-        {
-          "d": "2020-06-21",
-          "v": 0.3777
-        },
-        {
-          "d": "2020-06-22",
-          "v": 0.4028
-        },
         {
           "d": "2020-06-23",
           "v": 0.3987
@@ -26425,6 +26397,34 @@
         {
           "d": "2026-06-14",
           "v": 0.1911
+        },
+        {
+          "d": "2026-06-15",
+          "v": 0.201
+        },
+        {
+          "d": "2026-06-16",
+          "v": 0.1935
+        },
+        {
+          "d": "2026-06-17",
+          "v": 0.178
+        },
+        {
+          "d": "2026-06-18",
+          "v": 0.1586
+        },
+        {
+          "d": "2026-06-19",
+          "v": 0.1669
+        },
+        {
+          "d": "2026-06-20",
+          "v": 0.1764
+        },
+        {
+          "d": "2026-06-21",
+          "v": 0.163
         }
       ]
     },
@@ -26468,37 +26468,9 @@
       ],
       "explanation": "SOPR = ratio of price-at-spend / price-at-acquisition for moved coins. >1 means the average spend is in profit; <1 means at loss. Sustained <1 = capitulation phase (holders dumping below cost). A reclaim of 1 after sub-1 period historically marks the early-bull confirmation. We use the 7-day MA to smooth daily noise.",
       "use": "At entry, SOPR sub-1 or just reclaiming = low risk of being late. SOPR >1.05 = widespread profit-taking, late-cycle warning.",
-      "value": 0.992442857142857,
+      "value": 0.9976857142857144,
       "sub_score": 80.0,
       "series": [
-        {
-          "d": "2020-06-16",
-          "v": 1.002057
-        },
-        {
-          "d": "2020-06-17",
-          "v": 1.0016
-        },
-        {
-          "d": "2020-06-18",
-          "v": 1.007143
-        },
-        {
-          "d": "2020-06-19",
-          "v": 1.006943
-        },
-        {
-          "d": "2020-06-20",
-          "v": 1.007
-        },
-        {
-          "d": "2020-06-21",
-          "v": 1.007386
-        },
-        {
-          "d": "2020-06-22",
-          "v": 1.008771
-        },
         {
           "d": "2020-06-23",
           "v": 1.008857
@@ -35230,6 +35202,34 @@
         {
           "d": "2026-06-14",
           "v": 0.992443
+        },
+        {
+          "d": "2026-06-15",
+          "v": 0.992757
+        },
+        {
+          "d": "2026-06-16",
+          "v": 0.993929
+        },
+        {
+          "d": "2026-06-17",
+          "v": 0.995929
+        },
+        {
+          "d": "2026-06-18",
+          "v": 0.995829
+        },
+        {
+          "d": "2026-06-19",
+          "v": 0.995
+        },
+        {
+          "d": "2026-06-20",
+          "v": 0.995029
+        },
+        {
+          "d": "2026-06-21",
+          "v": 0.997686
         }
       ]
     },
@@ -35273,37 +35273,9 @@
       ],
       "explanation": "Liveliness = Coin-Days-Destroyed / Cumulative-Coin-Days-Created. Range 0\u20131. Rising liveliness = long-term holders (LTHs) are spending old coins. Falling liveliness = LTHs are sitting tight, accumulating. We show the 90-day percentage change. NEGATIVE change is bullish (LTHs not distributing). This is a slow-moving, high-conviction signal \u2014 LTHs are smart money. The score function inverts.",
       "use": "Negative 90d \u0394% (LTHs accumulating) is one of the strongest pre-bull signals historically. Sustained positive \u0394% is a top warning that the cycle-phase models may miss until later.",
-      "value": -0.7379873926755477,
+      "value": -0.7309990122750554,
       "sub_score": 50.0,
       "series": [
-        {
-          "d": "2020-06-16",
-          "v": -1.281153
-        },
-        {
-          "d": "2020-06-17",
-          "v": -1.295711
-        },
-        {
-          "d": "2020-06-18",
-          "v": -1.272146
-        },
-        {
-          "d": "2020-06-19",
-          "v": -1.266413
-        },
-        {
-          "d": "2020-06-20",
-          "v": -1.266464
-        },
-        {
-          "d": "2020-06-21",
-          "v": -1.277034
-        },
-        {
-          "d": "2020-06-22",
-          "v": -1.269905
-        },
         {
           "d": "2020-06-23",
           "v": -1.277572
@@ -44035,6 +44007,34 @@
         {
           "d": "2026-06-14",
           "v": -0.737987
+        },
+        {
+          "d": "2026-06-15",
+          "v": -0.733863
+        },
+        {
+          "d": "2026-06-16",
+          "v": -0.721326
+        },
+        {
+          "d": "2026-06-17",
+          "v": -0.721657
+        },
+        {
+          "d": "2026-06-18",
+          "v": -0.738757
+        },
+        {
+          "d": "2026-06-19",
+          "v": -0.733122
+        },
+        {
+          "d": "2026-06-20",
+          "v": -0.777298
+        },
+        {
+          "d": "2026-06-21",
+          "v": -0.730999
         }
       ]
     },
@@ -44154,29 +44154,9 @@
       ],
       "explanation": "US Dollar Index, 50-day percent change. BTC and DXY are inversely correlated (historically \u22120.5 to \u22120.7). A breaking-down DXY is liquidity-positive for BTC and risk assets globally. A ripping DXY is a structural headwind. We invert the direction in scoring \u2014 negative DXY \u0394% is bullish.",
       "use": "Confirms or contradicts the M2 / Net Liq read. If DXY is collapsing while macro liquidity is expanding, that's a clean risk-on macro alignment. If DXY is ripping while everything else is bullish, expect crypto headwinds even at a signal.",
-      "value": 1.0932857844424637,
+      "value": 2.831685425013057,
       "sub_score": 40.0,
       "series": [
-        {
-          "d": "2025-08-05",
-          "v": 0.795917
-        },
-        {
-          "d": "2025-08-06",
-          "v": -0.647642
-        },
-        {
-          "d": "2025-08-07",
-          "v": -0.515622
-        },
-        {
-          "d": "2025-08-08",
-          "v": -0.738048
-        },
-        {
-          "d": "2025-08-11",
-          "v": -0.192486
-        },
         {
           "d": "2025-08-12",
           "v": -0.325137
@@ -45023,7 +45003,23 @@
         },
         {
           "d": "2026-06-15",
-          "v": 1.093286
+          "v": 1.136935
+        },
+        {
+          "d": "2026-06-16",
+          "v": 1.076358
+        },
+        {
+          "d": "2026-06-17",
+          "v": 1.490563
+        },
+        {
+          "d": "2026-06-18",
+          "v": 1.951072
+        },
+        {
+          "d": "2026-06-22",
+          "v": 2.831685
         }
       ]
     },
@@ -45155,7 +45151,7 @@
       ],
       "explanation": "mNAV = MSTR market cap / (BTC holdings \u00d7 BTC price). Measures the premium the market assigns to MSTR's equity above its underlying BTC stack. Historical range 0.8 to 3.5+. Below 1.0 is rare \u2014 implies the equity trades at a DISCOUNT to its BTC. Tier 2a (the strategy's short leg) targets mNAV blowoffs. Tier 1 long benefits most from entering when mNAV is compressed.",
       "use": "Single most important MSTR-specific dial. mNAV <1.3 = excellent entry zone for Tier 1. mNAV >2.3 = Tier 2a setup forming. The LEVEL matters more than the 50d trend below.",
-      "value": 0.7890418143065565,
+      "value": 0.675582537887637,
       "sub_score": 100.0,
       "series": [
         {
@@ -53700,7 +53696,35 @@
         },
         {
           "d": "2026-06-15",
-          "v": 0.835484
+          "v": 0.825387
+        },
+        {
+          "d": "2026-06-16",
+          "v": 0.784905
+        },
+        {
+          "d": "2026-06-17",
+          "v": 0.758632
+        },
+        {
+          "d": "2026-06-18",
+          "v": 0.750125
+        },
+        {
+          "d": "2026-06-19",
+          "v": 0.742518
+        },
+        {
+          "d": "2026-06-20",
+          "v": 0.73444
+        },
+        {
+          "d": "2026-06-21",
+          "v": 0.746079
+        },
+        {
+          "d": "2026-06-22",
+          "v": 0.715142
         }
       ]
     },
@@ -53738,25 +53762,9 @@
       ],
       "explanation": "50-day percent change in MSTR price \u00f7 BTC price ratio. Rising ratio = MSTR outperforming BTC = mNAV expanding (premium inflating). Falling ratio = MSTR compressing relative to its BTC stack = better entry zone. The current ratio level is captured by mNAV above; this card shows the TREND.",
       "use": "Timing kicker on top of mNAV level. mNAV LOW + ratio FALLING = best possible entry. mNAV LOW + ratio RISING (current state) = level is cheap but momentum is in the wrong direction; possibly wait or scale in.",
-      "value": -9.30666377961879,
-      "sub_score": 65.0,
+      "value": -24.68744425504704,
+      "sub_score": 90.0,
       "series": [
-        {
-          "d": "2017-09-27",
-          "v": -21.161578
-        },
-        {
-          "d": "2017-09-28",
-          "v": -21.701246
-        },
-        {
-          "d": "2017-09-29",
-          "v": -18.798243
-        },
-        {
-          "d": "2017-10-02",
-          "v": -17.17464
-        },
         {
           "d": "2017-10-03",
           "v": 0.44915
@@ -62499,7 +62507,23 @@
         },
         {
           "d": "2026-06-15",
-          "v": -9.306664
+          "v": -10.402739
+        },
+        {
+          "d": "2026-06-16",
+          "v": -14.398979
+        },
+        {
+          "d": "2026-06-17",
+          "v": -16.631225
+        },
+        {
+          "d": "2026-06-18",
+          "v": -14.297118
+        },
+        {
+          "d": "2026-06-22",
+          "v": -24.687444
         }
       ]
     },
@@ -62543,93 +62567,9 @@
       ],
       "explanation": "BTC perpetual futures funding rate, annualized (OKX BTC-USDT-SWAP, 8h interval). Funding is the payment longs make to shorts (positive) or shorts to longs (negative). Persistently elevated positive funding = leveraged long buildup, historically precedes squeezes/flushes. Neutral or negative = clean positioning.",
       "use": "Tactical timing read at signal-fire moment. Entering when funding is cool or negative reduces the odds of being a late long that gets flushed. Funding >30% annualized = the trade is crowded.",
-      "value": -8.92955772358425,
-      "sub_score": 100.0,
+      "value": 4.58653742892225,
+      "sub_score": 80.0,
       "series": [
-        {
-          "d": "2026-05-13",
-          "v": 9.492726
-        },
-        {
-          "d": "2026-05-14",
-          "v": 7.253172
-        },
-        {
-          "d": "2026-05-14",
-          "v": 4.24085
-        },
-        {
-          "d": "2026-05-14",
-          "v": 1.098046
-        },
-        {
-          "d": "2026-05-15",
-          "v": 3.907329
-        },
-        {
-          "d": "2026-05-15",
-          "v": 2.351906
-        },
-        {
-          "d": "2026-05-15",
-          "v": 1.266439
-        },
-        {
-          "d": "2026-05-16",
-          "v": 6.371927
-        },
-        {
-          "d": "2026-05-16",
-          "v": 9.353839
-        },
-        {
-          "d": "2026-05-16",
-          "v": 10.95
-        },
-        {
-          "d": "2026-05-17",
-          "v": 4.516028
-        },
-        {
-          "d": "2026-05-17",
-          "v": 3.513201
-        },
-        {
-          "d": "2026-05-17",
-          "v": -3.979777
-        },
-        {
-          "d": "2026-05-18",
-          "v": -1.5046
-        },
-        {
-          "d": "2026-05-18",
-          "v": 7.227017
-        },
-        {
-          "d": "2026-05-18",
-          "v": 10.079718
-        },
-        {
-          "d": "2026-05-19",
-          "v": 9.500017
-        },
-        {
-          "d": "2026-05-19",
-          "v": 4.499364
-        },
-        {
-          "d": "2026-05-19",
-          "v": 10.95
-        },
-        {
-          "d": "2026-05-20",
-          "v": 7.468847
-        },
-        {
-          "d": "2026-05-20",
-          "v": 3.135775
-        },
         {
           "d": "2026-05-20",
           "v": 7.620705
@@ -62945,6 +62885,90 @@
         {
           "d": "2026-06-15",
           "v": -8.092442
+        },
+        {
+          "d": "2026-06-16",
+          "v": -1.43444
+        },
+        {
+          "d": "2026-06-16",
+          "v": -6.485435
+        },
+        {
+          "d": "2026-06-16",
+          "v": -1.189644
+        },
+        {
+          "d": "2026-06-17",
+          "v": 3.941375
+        },
+        {
+          "d": "2026-06-17",
+          "v": -2.726011
+        },
+        {
+          "d": "2026-06-17",
+          "v": -3.749297
+        },
+        {
+          "d": "2026-06-18",
+          "v": 0.547121
+        },
+        {
+          "d": "2026-06-18",
+          "v": 2.969783
+        },
+        {
+          "d": "2026-06-18",
+          "v": 3.903884
+        },
+        {
+          "d": "2026-06-19",
+          "v": 0.147235
+        },
+        {
+          "d": "2026-06-19",
+          "v": 3.553242
+        },
+        {
+          "d": "2026-06-19",
+          "v": -0.546517
+        },
+        {
+          "d": "2026-06-20",
+          "v": 2.254407
+        },
+        {
+          "d": "2026-06-20",
+          "v": -2.062139
+        },
+        {
+          "d": "2026-06-20",
+          "v": 0.228162
+        },
+        {
+          "d": "2026-06-21",
+          "v": -0.966471
+        },
+        {
+          "d": "2026-06-21",
+          "v": -1.633991
+        },
+        {
+          "d": "2026-06-21",
+          "v": -1.304717
+        },
+        {
+          "d": "2026-06-22",
+          "v": -3.158887
+        },
+        {
+          "d": "2026-06-22",
+          "v": 3.148574
+        },
+        {
+          "d": "2026-06-22",
+          "v": 4.53958
         }
       ]
     },
@@ -62982,37 +63006,9 @@
       ],
       "explanation": "SSR = BTC Market Cap / Total Stablecoin Supply (USDT + USDC + DAI). Proxy for how much capital is sitting on the sidelines in stables vs deployed in BTC. Low SSR = lots of stablecoin dry powder relative to BTC's size = future buying capacity. Was the cleanest 2023 bottom indicator.",
       "use": "Slow-moving structural read. Low SSR during an entry signal = there's capital to deploy into the move. High SSR = stablecoin pool already mostly drained into BTC, less buying capacity remaining.",
-      "value": 5.042996139757592,
-      "sub_score": 75.0,
+      "value": 4.8790139686467775,
+      "sub_score": 100.0,
       "series": [
-        {
-          "d": "2025-06-16",
-          "v": 9.508978
-        },
-        {
-          "d": "2025-06-17",
-          "v": 9.638031
-        },
-        {
-          "d": "2025-06-18",
-          "v": 9.424322
-        },
-        {
-          "d": "2025-06-19",
-          "v": 9.426152
-        },
-        {
-          "d": "2025-06-20",
-          "v": 9.425316
-        },
-        {
-          "d": "2025-06-21",
-          "v": 9.298762
-        },
-        {
-          "d": "2025-06-22",
-          "v": 9.133651
-        },
         {
           "d": "2025-06-23",
           "v": 9.082888
@@ -64443,18 +64439,46 @@
         },
         {
           "d": "2026-06-15",
-          "v": 5.042996
+          "v": 4.961634
+        },
+        {
+          "d": "2026-06-16",
+          "v": 5.003062
+        },
+        {
+          "d": "2026-06-17",
+          "v": 4.952245
+        },
+        {
+          "d": "2026-06-18",
+          "v": 4.867624
+        },
+        {
+          "d": "2026-06-19",
+          "v": 4.756424
+        },
+        {
+          "d": "2026-06-20",
+          "v": 4.782017
+        },
+        {
+          "d": "2026-06-21",
+          "v": 4.853607
+        },
+        {
+          "d": "2026-06-22",
+          "v": 4.879014
         }
       ]
     }
   },
   "snapshot": {
-    "btc_price": 66816.703125,
-    "mstr_price": 133.8000030517578,
-    "mnav": 0.7890418143065565,
-    "mstr_btc_holdings": 846842.0,
+    "btc_price": 64582.171875,
+    "mstr_price": 110.2249984741211,
+    "mnav": 0.675582537887637,
+    "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
     "mstr_btc_holdings_source": "strategy.com/purchases",
-    "mstr_iv_atm": 0.7387721435546875
+    "mstr_iv_atm": 0.7863790893554687
   }
 }
