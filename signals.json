@@ -450,7 +450,7 @@
       "exit_reason": "V8_TIER1B_MERGE",
       "exit_code": "V8_TIER1B_MERGE",
       "days": 77,
-      "pnl": null,
+      "pnl": 15720788.82,
       "pnl_pct": 64.7838,
       "open": false
     },

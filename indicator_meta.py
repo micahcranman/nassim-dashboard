@@ -93,21 +93,28 @@ INDICATOR_META = {
         ),
         "use": "Extreme fear (<25) corroborates a long; greed (>75) corroborates a hedge, more loosely.",
     },
-    "tbl": {
-        "label": "TBL Liquidity",
-        "category": "Liquidity",
-        "value_fmt": ".2f",
+    "tbl_indicator": {
+        "label": "TBL Liquidity Indicator",
+        "category": "Liquidity Momentum",
+        "value_fmt": ".3f",
         "value_suffix": "",
-        "direction": "expanding = bullish",
-        "regime_bands": [],
+        "direction": "rising = bullish",
+        "regime_bands": [
+            {"lo": -0.30, "hi": -0.06, "label": "Falling (risk-off)", "color": "#ea3943"},
+            {"lo": -0.06, "hi": -0.02, "label": "Rolling over",       "color": "#f9844a"},
+            {"lo": -0.02, "hi": 0.02,  "label": "Neutral",            "color": "#f3c623"},
+            {"lo": 0.02,  "hi": 0.06,  "label": "Turning up",         "color": "#7bd88f"},
+            {"lo": 0.06,  "hi": 0.30,  "label": "Rising (risk-on)",   "color": "#16c784"},
+        ],
         "explanation": (
-            "The Bitcoin Layer's AI liquidity supertrend — a macro liquidity regime read. "
-            "Expanding liquidity is risk-on (supports MSTR/BTC); contracting is risk-off. Feeds "
-            "the SEPARATE macro/liquidity panel, never the core conviction. Fetched headlessly "
-            "from a login-gated TBL research page in CI; carries no weight until its live scale "
-            "is confirmed and its skill is measured by the calibrator."
+            "The Bitcoin Layer's Liquidity Indicator — the slope of their liquidity cycle (±0.26), "
+            "i.e. liquidity MOMENTUM. Rising = liquidity accelerating, risk-on (long-supportive); "
+            "rolling over = risk-off. Its zero-crossings are TBL's green(buy)/red(sell) dots. This "
+            "is the clean, composite version of net-liq acceleration — a coincident 'what now' read. "
+            "From TBL's public Supabase history (since 2024-03). The liquidity LEVEL (score 0–100) "
+            "and cycle live in the dedicated TBL Liquidity section."
         ),
-        "use": "A liquidity tailwind/headwind backdrop, not a top/bottom timing signal.",
+        "use": "A green (up-cross) corroborates a long; a red (down-cross) corroborates a hedge.",
     },
     "rsi": {
         "label": "BTC RSI-14",

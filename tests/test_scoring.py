@@ -56,17 +56,20 @@ def test_net_zone_confidence_is_magnitude():
 
 
 # ---- compute_meters: core net excludes macro; macro reported separately ----
-def test_compute_meters_core_vs_macro():
-    raw = {"mvrv_z": -0.5, "mnav": 0.8, "feargreed": 20, "rsi": 20,   # core, max long
-           "hy_oas": 2.0, "funding": -1.0}                            # macro
+def test_macro_bucket_retired():
+    """Macro is retired: funding + tbl_indicator are now CORE; there is no macro score."""
+    assert scoring.MACRO_KEYS == set()
+    raw = {"mvrv_z": -0.5, "mnav": 0.8, "feargreed": 20, "rsi": 20,
+           "funding": -10.0, "tbl_indicator": 0.10}
     m = compute_meters(raw)
-    assert m["net_conviction"] is not None and m["net_conviction"] > 60
+    assert m["net_conviction"] is not None and m["net_conviction"] > 50
     assert m["zone"] == "LONG"
-    # macro keys must NOT leak into the core contributions
-    assert "hy_oas" not in m["contributions"]
-    assert "funding" not in m["contributions"]
-    assert "hy_oas" in m["macro_contributions"]
-    assert m["macro_score"] is not None
+    # funding + tbl_indicator now live in the CORE contributions
+    assert "funding" in m["contributions"]
+    assert "tbl_indicator" in m["contributions"]
+    # the old macro inputs are gone entirely
+    assert "hy_oas" not in scoring.SPECS and "netliq_trend" not in scoring.SPECS
+    assert m["macro_score"] is None and m["macro_contributions"] == {}
 
 def test_compute_meters_top_reads_short():
     raw = {"mvrv_z": 3.5, "mnav": 2.8, "feargreed": 85, "rsi": 80, "nupl": 0.72}
@@ -119,3 +122,59 @@ def test_effective_specs_has_all_core_indicators():
     for k in ("mri", "mvrv_z", "nupl", "sth_sopr", "sth_mvrv", "feargreed", "rsi",
               "mnav", "slope_5d", "mstr_btc_trend"):
         assert k in specs and "band" in specs[k]
+
+
+# ---- slope_5d dropped from the conviction (both models), tile-only ----
+def test_slope_dropped_from_conviction_both_models():
+    """slope_5d must NOT vote in either model — it's gate-only now."""
+    assert "slope_5d" not in scoring.CORE_W
+    assert "slope_5d" not in scoring.CORE_W_TOP_V2
+    assert "slope_5d" not in scoring.CORE_W_BOT_V2
+    raw = {"mvrv_z": 3.5, "mnav": 2.8, "slope_5d": 6.0, "rsi": 80}
+    for mode in ("current", "v2"):
+        m = compute_meters(raw, mode)
+        assert "slope_5d" not in m["contributions"], f"slope leaked into {mode}"
+    # but its band survives so the tile can still render a signed read
+    assert indicator_score("slope_5d", 6.0) is not None
+
+
+# ---- v2 mNAV non-linear TOP amplifier ----
+def test_mnav_top_gain_shape():
+    g = scoring._mnav_top_gain
+    cfg = scoring.MNAV_TOP_GAIN
+    assert g(1.0) == 1.0                      # below v_lo: no boost
+    assert g(cfg["v_lo"]) == 1.0              # at v_lo: still 1.0
+    assert abs(g(cfg["v_hi"]) - (1 + cfg["amp"])) < 1e-9   # at v_hi: full boost
+    assert g(10.0) == 1 + cfg["amp"]         # clamped above v_hi
+    # convex (gamma>1): midpoint boost is less than half the full boost
+    mid = (cfg["v_lo"] + cfg["v_hi"]) / 2
+    assert (g(mid) - 1) < cfg["amp"] / 2
+
+def test_v2_amplifier_is_top_and_v2_only():
+    """Amplifier only swells mNAV's weight in v2 mode, on the top side, when stretched."""
+    top = {"mnav": 3.4, "mvrv_z": 3.3}       # stretched premium = top
+    bot = {"mnav": 0.85, "mvrv_z": -0.5}     # discount = bottom
+    cv = compute_meters(top, "v2")["contributions"]["mnav"]
+    cc = compute_meters(top, "current")["contributions"]["mnav"]
+    # v2 effective weight is amplified well above its base 0.20; current is not
+    assert cv["weight"] > 0.5
+    assert cc["weight"] < 0.2
+    # bottom side: NO amplification (uses base bottom weight 0.13)
+    bv = compute_meters(bot, "v2")["contributions"]["mnav"]
+    assert abs(bv["weight"] - scoring.CORE_W_BOT_V2["mnav"]) < 1e-9
+
+def test_v2_cycle_top_crosses_decisively():
+    """A full blow-off (mNAV 3.4 + hot BTC cycle) must read deep SHORT-TOP in v2."""
+    raw = {"mnav": 3.4, "mvrv_z": 3.4, "nupl": 0.72, "sth_sopr": 1.1,
+           "feargreed": 90, "rsi": 80, "mstr_btc_trend": 60}
+    m = compute_meters(raw, "v2")
+    assert m["net_conviction"] < -65 and m["read"] == "SHORT-TOP"
+
+def test_curve_vs_step_consistent_direction():
+    """_curve (v2) and _signed (current) agree in sign/orientation through the anchors."""
+    for k in ("mnav", "mvrv_z", "rsi"):
+        band = scoring._effective_specs()[k]["band"]
+        for v in (0.5, 1.5, 3.0, 50, 80):
+            step = scoring._signed(v, band)
+            curve = scoring._curve(v, band)
+            assert (step >= 0) == (curve >= 0) or abs(step) < 20 or abs(curve) < 20

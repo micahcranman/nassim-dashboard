@@ -32,12 +32,55 @@ SHORT_ZONE = 25.0  # symmetric: net < -25 = short
 
 
 def _signed(value: float, bands) -> float:
-    """bands: ascending list of (upper_exclusive, score); last upper = inf. Returns the
-    score of the first band whose upper bound exceeds value."""
+    """STEP form (current model): bands = ascending (upper_exclusive, score); last upper = inf.
+    Returns the score of the first band whose upper bound exceeds value."""
     for upper, score in bands:
         if value < upper:
             return float(score)
     return float(bands[-1][1])
+
+
+def _curve(value: float, bands) -> float:
+    """CURVE form (v2 model): piecewise-LINEAR interpolation through the SAME band anchors — no
+    artificial cliffs, smooth + monotonic. Flat below the first threshold (at its score) and flat
+    above the last (at the inf score); the inf score is reached one step-width past the last finite
+    threshold so the tail ramps in rather than jumping."""
+    fin = [(t, s) for (t, s) in bands if t != float("inf")]
+    if not fin:
+        return float(bands[-1][1])
+    xs = [t for t, _ in fin]
+    ys = [s for _, s in fin]
+    tail = float(bands[-1][1])
+    if len(xs) >= 2 and tail != ys[-1]:           # ramp into the inf-score tail
+        xs = xs + [xs[-1] + (xs[-1] - xs[-2])]
+        ys = ys + [tail]
+    if value <= xs[0]:
+        return float(ys[0])
+    if value >= xs[-1]:
+        return float(ys[-1])
+    for i in range(1, len(xs)):
+        if value <= xs[i]:
+            x0, x1, y0, y1 = xs[i - 1], xs[i], ys[i - 1], ys[i]
+            return float(y0 + (value - x0) / (x1 - x0) * (y1 - y0))
+    return float(ys[-1])
+
+
+# mNAV non-linear TOP amplifier (v2 model only). At a CYCLE top mNAV's lone -100 gets diluted
+# in the weighted average by the slow BTC-cycle metrics that read only mildly negative — so the
+# net "barely" crosses the cycle-top line (per Micah). This boosts mNAV's EFFECTIVE weight
+# super-linearly as the premium climbs into the blow-off zone ("exponentially more impact in the
+# ~2.5-3.4x range"), so a stretched premium DOMINATES the read instead of being averaged away.
+# A value-gated multiplier: 1.0 below v_lo, 1+amp at/above v_hi, convex (gamma>1) ramp between
+# so most of the boost lands in the upper zone. TOP-side only (score<0); bottoms are untouched.
+MNAV_TOP_GAIN = {"v_lo": 1.8, "v_hi": 3.4, "amp": 3.0, "gamma": 1.7}
+
+
+def _mnav_top_gain(value) -> float:
+    g = MNAV_TOP_GAIN
+    if value is None:
+        return 1.0
+    t = max(0.0, min(1.0, (value - g["v_lo"]) / (g["v_hi"] - g["v_lo"])))
+    return 1.0 + g["amp"] * (t ** g["gamma"])
 
 
 # Signed bands: + bullish/bottom, - bearish/top. Centered so mid-cycle ≈ 0.
@@ -52,8 +95,10 @@ def _signed(value: float, bands) -> float:
 #
 SPECS: Dict[str, Dict[str, Any]] = {
     # --- BTC cycle cluster ---
-    "mri": {  # <12 Q-fire. Strong bottom-caller, WEAK top-caller (floors at -50).
-        "band": [(12, 100), (20, 82), (30, 55), (45, 28), (65, 0), (80, -22), (92, -38), (float("inf"), -50)],
+    "mri": {  # <12 is the Q-fire THRESHOLD, not max capitulation — true capitulation is the ~1st
+              # pctile (MRI ~3-7). So +100 now requires MRI<7 (deep); at the 12 threshold it reads
+              # +84 (strong long, not saturated) so it doesn't overstate a borderline reading.
+        "band": [(7, 100), (12, 84), (18, 62), (28, 40), (45, 15), (60, -10), (75, -32), (90, -45), (float("inf"), -52)],
         "w": 0.11,
     },
     "mvrv_z": {  # recent-cycle TOPS sit at z≈3-3.5 (not 7 like 2017) → band steepened so the
@@ -102,49 +147,63 @@ SPECS: Dict[str, Dict[str, Any]] = {
         "band": [(-35, 50), (-20, 22), (-8, 5), (-3, 0), (5, -18), (15, -55), (25, -80), (float("inf"), -100)],
         "w": 0.12,
     },
-    # --- macro cluster (total ≈ 0.22) ---
-    "hy_oas": {  # tight = risk-on; widening = risk-off
-        "band": [(3, 55), (4, 15), (4.5, 0), (5, -35), (6, -70), (float("inf"), -95)],
-        "w": 0.06,
+    # --- positioning + liquidity momentum (moved INTO core per Micah; the old macro bucket —
+    #     hy_oas / netliq_trend / m2_trend / TBL-score — is RETIRED. Net liquidity decayed to
+    #     noise post-ETF; TBL's liquidity LEVEL lives in its own section, not the conviction.) ---
+    "funding": {  # contrarian froth/positioning: deeply negative = capitulation (long), hot
+                  # perps = crowded longs / squeeze risk (short). A fast coincident contrarian.
+        "band": [(-20, 90), (-5, 55), (0, 40), (5, 15), (15, -10), (30, -45), (50, -75), (float("inf"), -95)],
+        "w": 0.08,
     },
-    "funding": {  # cool/neg clean-long; hot = squeeze risk
-        "band": [(0, 40), (5, 15), (15, -10), (30, -45), (50, -75), (float("inf"), -95)],
-        "w": 0.06,
-    },
-    "netliq_trend": {
-        "band": [(-3, -50), (-1, -25), (0, 0), (2, 30), (float("inf"), 55)],
-        "w": 0.05,
-    },
-    "m2_trend": {
-        "band": [(-1, -40), (0, -15), (1, 10), (2, 30), (float("inf"), 50)],
-        "w": 0.05,
-    },
-    "tbl": {  # The Bitcoin Layer AI liquidity supertrend. Expanding liquidity = risk-on
-              # (long-supportive, +), contracting = risk-off (short, -). PROVISIONAL band:
-              # the live value's exact scale is confirmed once the TBL payload is captured in
-              # CI; until then tbl carries 0 macro weight (calibration_config.macro_w omits it),
-              # so a mis-scale can't move the panel. Symmetric around 0.
-        "band": [(-2, -70), (-1, -35), (-0.25, -10), (0.25, 0), (1, 20), (2, 45), (float("inf"), 70)],
-        "w": 0.0,
+    "tbl_indicator": {  # TBL Liquidity Indicator = slope of the liquidity cycle (±0.26). Measured
+                        # skill (per swing size): it calls LOCAL TOPS well (AUC ~0.59 as swings get
+                        # smaller) but its local-BOTTOM signal is weak/INVERTED (liquidity momentum
+                        # lags at price bottoms, since it leads). So the band is LOCAL-CAPPED (never
+                        # alone reaches a CYCLE extreme ±65) and ASYMMETRIC: trust the negative/
+                        # local-top side (down to -48), dampen the positive/local-bottom side (+35 cap).
+        "band": [(-0.13, -48), (-0.06, -34), (-0.02, -14), (0.02, 0), (0.06, 14), (0.13, 28), (float("inf"), 35)],
+        "w": 0.10,
     },
 }
 
 
-# Macro is pulled OUT of the core conviction (it adds noise per Micah) and reported as a
-# separate score. TBL liquidity will join this group later.
-MACRO_KEYS = {"m2_trend", "netliq_trend", "hy_oas", "funding", "tbl"}
+# The separate macro bucket is RETIRED (per Micah: ditch all macro signals except TBL; funding
+# moves into core; TBL's liquidity LEVEL gets its own section). Everything scored is now core.
+MACRO_KEYS: set = set()
 
-# CORE weights — concentrated on the TOP-CALLERS (mnav / mvrv_z / mstr_btc_trend / slope_5d
-# / sth_mvrv = 0.70 combined) so that when several max out together at a CYCLE top the net
-# saturates toward -100, while a lone signal firing (local top) lands ~-40/-60. That's what
-# separates cycle extremes from local extremes.
+# CORE weights — top-callers (mnav / mvrv_z / mstr_btc_trend / sth_mvrv) concentrated so several
+# maxing together at a CYCLE top saturate the net toward -100 vs a lone local-top signal at
+# ~-40/-60. funding (contrarian) + tbl_indicator (liquidity momentum) join core.
+# slope_5d is DROPPED from the conviction entirely (per Micah) — it's wrong both directions as a
+# timer and adds noise; it survives only as the v8.5 hedge GATE in strategy_state (derived).
 CORE_W = {
-    "mnav": 0.17, "mvrv_z": 0.15, "mstr_btc_trend": 0.11, "slope_5d": 0.10, "sth_mvrv": 0.10,
-    "mri": 0.10, "nupl": 0.08, "sth_sopr": 0.06, "feargreed": 0.07, "rsi": 0.06,
+    "mnav": 0.16, "mvrv_z": 0.14, "mstr_btc_trend": 0.10, "sth_mvrv": 0.09,
+    "mri": 0.09, "nupl": 0.07, "sth_sopr": 0.05, "feargreed": 0.06, "rsi": 0.05,
+    "funding": 0.08, "tbl_indicator": 0.12,
 }
-# Macro sub-score weights (relative, within the macro panel only).
-# tbl default 0 until its live scale is confirmed and calibrate_weights can measure its skill.
-MACRO_W = {"hy_oas": 0.35, "netliq_trend": 0.25, "funding": 0.20, "m2_trend": 0.20, "tbl": 0.0}
+MACRO_W: dict = {}
+
+# ---- v2 model: DIRECTIONAL JUDGMENT weights (NOT AUC-fit). Set from each indicator's MSTR-
+# specific relevance + demonstrated reliability at the real cycle turns (conditional forward
+# MSTR move), accepting we can't statistically fit 2-3 cycle tops. Paired with CURVE scoring.
+#   - mNAV is the heaviest TOP weight: it's the cleanest MSTR-specific over-valuation read
+#     (premium to the BTC it holds; 3.4 marked both cycle tops). RSI/STH-SOPR are bottom
+#     specialists (oversold/capitulation → reliable bounce, useless at tops). MA200 slope is a
+#     gate, near-zero. mstr_btc_trend is MSTR-euphoria, top-only.  (each side sums to ~1.0)
+#   slope_5d is DROPPED entirely (per Micah) — see CORE_W note. Weights below no longer sum to
+#   exactly 1.0 (slope's old 0.02 removed); harmless since net = Σw·s / Σw is a weighted average.
+#   The mNAV TOP side is further amplified at runtime by _mnav_top_gain (blow-off zone) so the
+#   0.20 base swells toward ~0.44 when the premium is stretched.
+CORE_W_TOP_V2 = {
+    "mnav": 0.20, "mvrv_z": 0.16, "mri": 0.11, "nupl": 0.10, "sth_mvrv": 0.09,
+    "mstr_btc_trend": 0.09, "sth_sopr": 0.06, "feargreed": 0.05, "funding": 0.05,
+    "tbl_indicator": 0.04, "rsi": 0.03,
+}
+CORE_W_BOT_V2 = {
+    "mnav": 0.13, "mvrv_z": 0.13, "sth_sopr": 0.13, "rsi": 0.12, "mri": 0.12,
+    "nupl": 0.11, "sth_mvrv": 0.08, "funding": 0.07, "feargreed": 0.05,
+    "mstr_btc_trend": 0.03, "tbl_indicator": 0.01,
+}
 
 
 def export_config() -> dict:
@@ -158,7 +217,14 @@ def export_config() -> dict:
         bands[k] = [[(None if u == float("inf") else u), sc] for (u, sc) in v["band"]]
     return {
         "bands": bands,
+        # current model (step bands + AUC-derived directional weights)
         "core_w": cal.get("core_w", CORE_W),
+        "core_w_top": cal.get("core_w_top"),
+        "core_w_bot": cal.get("core_w_bot"),
+        # v2 model (curve interpolation + MSTR-specific judgment weights)
+        "core_w_top_v2": CORE_W_TOP_V2,
+        "core_w_bot_v2": CORE_W_BOT_V2,
+        "mnav_top_gain": MNAV_TOP_GAIN,  # v2 non-linear mNAV top-weight amplifier (JS mirrors this)
         "macro_w": cal.get("macro_w", MACRO_W),
         "macro_keys": sorted(MACRO_KEYS),
         "zones": {"long_cap": 65, "long_local": 28, "short_local": -28, "short_top": -65},
@@ -190,36 +256,53 @@ def _effective_specs() -> Dict[str, Dict[str, Any]]:
     return specs
 
 
-def indicator_score(key: str, value: Optional[float], specs=None) -> Optional[float]:
-    """Signed score in [-100,100] for one indicator, or None if unavailable."""
+def indicator_score(key: str, value: Optional[float], specs=None, interp: bool = False) -> Optional[float]:
+    """Signed score in [-100,100] for one indicator, or None if unavailable.
+    interp=False → STEP bands (current model); interp=True → CURVE interpolation (v2 model)."""
     if value is None:
         return None
     specs = specs or _effective_specs()
     spec = specs.get(key)
     if not spec:
         return None
-    return _signed(value, spec["band"])
+    return (_curve if interp else _signed)(value, spec["band"])
 
 
-def compute_meters(raw: Dict[str, Optional[float]]) -> Dict[str, Any]:
-    """raw: indicator -> value. Core net conviction (macro excluded) + a SEPARATE macro score."""
+def compute_meters(raw: Dict[str, Optional[float]], mode: str = "current") -> Dict[str, Any]:
+    """raw: indicator -> value. Core net conviction. mode='current' (step+AUC) or 'v2' (curve+judgment)."""
     specs = _effective_specs()
     cal = _load_calibration() or {}
     core_w = cal.get("core_w", CORE_W)
     macro_w = cal.get("macro_w", MACRO_W)
+    # MODE: "current" = STEP bands + AUC-derived directional weights; "v2" = CURVE interpolation
+    # + the MSTR-specific directional JUDGMENT weights. The page toggle compares the two.
+    interp = (mode == "v2")
+    if mode == "v2":
+        core_w_top, core_w_bot = CORE_W_TOP_V2, CORE_W_BOT_V2
+    else:
+        core_w_top = cal.get("core_w_top")
+        core_w_bot = cal.get("core_w_bot")
+    directional = bool(core_w_top and core_w_bot)
     num = den = mnum = mden = 0.0
     contributions, macro_contrib = {}, {}
     for key in specs:
-        sc = indicator_score(key, raw.get(key), specs)
+        sc = indicator_score(key, raw.get(key), specs, interp=interp)
         if sc is None:
             continue
         rec = lambda w: {"value": raw.get(key), "score": round(sc, 1), "weight": w, "contrib": round(w * sc, 2)}
         if key in MACRO_KEYS:
             w = macro_w.get(key, 0.0)
+            if w == 0:
+                continue
             mnum += w * sc; mden += w; macro_contrib[key] = rec(w)
         else:
-            w = core_w.get(key, 0.0)
-            num += w * sc; den += w; contributions[key] = rec(w)
+            w = ((core_w_top if sc < 0 else core_w_bot).get(key, 0.0)) if directional else core_w.get(key, 0.0)
+            # v2 non-linear mNAV top amplifier: a stretched premium swells its effective weight
+            if mode == "v2" and key == "mnav" and sc < 0:
+                w *= _mnav_top_gain(raw.get(key))
+            if w == 0:   # dropped/zero-weight indicators (e.g. slope_5d) don't vote or show as drivers
+                continue
+            num += w * sc; den += w; contributions[key] = rec(round(w, 4))
     net = round(num / den, 1) if den else None
     macro_score = round(mnum / mden, 1) if mden else None
     zone, label, confidence = net_zone(net)

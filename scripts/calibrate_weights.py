@@ -87,10 +87,10 @@ def build_panel():
         "mnav": _norm(derived.get("mnav_series")),
         "mstr_btc_trend": _norm(D._pct_series(derived.get("mstr_btc_ratio_series"), 50)),
         "slope_5d": _norm(derived.get("slope_5d_series")),
-        "hy_oas": _norm(results.get("hy_oas", {}).get("series")),
+        # funding + tbl_indicator are now CORE (macro bucket retired). Both have limited history
+        # (funding ~weeks via OKX; tbl_indicator from 2024-03) → they lean on their priors.
         "funding": _norm(results.get("funding", {}).get("series")),
-        "netliq_trend": _norm(D._pct_series(results.get("netliq", {}).get("series"), 28)),
-        "m2_trend": _norm(D._pct_series(results.get("m2", {}).get("series"), 84)),
+        "tbl_indicator": _norm(results.get("tbl", {}).get("series")),
     }
     mstr_px = _norm(results.get("mstr", {}).get("series"))
     btc_px = _norm(derived.get("mnav_series"))  # placeholder, replaced below
@@ -198,21 +198,29 @@ def main():
                      "top_skill": t, "bot_skill": b, "skill": t + b})
     skill = pd.DataFrame(rows).set_index("key")
 
-    # ---- CORE weights: cluster -> cap -> allocate by skill -> shrink to prior -> normalize ----
+    # ---- CORE weights — DIRECTIONAL: an indicator's weight when it's calling a TOP (negative
+    #      score) comes from its TOP skill; its weight when calling a BOTTOM (positive score) comes
+    #      from its BOTTOM skill. So mNAV (sharp at tops, coin-flip at bottoms) bites hard at tops
+    #      but barely moves the net when bullish — instead of one symmetric average of the two.
+    #      Each direction is independently cluster-capped and shrunk to the hand prior. ----
     core = [k for k in keys if k in CORE_KEYS]
-    raw = skill.loc[core, "skill"].clip(lower=1e-3)
     clusters = cluster(scores, core)
-    capped = raw.copy()
-    for grp in clusters:
-        tot = raw[grp].sum()
-        cap = CLUSTER_CAP * raw.sum()
-        if tot > cap:
-            capped[grp] = raw[grp] * (cap / tot)
-    emp = (capped / capped.sum())
     prior = pd.Series(scoring.CORE_W).reindex(core).fillna(0.0)
     prior = prior / prior.sum()
-    core_w = (1 - SHRINK) * emp + SHRINK * prior
-    core_w = (core_w / core_w.sum()).round(3)
+    def _alloc(skill_col):
+        raw = skill.loc[core, skill_col].clip(lower=1e-3)
+        capped = raw.copy()
+        for grp in clusters:
+            tot = raw[grp].sum(); cap = CLUSTER_CAP * raw.sum()
+            if tot > cap:
+                capped[grp] = raw[grp] * (cap / tot)
+        emp = capped / capped.sum()
+        w = (1 - SHRINK) * emp + SHRINK * prior
+        return (w / w.sum()).round(3)
+    core_w_top = _alloc("top_skill")   # used when an indicator is bearish (score < 0)
+    core_w_bot = _alloc("bot_skill")   # used when an indicator is bullish (score > 0)
+    core_w = ((core_w_top + core_w_bot) / 2).round(3)   # symmetric fallback / overview
+    emp = core_w  # (kept for the audit table's "empirical w" column)
 
     # ---- MACRO weights: relative within the macro panel, skill shrunk to prior ----
     # (macro skill AUCs are noisy — funding/netliq have short, gappy histories — so we lean
@@ -230,9 +238,11 @@ def main():
 
     config = {
         "_generated_by": "scripts/calibrate_weights.py",
-        "_method": "per-indicator top/bottom AUC, |r|>0.7 cluster caps, shrink-to-prior",
+        "_method": "DIRECTIONAL top/bottom AUC weights, |r|>0.7 cluster caps, shrink-to-prior",
         "_shrink": SHRINK, "_cluster_cap": CLUSTER_CAP,
-        "core_w": {k: float(core_w[k]) for k in core},
+        "core_w": {k: float(core_w[k]) for k in core},          # symmetric overview/fallback
+        "core_w_top": {k: float(core_w_top[k]) for k in core},  # weight when bearish (score<0)
+        "core_w_bot": {k: float(core_w_bot[k]) for k in core},  # weight when bullish (score>0)
         "macro_w": {k: float(macro_w[k]) for k in macro},
     }
     OUT_CONFIG.write_text(json.dumps(config, indent=2))
@@ -279,23 +289,32 @@ def main():
     for i, grp in enumerate(clusters, 1):
         for k in grp:
             cluster_of[k] = i
+
+    def _r(x):  # round, but NaN/inf -> None so the emitted JSON is browser-parseable (no literal NaN)
+        try:
+            x = float(x)
+        except (TypeError, ValueError):
+            return None
+        return None if (np.isnan(x) or np.isinf(x)) else round(x, 3)
+
     audit = {
         "_generated_by": "scripts/calibrate_weights.py",
         "panel_start": str(df.index.min().date()), "panel_end": str(df.index.max().date()),
         "panel_days": int(len(df)),
         "near_top_days": int(near_top.sum()), "near_bottom_days": int(near_bottom.sum()),
         "shrink": SHRINK, "cluster_cap": CLUSTER_CAP,
-        "core": [{"key": k, "top_auc": round(float(skill.loc[k, "top_auc"]), 3),
-                  "bot_auc": round(float(skill.loc[k, "bot_auc"]), 3),
-                  "skill": round(float(skill.loc[k, "skill"]), 3),
-                  "prior_w": round(float(prior[k]), 3), "empirical_w": round(float(emp[k]), 3),
-                  "final_w": round(float(core_w[k]), 3), "cluster": cluster_of.get(k)} for k in core],
-        "macro": [{"key": k, "top_auc": round(float(skill.loc[k, "top_auc"]), 3),
-                   "bot_auc": round(float(skill.loc[k, "bot_auc"]), 3),
-                   "weight": round(float(macro_w[k]), 3)} for k in macro],
+        "core": [{"key": k, "top_auc": _r(skill.loc[k, "top_auc"]),
+                  "bot_auc": _r(skill.loc[k, "bot_auc"]),
+                  "skill": _r(skill.loc[k, "skill"]),
+                  "prior_w": _r(prior[k]), "empirical_w": _r(emp[k]),
+                  "final_w": _r(core_w[k]), "top_w": _r(core_w_top[k]), "bot_w": _r(core_w_bot[k]),
+                  "cluster": cluster_of.get(k)} for k in core],
+        "macro": [{"key": k, "top_auc": _r(skill.loc[k, "top_auc"]),
+                   "bot_auc": _r(skill.loc[k, "bot_auc"]),
+                   "weight": _r(macro_w[k])} for k in macro],
         "clusters": [{"id": i, "members": grp} for i, grp in enumerate(clusters, 1)],
     }
-    OUT_AUDIT_JSON.write_text(json.dumps(audit, indent=2))
+    OUT_AUDIT_JSON.write_text(json.dumps(audit, indent=2, allow_nan=False))
 
     print(f"Wrote {OUT_CONFIG.name}, {OUT_REPORT.name} and {OUT_AUDIT_JSON.name}")
     print("\ncore_w:", json.dumps(config["core_w"]))

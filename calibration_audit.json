@@ -1,34 +1,201 @@
 {
   "_generated_by": "scripts/calibrate_weights.py",
   "panel_start": "2020-08-01",
-  "panel_end": "2026-06-20",
-  "panel_days": 2150,
+  "panel_end": "2026-06-25",
+  "panel_days": 2155,
   "near_top_days": 607,
   "near_bottom_days": 1052,
   "shrink": 0.45,
   "cluster_cap": 0.42,
   "core": [
-    {"key": "mri", "top_auc": 0.588, "bot_auc": 0.595, "skill": 0.183, "prior_w": 0.1, "empirical_w": 0.102, "final_w": 0.101, "cluster": 1},
-    {"key": "mvrv_z", "top_auc": 0.58, "bot_auc": 0.589, "skill": 0.169, "prior_w": 0.15, "empirical_w": 0.095, "final_w": 0.12, "cluster": 1},
-    {"key": "nupl", "top_auc": 0.558, "bot_auc": 0.579, "skill": 0.136, "prior_w": 0.08, "empirical_w": 0.076, "final_w": 0.078, "cluster": 1},
-    {"key": "sth_sopr", "top_auc": 0.575, "bot_auc": 0.579, "skill": 0.154, "prior_w": 0.06, "empirical_w": 0.122, "final_w": 0.094, "cluster": 2},
-    {"key": "sth_mvrv", "top_auc": 0.588, "bot_auc": 0.6, "skill": 0.188, "prior_w": 0.1, "empirical_w": 0.105, "final_w": 0.103, "cluster": 1},
-    {"key": "feargreed", "top_auc": 0.595, "bot_auc": 0.617, "skill": 0.211, "prior_w": 0.07, "empirical_w": 0.118, "final_w": 0.096, "cluster": 1},
-    {"key": "rsi", "top_auc": 0.606, "bot_auc": 0.617, "skill": 0.223, "prior_w": 0.06, "empirical_w": 0.177, "final_w": 0.124, "cluster": 2},
-    {"key": "mnav", "top_auc": 0.503, "bot_auc": 0.608, "skill": 0.111, "prior_w": 0.17, "empirical_w": 0.088, "final_w": 0.125, "cluster": 3},
-    {"key": "mstr_btc_trend", "top_auc": 0.582, "bot_auc": 0.551, "skill": 0.133, "prior_w": 0.11, "empirical_w": 0.105, "final_w": 0.107, "cluster": 4},
-    {"key": "slope_5d", "top_auc": 0.522, "bot_auc": 0.487, "skill": 0.022, "prior_w": 0.1, "empirical_w": 0.013, "final_w": 0.052, "cluster": 1}
+    {
+      "key": "mri",
+      "top_auc": 0.589,
+      "bot_auc": 0.597,
+      "skill": 0.187,
+      "prior_w": 0.082,
+      "empirical_w": 0.09,
+      "final_w": 0.09,
+      "top_w": 0.085,
+      "bot_w": 0.096,
+      "cluster": 1
+    },
+    {
+      "key": "mvrv_z",
+      "top_auc": 0.581,
+      "bot_auc": 0.588,
+      "skill": 0.168,
+      "prior_w": 0.127,
+      "empirical_w": 0.106,
+      "final_w": 0.106,
+      "top_w": 0.101,
+      "bot_w": 0.111,
+      "cluster": 1
+    },
+    {
+      "key": "nupl",
+      "top_auc": 0.559,
+      "bot_auc": 0.577,
+      "skill": 0.136,
+      "prior_w": 0.064,
+      "empirical_w": 0.068,
+      "final_w": 0.068,
+      "top_w": 0.061,
+      "bot_w": 0.075,
+      "cluster": 1
+    },
+    {
+      "key": "sth_sopr",
+      "top_auc": 0.576,
+      "bot_auc": 0.578,
+      "skill": 0.154,
+      "prior_w": 0.045,
+      "empirical_w": 0.077,
+      "final_w": 0.077,
+      "top_w": 0.064,
+      "bot_w": 0.09,
+      "cluster": 2
+    },
+    {
+      "key": "sth_mvrv",
+      "top_auc": 0.589,
+      "bot_auc": 0.598,
+      "skill": 0.187,
+      "prior_w": 0.082,
+      "empirical_w": 0.09,
+      "final_w": 0.09,
+      "top_w": 0.085,
+      "bot_w": 0.096,
+      "cluster": 1
+    },
+    {
+      "key": "feargreed",
+      "top_auc": 0.596,
+      "bot_auc": 0.614,
+      "skill": 0.21,
+      "prior_w": 0.055,
+      "empirical_w": 0.085,
+      "final_w": 0.085,
+      "top_w": 0.076,
+      "bot_w": 0.094,
+      "cluster": 1
+    },
+    {
+      "key": "rsi",
+      "top_auc": 0.607,
+      "bot_auc": 0.615,
+      "skill": 0.222,
+      "prior_w": 0.045,
+      "empirical_w": 0.103,
+      "final_w": 0.103,
+      "top_w": 0.082,
+      "bot_w": 0.123,
+      "cluster": 2
+    },
+    {
+      "key": "mnav",
+      "top_auc": 0.544,
+      "bot_auc": 0.548,
+      "skill": 0.092,
+      "prior_w": 0.145,
+      "empirical_w": 0.1,
+      "final_w": 0.1,
+      "top_w": 0.091,
+      "bot_w": 0.109,
+      "cluster": 3
+    },
+    {
+      "key": "mstr_btc_trend",
+      "top_auc": 0.583,
+      "bot_auc": 0.549,
+      "skill": 0.132,
+      "prior_w": 0.091,
+      "empirical_w": 0.087,
+      "final_w": 0.087,
+      "top_w": 0.089,
+      "bot_w": 0.085,
+      "cluster": 4
+    },
+    {
+      "key": "slope_5d",
+      "top_auc": 0.524,
+      "bot_auc": 0.485,
+      "skill": 0.024,
+      "prior_w": 0.082,
+      "empirical_w": 0.044,
+      "final_w": 0.044,
+      "top_w": 0.05,
+      "bot_w": 0.037,
+      "cluster": 1
+    },
+    {
+      "key": "funding",
+      "top_auc": 0.733,
+      "bot_auc": null,
+      "skill": 0.233,
+      "prior_w": 0.073,
+      "empirical_w": 0.1,
+      "final_w": 0.1,
+      "top_w": 0.167,
+      "bot_w": 0.034,
+      "cluster": 5
+    },
+    {
+      "key": "tbl_indicator",
+      "top_auc": 0.493,
+      "bot_auc": 0.482,
+      "skill": 0.0,
+      "prior_w": 0.109,
+      "empirical_w": 0.05,
+      "final_w": 0.05,
+      "top_w": 0.05,
+      "bot_w": 0.05,
+      "cluster": 6
+    }
   ],
-  "macro": [
-    {"key": "hy_oas", "top_auc": 0.401, "bot_auc": 0.396, "weight": 0.16},
-    {"key": "funding", "top_auc": 0.692, "bot_auc": null, "weight": 0.632},
-    {"key": "netliq_trend", "top_auc": 0.452, "bot_auc": 0.411, "weight": 0.115},
-    {"key": "m2_trend", "top_auc": 0.469, "bot_auc": 0.397, "weight": 0.093}
-  ],
+  "macro": [],
   "clusters": [
-    {"id": 1, "members": ["mri", "mvrv_z", "nupl", "sth_mvrv", "feargreed", "slope_5d"]},
-    {"id": 2, "members": ["sth_sopr", "rsi"]},
-    {"id": 3, "members": ["mnav"]},
-    {"id": 4, "members": ["mstr_btc_trend"]}
+    {
+      "id": 1,
+      "members": [
+        "mri",
+        "mvrv_z",
+        "nupl",
+        "sth_mvrv",
+        "feargreed",
+        "slope_5d"
+      ]
+    },
+    {
+      "id": 2,
+      "members": [
+        "sth_sopr",
+        "rsi"
+      ]
+    },
+    {
+      "id": 3,
+      "members": [
+        "mnav"
+      ]
+    },
+    {
+      "id": 4,
+      "members": [
+        "mstr_btc_trend"
+      ]
+    },
+    {
+      "id": 5,
+      "members": [
+        "funding"
+      ]
+    },
+    {
+      "id": 6,
+      "members": [
+        "tbl_indicator"
+      ]
+    }
   ]
 }

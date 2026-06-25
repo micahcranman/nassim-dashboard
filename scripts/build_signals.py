@@ -172,13 +172,15 @@ def main():
             pnl_pct = ev.get("pnl_pct")
             if pnl is None and t == "BULL_EXIT" and tr["size_usd"]:
                 pnl = round(float(ev.get("value", 0.0)) - tr["size_usd"], 2)  # all-in: NAV delta
-            if pnl is None and pnl_pct is not None and tr["size_usd"]:
-                pnl = round(tr["size_usd"] * float(pnl_pct) / 100.0, 2)
+            # Derive pnl_pct from prices FIRST (so the pnl-from-pct fallback below can use it —
+            # the previous order left merges/liquidations with a % but no $ figure).
             if pnl_pct is None:
                 if tr["direction"] == "long":
                     pnl_pct = round((tr["exit_price"] / tr["entry_price"] - 1) * 100, 4)
                 else:
                     pnl_pct = round((1 - tr["exit_price"] / tr["entry_price"]) * 100, 4)
+            if pnl is None and pnl_pct is not None and tr["size_usd"]:
+                pnl = round(tr["size_usd"] * float(pnl_pct) / 100.0, 2)
             tr["pnl"] = round(float(pnl), 2) if pnl is not None else None
             tr["pnl_pct"] = round(float(pnl_pct), 4) if pnl_pct is not None else None
             tr["open"] = False

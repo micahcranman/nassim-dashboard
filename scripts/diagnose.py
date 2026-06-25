@@ -16,7 +16,8 @@ import dashboard as D
 import scoring
 
 TARGETS = {
-    "2021-11-09": "Nov-2021 CYCLE TOP        -> want STRONG SHORT (~ -80)",
+    "2021-02-09": "Feb-2021 MSTR mNAV TOP    -> want STRONG SHORT (premium ~3.4 blow-off)",
+    "2021-11-09": "Nov-2021 BTC-cycle top    -> SHORT-LOCAL (MSTR premium already unwound, mNAV~1.2)",
     "2022-11-21": "Nov-2022 CYCLE BOTTOM     -> want STRONG LONG  (~ +85)",
     "2024-03-13": "Mar-2024 local top        -> want SHORT-LOCAL",
     "2024-11-21": "Nov-2024 CYCLE TOP        -> want NEAR-MAX SHORT (~ -90)",
@@ -54,11 +55,8 @@ def build_panel():
         "mnav": _norm(derived.get("mnav_series")),
         "mstr_btc_trend": _norm(D._pct_series(derived.get("mstr_btc_ratio_series"), 50)),
         "slope_5d": _norm(derived.get("slope_5d_series")),
-        # macro (for reference / macro panel)
-        "hy_oas": _norm(results.get("hy_oas", {}).get("series")),
         "funding": _norm(results.get("funding", {}).get("series")),
-        "netliq_trend": _norm(D._pct_series(results.get("netliq", {}).get("series"), 28)),
-        "m2_trend": _norm(D._pct_series(results.get("m2", {}).get("series"), 84)),
+        "tbl_indicator": _norm(results.get("tbl", {}).get("series")),
     }
     cols = {k: v for k, v in cols.items() if v is not None and len(v) > 5}
     end = max(v.index.max() for v in cols.values())

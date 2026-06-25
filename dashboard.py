@@ -273,6 +273,9 @@ def compute_derived(results: dict, logger):
             logger.info(f"  mNAV: shares combined — diluted from {diluted_n.index.min().date()} "
                         f"({len(diluted_n)} pts) over basic from {basic_n.index.min().date()} "
                         f"({len(basic_n)} pts) → {len(shares_hist)} total")
+        # NOTE: shares_hist is already split-consistent with the (split-adjusted) yfinance close —
+        # the mNAV lands at ≈3.4 at both the 2021 and 2024 cycle tops, matching Strategy's reported
+        # premium. (Do NOT re-apply a split factor here; that double-adjusts pre-split dates 10x.)
         holdings_hist = mstr_hist.get("holdings_series", pd.Series(dtype=float))
 
         if (not mstr_series.empty and not btc_series.empty
@@ -300,6 +303,12 @@ def compute_derived(results: dict, logger):
             mcap_s = mstr_d * shares_d
             btc_val_s = hold_d * btc_d
             mnav_s = (mcap_s / btc_val_s).dropna()
+            # Clip to the real TREASURY-COMPANY era. Before ~Jan 2021 MSTR still carried material
+            # non-BTC enterprise value (a software company that had only just started buying BTC —
+            # EV was ~4-5x its tiny BTC NAV), so "mNAV" then is NOT the BTC-premium metric it is
+            # now; that pre-treasury data poisons the top/bottom calibration. Post-Jan-2021 the
+            # premium tracks tops cleanly (≈3.4 at both the 2021 and 2024 cycle tops).
+            mnav_s = mnav_s[mnav_s.index >= "2021-01-01"]
             derived["mnav_series"] = mnav_s
             logger.info(f"  Derived: mNAV series (TRUE historical) len={len(mnav_s)}, "
                         f"range {mnav_s.min():.2f}-{mnav_s.max():.2f}, latest {mnav_s.iloc[-1]:.3f}")
@@ -406,11 +415,8 @@ def _tile_series(results, derived):
         "mnav":           derived.get("mnav_series"),
         "mstr_btc_trend": _pct_series(derived.get("mstr_btc_ratio_series"), 50),
         "slope_5d":       derived.get("slope_5d_series"),
-        "m2_trend":       _pct_series(results["m2"]["series"], 84),
-        "netliq_trend":   _pct_series(results["netliq"]["series"], 28),
-        "hy_oas":         results["hy_oas"]["series"],
         "funding":        results["funding"]["series"],
-        "tbl":            results.get("tbl", {}).get("series", pd.Series(dtype=float)),
+        "tbl_indicator":  results.get("tbl", {}).get("series", pd.Series(dtype=float)),
     }
 
 
@@ -425,11 +431,8 @@ def build_raw_for_meters(results, derived):
         "feargreed":      results["feargreed"]["value"],
         "rsi":            results["rsi"]["value"],
         "mnav":           derived.get("mnav"),
-        "m2_trend":       derived.get("m2_12w_pct"),
-        "netliq_trend":   derived.get("netliq_4w_pct"),
-        "hy_oas":         results["hy_oas"]["value"],
         "funding":        results["funding"]["value"],
-        "tbl":            results.get("tbl", {}).get("value"),
+        "tbl_indicator":  results.get("tbl", {}).get("value"),
         "mstr_btc_trend": derived.get("mstr_btc_50d_pct"),
         "slope_5d":       derived.get("slope_5d"),
     }
@@ -462,9 +465,10 @@ def build_strategy_state(derived):
     }
 
 
-def compute_oscillator_history(results, derived, scoring):
+def compute_oscillator_history(results, derived, scoring, mode="current"):
     """Backfill the net-conviction oscillator over ~5y from the daily indicator series,
-    so the centerpiece chart has real history (not one point). Returns list + summary."""
+    so the centerpiece chart has real history (not one point). Returns (list, last-day meters).
+    mode='current' (step+AUC) or 'v2' (curve+judgment) — for the A/B page toggle."""
     def _norm(s):
         if s is None or len(s) == 0:
             return None
@@ -472,7 +476,11 @@ def compute_oscillator_history(results, derived, scoring):
         s.index = pd.to_datetime(s.index)
         if getattr(s.index, "tz", None) is not None:
             s.index = s.index.tz_localize(None)
-        return s[~s.index.duplicated(keep="last")].sort_index()
+        # normalize to calendar day + keep the LAST reading of each day, so intraday series
+        # (funding, 8h) score the same value the emitted tile series exposes to the JS scrubber.
+        s.index = s.index.normalize()
+        s = s.sort_index()
+        return s[~s.index.duplicated(keep="last")]
 
     cols = {
         "mri": _norm(results.get("mri", {}).get("series")),
@@ -485,19 +493,28 @@ def compute_oscillator_history(results, derived, scoring):
         "mnav": _norm(derived.get("mnav_series")),
         "mstr_btc_trend": _norm(_pct_series(derived.get("mstr_btc_ratio_series"), 50)),
         "slope_5d": _norm(derived.get("slope_5d_series")),
+        "funding": _norm(results.get("funding", {}).get("series")),
+        "tbl_indicator": _norm(results.get("tbl", {}).get("series")),
     }
     cols = {k: v for k, v in cols.items() if v is not None and len(v) > 30}
     if not cols:
         return []
     end = max(v.index.max() for v in cols.values())
-    start = max(min(v.index.min() for v in cols.values()),
-                pd.Timestamp(date.today()) - pd.Timedelta(days=365 * 5))
+    # Anchor the backfill to the MSTR-mNAV TREASURY ERA start (2021-01-01), NOT a rolling 5y
+    # window. The old 5y cap (today-1826d ≈ mid-2021) silently chopped off the FEB-2021 mNAV
+    # blow-off (premium peaked ~3.41x on 2021-02-09 — the real MSTR cycle top), so the chart
+    # never showed it and the model never scored it. Pre-2021 stays excluded (EV-distorted, and
+    # mnav_series is clipped there anyway). Indicator tile series already reach ≥2021-01-01, so
+    # the JS scrubber can recompute any pinned era date. (era floor avoids unbounded growth vs
+    # min-of-all-series, which would drag in pre-treasury 2014-era BTC history.)
+    ERA_START = pd.Timestamp("2021-01-01")
+    start = max(min(v.index.min() for v in cols.values()), ERA_START)
     idx = pd.date_range(start, end, freq="D")
     df = pd.DataFrame({k: v.reindex(idx).ffill() for k, v in cols.items()})
     nets = []
     for _, rv in df.iterrows():
         raw = {k: (float(rv[k]) if pd.notna(rv[k]) else None) for k in cols}
-        nets.append(scoring.compute_meters(raw)["net_conviction"])
+        nets.append(scoring.compute_meters(raw, mode)["net_conviction"])
     net_s = pd.Series(nets, index=idx)
     smooth = net_s.ewm(span=14, min_periods=1).mean()
     out = []
@@ -506,7 +523,13 @@ def compute_oscillator_history(results, derived, scoring):
             continue
         out.append({"d": t.strftime("%Y-%m-%d"), "net": nets[i],
                     "smooth": round(float(smooth.iloc[i]), 1)})
-    return out
+    # The most-recent ALIGNED day = the authoritative "now" headline, so the big number matches
+    # the last point on the chart (and the scrubber) instead of a separately-computed snapshot
+    # that could straddle a zone threshold.
+    last_raw = {k: (float(df[k].iloc[-1]) if pd.notna(df[k].iloc[-1]) else None) for k in cols}
+    last_meters = scoring.compute_meters(last_raw, mode)
+    last_meters["as_of"] = idx[-1].strftime("%Y-%m-%d")
+    return out, last_meters
 
 
 def append_history(meters, strat, results, derived, ts):
@@ -542,7 +565,22 @@ def _series_to_points(series, decimals=6, years=6):
     out = []
     if series is None or len(series) == 0:
         return out
-    for idx, v in series.dropna().tail(365 * years).items():
+    s = series.dropna()
+    # Collapse any intraday / duplicate-day points to ONE per calendar day (keep last). funding is
+    # 8h-granular; emitting 3 points/day made the JS scrubber's valAt (matches on the YYYY-MM-DD
+    # string) read a different value than the daily backend pipeline scores → a pinned-date driver
+    # bar that disagreed with the headline. One-per-day keeps them in lockstep (and tail() then
+    # counts DAYS, not raw points, so the window length is right for intraday series too).
+    try:
+        s.index = pd.to_datetime(s.index)
+        if getattr(s.index, "tz", None) is not None:
+            s.index = s.index.tz_localize(None)
+        s.index = s.index.normalize()
+        s = s.sort_index()
+        s = s[~s.index.duplicated(keep="last")]
+    except Exception:
+        pass
+    for idx, v in s.tail(365 * years).items():
         try:
             d = idx.strftime("%Y-%m-%d")
         except Exception:
@@ -563,8 +601,21 @@ def main():
     logger.info("Scoring (signed net-conviction oscillator)...")
     import scoring
     raw = build_raw_for_meters(results, derived)
-    meters = scoring.compute_meters(raw)
-    meters["verdict"] = scoring.verdict(meters["net_conviction"])
+    # Compute BOTH models so the page can A/B toggle: "current" (step bands + AUC directional
+    # weights) and "v2" (curve interpolation + MSTR-specific judgment weights). Each adopts its
+    # own most-recent ALIGNED oscillator day as the headline (consistent with its chart).
+    def _build(mode):
+        m = scoring.compute_meters(raw, mode)
+        m["verdict"] = scoring.verdict(m["net_conviction"])
+        osc, last = compute_oscillator_history(results, derived, scoring, mode)
+        if last and last.get("net_conviction") is not None:
+            last["verdict"] = scoring.verdict(last["net_conviction"])
+            m = last
+        return m, osc
+    meters, oscillator = _build("current")
+    meters_v2, oscillator_v2 = _build("v2")
+    logger.info(f"  Models: current net {meters['net_conviction']} ({meters['label']}) · "
+                f"v2 net {meters_v2['net_conviction']} ({meters_v2['label']})")
     strat = build_strategy_state(derived)
     logger.info(f"  Net={meters['net_conviction']} (bull {meters['bull_sum']} / bear {meters['bear_sum']}) "
                 f"→ {meters['zone']} = {meters['verdict']} ({meters['read']})")
@@ -584,8 +635,6 @@ def main():
     except Exception:
         pass
 
-    # oscillator history (backfilled)
-    oscillator = compute_oscillator_history(results, derived, scoring)
     logger.info(f"  Oscillator history points: {len(oscillator)}")
 
     # indicator tiles
@@ -595,10 +644,12 @@ def main():
         INDICATOR_META = {}
     tiles = _tile_series(results, derived)
     contrib = meters["contributions"]
+    macro_contrib = meters.get("macro_contributions", {})
     indicators = {}
     for key, series in tiles.items():
         meta = INDICATOR_META.get(key, {"label": key.replace("_", " ").title()})
-        c = contrib.get(key, {})
+        # core score lives in contributions; macro indicators carry theirs in macro_contributions
+        c = contrib.get(key) or macro_contrib.get(key, {})
         decimals = 2 if key in ("mri", "feargreed") else 4
         indicators[key] = {
             "label": meta.get("label", key),
@@ -610,7 +661,11 @@ def main():
             "regime_bands": meta.get("regime_bands", []),
             "value": raw.get(key),
             "score": c.get("score"),
-            "series": _series_to_points(series, decimals=decimals, years=4),
+            # 7yr ≥ the oscillator's era-anchored backfill (now 2021-01-01 → today, ~5.5y and
+            # growing), so the JS scrubber recomputes the SAME conviction the oscillator shows
+            # for any pinned date — including the FEB-2021 mNAV top. (Was 6yr vs a 5y oscillator;
+            # bumped to keep margin as the era window grows past 6y.)
+            "series": _series_to_points(series, decimals=decimals, years=7),
         }
 
     # BTC overlay (extended via Yahoo for long history)
@@ -643,7 +698,7 @@ def main():
     # data health (for the age badge)
     health = []
     for name in ["mri", "mvrv_z", "nupl", "sth_sopr", "sth_mvrv", "feargreed", "rsi",
-                 "m2", "netliq", "hy_oas", "funding", "tbl", "mstr", "btc_price", "mstr_history"]:
+                 "funding", "tbl", "mstr", "btc_price", "mstr_history"]:
         r = results.get(name, {})
         health.append({"name": name, "stale": bool(r.get("stale")),
                        "source": r.get("source", ""), "error": r.get("error")})
@@ -706,10 +761,26 @@ def main():
     except Exception as e:
         logger.warning(f"  calibration_audit.json load failed (non-fatal): {e}")
 
+    # TBL Liquidity section (replaces the retired macro panel): the liquidity LEVEL (score 0-100),
+    # the Cycle oscillator (±8), the Indicator (±0.3 = slope of the cycle) and its reconstructed
+    # buy/sell dots (zero-crossings). The indicator also feeds the conviction (as tbl_indicator);
+    # the dots also overlay the MSTR price chart. From TBL's public Supabase history tables.
+    tbl_res = results.get("tbl", {})
+    tbl_block = {
+        "score": tbl_res.get("score"), "indicator": tbl_res.get("value"), "cycle": tbl_res.get("cycle"),
+        "stale": bool(tbl_res.get("stale")), "source": tbl_res.get("source"),
+        "dots": tbl_res.get("dots", []),
+        "score_series": _series_to_points(tbl_res.get("score_series"), decimals=2, years=6),
+        "cycle_series": _series_to_points(tbl_res.get("cycle_series"), decimals=3, years=6),
+        "indicator_series": _series_to_points(tbl_res.get("series"), decimals=4, years=6),
+    }
+
     latest = {
         "timestamp": ts_now.isoformat(),
         "strategy_state": strat,
         "meters": meters,
+        "meters_v2": meters_v2,
+        "tbl": tbl_block,
         "signals": signals,
         "simulator": simulator,
         "scoring_config": scoring_cfg,
@@ -717,6 +788,7 @@ def main():
         "net_delta_7d": delta_7d,
         "zones": {"long": scoring.LONG_ZONE, "short": -scoring.SHORT_ZONE},
         "oscillator": oscillator,
+        "oscillator_v2": oscillator_v2,
         "indicators": indicators,
         "btc_overlay": btc_overlay,
         "mstr_line": mstr_line,
@@ -726,6 +798,9 @@ def main():
             "mnav": derived.get("mnav"),
             "mnav_confidence": derived.get("mnav_confidence"),
             "mnav_shares_source": derived.get("mnav_shares_source"),
+            "mnav_convention": "common-equity diluted",  # mktcap(diluted shares)/BTC-NAV — matches
+            # bitcointreasuries.net's "diluted mNAV". NOT Strategy's headline EV-mNAV (which adds
+            # convert debt + preferred − cash and reads ~0.3-0.4x higher). See mnav_xcheck.
             "mnav_xcheck": derived.get("mnav_xcheck"),
             "mstr_btc_holdings": (results.get("mstr_history", {}).get("value")
                                   or results["mstr_btc_holdings"]["value"]),
@@ -734,9 +809,21 @@ def main():
         },
         "data_health": health,
     }
+    # Sanitize NaN/inf → null so the browser-facing JSON is always parseable. Python's
+    # json.dump emits a literal `NaN`/`Infinity` (invalid JSON) by default, which would make
+    # the live site's JSON.parse throw and the whole dashboard render blank. allow_nan=False
+    # then guarantees we never silently ship an unparseable file (it raises instead).
+    def _clean(o):
+        if isinstance(o, float):
+            return None if (o != o or o in (float("inf"), float("-inf"))) else o
+        if isinstance(o, dict):
+            return {k: _clean(v) for k, v in o.items()}
+        if isinstance(o, (list, tuple)):
+            return [_clean(v) for v in o]
+        return o
     latest_json_path = OUT_DIR / "latest.json"
     with open(latest_json_path, "w") as f:
-        json.dump(latest, f, indent=2, default=str)
+        json.dump(_clean(latest), f, indent=2, default=str, allow_nan=False)
     logger.info(f"  Wrote {latest_json_path}")
 
     print(f"\n=== Result ===")

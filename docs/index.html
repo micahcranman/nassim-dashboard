@@ -74,14 +74,25 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
 .badge.neutral{background:rgba(243,198,35,.14);color:var(--neutral);border:1px solid rgba(243,198,35,.3)}
 .action{margin-top:14px;padding:11px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(74,168,255,.12),rgba(124,92,255,.07));border:1px solid rgba(74,168,255,.2);font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center}
 
-/* breakdown diverging bars */
+/* breakdown diverging bars — weight LEFT, full name, compressed bar, score */
 .brk{padding:18px}
-.brkrow{display:grid;grid-template-columns:150px 1fr 44px;align-items:center;gap:10px;margin:7px 0;font-size:12.5px}
-.brkrow .nm{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* fr units so columns scale with width (no overflow/wrap on mobile); bar gets a healthy ~40% */
+.brkrow{display:grid;grid-template-columns:40px 1.5fr 1fr 38px;align-items:center;gap:11px;margin:6px 0;font-size:12.5px}
+.brkrow .wt{font-family:var(--mono);font-weight:700;color:var(--accent);text-align:right;font-size:12px}
+.brkrow .nm{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .brkrow .bar{position:relative;height:14px;background:rgba(255,255,255,.04);border-radius:7px}
 .brkrow .bar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.18)}
 .brkrow .bar > i{position:absolute;top:0;bottom:0;border-radius:5px}
 .brkrow .sc{text-align:right;font-family:var(--mono);font-weight:700}
+.brkrow.drv{cursor:pointer;border-radius:9px;padding:3px 6px;margin:3px -6px;transition:background .12s}
+.brkrow.drv:hover{background:rgba(74,168,255,.07)}
+.dpop{position:fixed;z-index:60;width:330px;max-width:92vw;padding:15px 16px;border-radius:15px;display:none;
+  background:rgba(11,17,30,.98);border:1px solid var(--glass-brd);box-shadow:0 14px 44px rgba(0,0,0,.55);
+  backdrop-filter:blur(10px)}
+.dpop.on{display:block}
+.dpop h4{margin:0 0 4px;font-size:14.5px;font-weight:700}
+.dpop .stat{font-size:11.5px;color:var(--muted);margin:3px 0}
+.dpop .why{font-size:12px;color:var(--ink);margin-top:9px;line-height:1.55}
 
 .chart{padding:14px 10px 6px}
 .chart .plot{width:100%;height:340px}
@@ -148,7 +159,7 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
 .calnote{color:var(--muted);font-size:12px;line-height:1.6;margin-top:14px;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
 .calband{font:600 10px var(--mono);color:var(--faint)}
 
-@media(max-width:720px){.netnum{font-size:48px}.vbadge{font-size:24px}.chart .plot{height:300px}.brkrow{grid-template-columns:96px 1fr 40px}
+@media(max-width:720px){.netnum{font-size:48px}.vbadge{font-size:24px}.chart .plot{height:300px}.brkrow{grid-template-columns:30px 1.5fr 0.9fr 28px;gap:7px;font-size:11.5px}.dpop{width:300px}
   .trow{grid-template-columns:1fr auto;gap:8px}.trow .tgates{display:none}.trow .tdate{grid-row:2}
   .caltable th:nth-child(2),.caltable td:nth-child(2),.caltable th:nth-child(3),.caltable td:nth-child(3){display:none}}
 </style>
@@ -183,9 +194,16 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
     <div class="confbar"><i id="confFill"></i></div>
     <div class="subline" id="netSub"></div>
     <div class="rangebar" id="rangebar"></div>
+    <div class="rangebar modetog" id="modetog" style="margin-top:7px">
+      <span style="color:var(--faint);font-size:10.5px;letter-spacing:1px;margin-right:3px">MODEL</span>
+      <span class="rb on" data-m="current" onclick="setMode('current')">Current</span>
+      <span class="rb" data-m="v2" onclick="setMode('v2')">v2 · curves + MSTR weights ✦</span>
+      <span style="font-size:11px;color:var(--faint);margin-left:6px" id="modeNote"></span>
+    </div>
     <div class="chart" style="padding:8px 0 0"><div class="plot" id="osc" style="height:300px"></div></div>
     <div class="legend">
-      <span><i style="background:#fff"></i>Conviction (smoothed)</span>
+      <span><i style="background:#38bdf8"></i>Conviction (smoothed)</span>
+      <span><i style="background:#fff;opacity:.6"></i>Conviction (now)</span>
       <span><i style="background:#c9a4ff"></i>MSTR price (right axis)</span>
       <span><i style="background:var(--long)"></i>LONG zone (bottom)</span>
       <span><i style="background:var(--short)"></i>SHORT zone (top)</span>
@@ -193,11 +211,14 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
     </div>
   </div>
 
-  <div class="sec">v8.5 Strategy State <span class="hint">— the mechanical call (system of record)</span></div>
+  <div class="sec">v8.5 Strategy State <span class="hint">— the mechanical call (system of record)</span><span id="ssPin" style="margin-left:auto;font-weight:600;font-size:12px"></span></div>
   <div class="card" style="padding:18px">
     <div class="chips" id="chips"></div>
     <div class="action" id="action"></div>
   </div>
+
+  <div class="sec">Conviction Drivers <span class="hint">— what's pulling the score, signed (green = LONG, red = SHORT)</span></div>
+  <div class="card brk" id="brk"></div>
 
   <div class="sec">MSTR Price · v8.5 Backtest Signals <span class="hint">— REAL backtest entries/exits (not live tags): Q-fire longs, PUT/SHORT hedges, t1b exits</span></div>
   <div class="card chart tall">
@@ -219,11 +240,8 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
     <div id="simTrades" class="simtrades"></div>
   </div>
 
-  <div class="sec">Conviction Drivers <span class="hint">— what's pulling the score, signed (green = LONG, red = SHORT)</span></div>
-  <div class="card brk" id="brk"></div>
-
-  <div class="sec">Macro / Liquidity <span class="hint">— a SEPARATE backdrop score (kept out of the core net — it's noise for top/bottom timing)</span></div>
-  <div class="card" id="macroCard" style="padding:18px"></div>
+  <div class="sec">TBL Liquidity <span class="hint">— The Bitcoin Layer's composite: liquidity score (the tide), the Cycle, and the buy/sell Indicator (zero-crossings = dots)</span></div>
+  <div class="card" id="tblCard" style="padding:18px 16px"></div>
 
   <div class="sec">Indicators <span class="hint">— one signed score each · tap for detail</span></div>
   <div class="tiles" id="tiles"></div>
@@ -261,12 +279,33 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
   </div>
 </div>
 
+<div class="dpop" id="dpop"></div>
+
 <script>
 const FMT=(v,fmt)=>{if(v===null||v===undefined||isNaN(v))return"—";const m=/\.(\d)f/.exec(fmt||".2f");const d=m?+m[1]:2;return (+v).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});};
 const zoneHex=z=>({LONG:"#16c784",SHORT:"#ea3943",NEUTRAL:"#f3c623"}[z]||"#8c98b8");
 const scoreColor=s=>s==null?"#8c98b8":(s>=15?"#16c784":s<=-15?"#ea3943":"#f3c623");
 const scoreLabel=s=>s==null?"—":(s>=15?"LONG":s<=-15?"SHORT":"NEUTRAL");
 let DATA=null, RANGE="all", curModalKey=null, overlayOn=false, pinned=null;
+// A/B model toggle: "current" (step bands + AUC directional weights) vs "v2" (curve interp + judgment weights)
+let MODE="current";
+const isV2=()=>MODE==="v2";
+const modeMeters=()=>isV2()?DATA.meters_v2:DATA.meters;
+const modeOsc=()=>isV2()?DATA.oscillator_v2:DATA.oscillator;
+// CURVE form (v2): piecewise-linear interp through the same band anchors (mirrors scoring._curve)
+function _curveJS(v,band){
+  const fin=band.filter(b=>b[0]!==null); if(!fin.length)return band[band.length-1][1];
+  let xs=fin.map(b=>b[0]), ys=fin.map(b=>b[1]); const tail=band[band.length-1][1];
+  if(xs.length>=2&&tail!==ys[ys.length-1]){xs=xs.concat([xs[xs.length-1]+(xs[xs.length-1]-xs[xs.length-2])]);ys=ys.concat([tail]);}
+  if(v<=xs[0])return ys[0]; if(v>=xs[xs.length-1])return ys[ys.length-1];
+  for(let i=1;i<xs.length;i++){if(v<=xs[i]){const x0=xs[i-1],x1=xs[i],y0=ys[i-1],y1=ys[i];return y0+(v-x0)/(x1-x0)*(y1-y0);}}
+  return ys[ys.length-1];
+}
+const scoreJS=(v,band)=>isV2()?_curveJS(v,band):_signedJS(v,band);
+// mirror scoring._mnav_top_gain — v2 non-linear amplifier on mNAV's top-side weight
+function mnavTopGainJS(v,g){if(v==null||!g)return 1;const t=Math.max(0,Math.min(1,(v-g.v_lo)/(g.v_hi-g.v_lo)));return 1+g.amp*Math.pow(t,g.gamma);}
+function setMode(m){MODE=m;document.querySelectorAll(".modetog .rb").forEach(e=>e.classList.toggle("on",e.dataset.m===m));
+  applyConviction();drawTiles(DATA.indicators);}
 const RANGES=[["6M",182],["1Y",365],["2Y",730],["4Y",1460],["All",99999]];
 
 const HOVER={bgcolor:"rgba(10,16,30,0.96)",bordercolor:"rgba(120,150,220,0.35)",font:{color:"#eaf0ff",family:"JetBrains Mono, monospace",size:12}};
@@ -274,7 +313,7 @@ const PLOT_LAYOUT=extra=>Object.assign({
   paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
   font:{color:"#8c98b8",family:"JetBrains Mono, monospace",size:11},
   margin:{l:46,r:46,t:10,b:28},showlegend:false,hovermode:"x unified",hoverlabel:HOVER,
-  xaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:false},
+  xaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:false,hoverformat:"%b %-d, %Y"},
   yaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:false},
 },extra||{});
 const PCONF={displayModeBar:false,responsive:true};
@@ -284,6 +323,8 @@ function slicePts(arr){if(RANGE==="All"||!arr)return arr;const c=cutoff();return
 
 // ---- historical scrubber: recompute conviction + drivers for any pinned date ----
 function valAt(series,date){let pick=null;if(!series)return null;for(const p of series){if(p.d<=date)pick=p;else break;}return pick?pick.v:null;}
+// the oscillator's backend-computed net for a date — authoritative headline (matches the chart)
+function oscNetAt(date){let pick=null;for(const p of (modeOsc()||[])){if(p.d<=date)pick=p;else break;}return pick?pick.net:null;}
 function _signedJS(v,band){for(const b of band){if(b[0]===null||v<b[0])return b[1];}return band[band.length-1][1];}
 function zoneOf(net){const z=(DATA.scoring_config||{}).zones||{long_cap:65,long_local:28,short_local:-28,short_top:-65};
   if(net==null)return{zone:"NEUTRAL",label:"UNKNOWN"};
@@ -295,12 +336,22 @@ function zoneOf(net){const z=(DATA.scoring_config||{}).zones||{long_cap:65,long_
 function metersForDate(date){
   const cfg=DATA.scoring_config; if(!cfg)return DATA.meters;
   const bands=cfg.bands,coreW=cfg.core_w,macroW=cfg.macro_w,mk=new Set(cfg.macro_keys);
+  const cwTop=isV2()?cfg.core_w_top_v2:cfg.core_w_top,cwBot=isV2()?cfg.core_w_bot_v2:cfg.core_w_bot,dir=cwTop&&cwBot;
+  const gain=cfg.mnav_top_gain;
   let num=0,den=0,mnum=0,mden=0;const contributions={};
   for(const k in bands){const ind=DATA.indicators[k];if(!ind||!ind.series||!ind.series.length)continue;
-    const v=valAt(ind.series,date);if(v==null)continue;const sc=_signedJS(v,bands[k]);
-    if(mk.has(k)){const w=macroW[k]||0;mnum+=w*sc;mden+=w;}
-    else{const w=coreW[k]||0;num+=w*sc;den+=w;contributions[k]={value:v,score:Math.round(sc*10)/10,weight:w,contrib:Math.round(w*sc*100)/100};}}
-  const net=den?Math.round(num/den*10)/10:null;
+    const v=valAt(ind.series,date);if(v==null)continue;const sc=scoreJS(v,bands[k]);
+    if(mk.has(k)){const w=macroW[k]||0;if(!w)continue;mnum+=w*sc;mden+=w;}
+    else{let w=dir?((sc<0?cwTop:cwBot)[k]||0):(coreW[k]||0);
+      if(isV2()&&k==="mnav"&&sc<0&&gain)w*=mnavTopGainJS(v,gain);  // mirror scoring._mnav_top_gain
+      if(!w)continue;  // dropped/zero-weight (e.g. slope_5d) — no vote, no driver bar
+      num+=w*sc;den+=w;contributions[k]={value:v,score:Math.round(sc*10)/10,weight:Math.round(w*1e4)/1e4,contrib:Math.round(w*sc*100)/100};}}
+  // Use the oscillator's authoritative net for the headline so the pinned number matches the
+  // chart exactly; the recomputed contributions (now full, tiles cover the window) drive the
+  // breakdown bars. Fall back to the recompute only if the oscillator has no point there.
+  const recomputed=den?Math.round(num/den*10)/10:null;
+  const oNet=oscNetAt(date);
+  const net=(oNet!=null)?oNet:recomputed;
   for(const k in contributions)contributions[k].eff=den?contributions[k].weight/den:0;
   const z=zoneOf(net),cs=Object.values(contributions);
   return {net_conviction:net,zone:z.zone,label:z.label,verdict:z.label,read:z.label,
@@ -309,7 +360,7 @@ function metersForDate(date){
     bull_sum:Math.round(cs.filter(c=>c.contrib>0).reduce((a,c)=>a+c.contrib,0)*10)/10,
     bear_sum:Math.round(cs.filter(c=>c.contrib<0).reduce((a,c)=>a+c.contrib,0)*10)/10};
 }
-function currentMeters(){return pinned?metersForDate(pinned):DATA.meters;}
+function currentMeters(){return pinned?metersForDate(pinned):modeMeters();}
 function applyConviction(){
   const m=currentMeters(); if(!m)return; const net=m.net_conviction, hex=zoneHex(m.zone);
   const vb=document.getElementById("vbadge"); vb.textContent=m.verdict||m.label||"—";
@@ -319,8 +370,12 @@ function applyConviction(){
   const cf=document.getElementById("confFill"); cf.style.width=Math.min(100,Math.abs(net))+"%"; cf.style.background=`linear-gradient(90deg, ${hex}, ${hex}aa)`; cf.style.boxShadow=`0 0 16px ${hex}88`;
   const sub=document.getElementById("netSub");
   if(pinned){sub.innerHTML=`<b style="color:#c9a4ff">📌 ${pinned}</b> — historical reading · Bull +${m.bull_sum} · Bear ${m.bear_sum} · <span class="rb" style="display:inline-block;padding:2px 9px" onclick="resetPin()">↺ Reset to live</span>`;}
-  else{const m0=DATA.meters,dl=DATA.net_delta_7d; sub.innerHTML=`Bull +${m0.bull_sum} · Bear ${m0.bear_sum}`+(dl!=null?` · 7d ${dl>0?"▲+":"▼"}${dl}`:"")+` · confidence ${m0.confidence} · <span style="color:var(--faint)">click the chart to inspect any past date</span>`;}
+  else{const m0=modeMeters(),dl=DATA.net_delta_7d; sub.innerHTML=`Bull +${m0.bull_sum} · Bear ${m0.bear_sum}`+(dl!=null?` · 7d ${dl>0?"▲+":"▼"}${dl}`:"")+` · confidence ${m0.confidence} · <span style="color:var(--faint)">click the chart to inspect any past date</span>`;}
+  const a=DATA.meters,b=DATA.meters_v2,mn=document.getElementById("modeNote");
+  if(mn&&a&&b)mn.innerHTML=`current <b>${a.net_conviction>0?"+":""}${a.net_conviction}</b> ${a.label} · v2 <b style="color:var(--accent)">${b.net_conviction>0?"+":""}${b.net_conviction}</b> ${b.label}`;
   drawBreakdown(m);
+  // v8.5 Strategy State follows the pin too (reconstructed from series; IV% is live-only)
+  drawStrategy(pinned?strategyStateForDate(pinned):DATA.strategy_state, pinned);
   drawOscillator(); // redraw to move/clear the pinned marker
 }
 function pinDate(date){pinned=(""+date).slice(0,10); applyConviction();}
@@ -337,9 +392,11 @@ function render(){
   // hero conviction (score + 5-label + drivers) is rendered by applyConviction() — pinned-aware
   document.getElementById("px").textContent=`BTC $${FMT(snap.btc_price,".0f")}  ·  MSTR $${FMT(snap.mstr_price,".2f")}`;
   const cflag=snap.mnav_confidence==="high"?"":` ⚠ ${snap.mnav_confidence}`;
-  document.getElementById("mnavTop").innerHTML=`mNAV ${FMT(snap.mnav,".2f")}x${cflag} · ${FMT(snap.mstr_btc_holdings,".0f")} BTC${snap.mstr_btc_holdings_stale?" ⚠":""}`;
+  const conv=snap.mnav_convention||"common-equity diluted";
+  const mnavTip=`${conv} mNAV — MSTR market cap (diluted shares) ÷ BTC NAV. Computed from Strategy's official share/holdings data (strategy.com) + live BTC price; strategy.com is bot-walled so the figure can't be pulled directly. Matches bitcointreasuries.net's diluted mNAV. Strategy's headline EV-mNAV (adds convert debt + preferred − cash) reads ~0.3–0.4x higher.`;
+  document.getElementById("mnavTop").innerHTML=`<span title="${mnavTip}" style="cursor:help;border-bottom:1px dotted var(--faint)">mNAV ${FMT(snap.mnav,".2f")}x</span>${cflag} <span style="color:var(--faint);font-size:11px">(${conv})</span> · ${FMT(snap.mstr_btc_holdings,".0f")} BTC${snap.mstr_btc_holdings_stale?" ⚠":""}`;
 
-  drawRangeBar(); applyConviction(); drawSignalChart(); drawStrategy(s); drawMacro(m); drawTiles(d.indicators);
+  drawRangeBar(); applyConviction(); drawSignalChart(); drawTBL(); drawTiles(d.indicators);
   initSim(); if(calShown)drawCalibration();
   document.getElementById("foot").textContent=`Generated ${ts.toLocaleString()} · ${(d.data_health||[]).filter(h=>!h.stale).length}/${(d.data_health||[]).length} sources fresh`;
 }
@@ -362,12 +419,37 @@ function drawSignalChart(){
   const sigs=(DATA.signals||[]).filter(s=>RANGE==="All"||s.date>=cutoff());
   const traces=[{x:ml.map(p=>p.d),y:ml.map(p=>p.v),type:"scatter",mode:"lines",
     line:{color:"#c9a4ff",width:1.6},name:"MSTR",hovertemplate:"MSTR $%{y:.2f}<extra></extra>"}];
-  Object.keys(SIGMETA).forEach(tp=>{
-    const g=sigs.filter(s=>s.type===tp); if(!g.length)return; const meta=SIGMETA[tp];
-    traces.push({x:g.map(s=>s.date),y:g.map(s=>s.price),type:"scatter",mode:"markers",name:meta.nm,
-      marker:{color:meta.c,symbol:meta.sym,size:13,line:{color:"#070b14",width:1.3}},
-      text:g.map(s=>s.pnl!=null?`PnL $${(s.pnl/1e6).toFixed(1)}M`:""),
-      hovertemplate:`${meta.nm}<br>$%{y:.2f} · %{x}<br>%{text}<extra></extra>`});
+  // ALL entries + exits from the trade log (the SIGMETA markers only covered t1b/PUT/SHORT —
+  // this also surfaces the t1-BULL longs and EVERY exit). ENV is BTC-scale → excluded.
+  const TR_STYLE={
+    "t1b Q-fire long":{c:"#16c784",sym:"triangle-up",nm:"Q-fire long (t1b)"},
+    "t1-BULL long":   {c:"#2dd4bf",sym:"triangle-up",nm:"BULL long (t1)"},
+    "t2a PUT hedge":  {c:"#f3c623",sym:"diamond",nm:"PUT hedge"},
+    "t2b SHORT hedge":{c:"#ea3943",sym:"triangle-down",nm:"SHORT hedge"},
+  };
+  const mlStart=ml.length?ml[0].d:"2020-08-01";
+  const inRange=d=>d&&d>=mlStart&&(RANGE==="All"||d>=cutoff());
+  const trades=(simData().trades||[]).filter(t=>TR_STYLE[t.type]);
+  Object.keys(TR_STYLE).forEach(tp=>{
+    const g=trades.filter(t=>t.type===tp&&inRange(t.entry_date)); if(!g.length)return; const m=TR_STYLE[tp];
+    traces.push({x:g.map(t=>t.entry_date),y:g.map(t=>t.entry_price),type:"scatter",mode:"markers",name:m.nm,
+      marker:{color:m.c,symbol:m.sym,size:13,line:{color:"#070b14",width:1.3}},customdata:g.map(t=>t.id),
+      text:g.map(t=>`${m.nm} entry`),hovertemplate:`%{text}<br>$%{y:.2f} · %{x}<extra></extra>`});
+  });
+  // EXITS — every closed position marked where it closed, green=win / red=loss (✕).
+  // P&L is scaled to the simulator's capital (simScale) so it matches the calculator below.
+  const scale=simScale();
+  const exits=trades.filter(t=>!t.open&&t.exit_date&&inRange(t.exit_date));
+  if(exits.length) traces.push({x:exits.map(t=>t.exit_date),y:exits.map(t=>t.exit_price),type:"scatter",mode:"markers",name:"exit",
+    marker:{symbol:"x-thin",size:9,line:{width:2,color:exits.map(t=>t.pnl>=0?"#16c784":"#ea3943")},color:exits.map(t=>t.pnl>=0?"#16c784":"#ea3943")},
+    text:exits.map(t=>{const p=t.pnl!=null?t.pnl*scale:null;return `${t.type} exit · ${p!=null?(p>=0?"+":"")+fmtUSD(p):(t.pnl_pct!=null?(t.pnl_pct>=0?"+":"")+t.pnl_pct.toFixed(0)+"%":"")}`;}),customdata:exits.map(t=>t.id),
+    hovertemplate:`%{text}<br>$%{y:.2f} · %{x}<extra></extra>`});
+  // TBL liquidity dots (plan #2) — hollow rings so they read distinct from the v8.5 markers
+  const tdots=((DATA.tbl&&DATA.tbl.dots)||[]).filter(d=>RANGE==="All"||d.date>=cutoff());
+  [["BUY","#16c784"],["SELL","#ea3943"]].forEach(([k,c])=>{
+    const g=tdots.filter(d=>d.type===k); if(!g.length)return;
+    traces.push({x:g.map(d=>d.date),y:g.map(d=>tblDotPrice(d.date,ml)),type:"scatter",mode:"markers",name:"TBL "+k.toLowerCase(),
+      marker:{symbol:"circle-open",size:10,color:c,line:{width:2,color:c}},hovertemplate:`TBL liquidity ${k} · %{x}<extra></extra>`});
   });
   Plotly.react("sigchart",traces,PLOT_LAYOUT({
     yaxis:{type:"log",gridcolor:"rgba(255,255,255,.05)",zeroline:false,tickprefix:"$"},
@@ -375,14 +457,17 @@ function drawSignalChart(){
     if(gd && !gd._sigHooked){gd._sigHooked=true;gd.style.cursor="pointer";
       gd.on("plotly_click",ev=>{const p=ev.points&&ev.points[0];if(p&&p.data&&p.data.mode==="markers"&&p.x){const t=tradeByDate((""+p.x).slice(0,10));if(t)openTrade(t.id);}});}
   });
-  const present=Object.keys(SIGMETA).filter(tp=>sigs.some(s=>s.type===tp));
+  const GLY={"triangle-up":"▲","diamond":"◆","triangle-down":"▼"};
+  const present=Object.keys(TR_STYLE).filter(tp=>trades.some(t=>t.type===tp&&inRange(t.entry_date)));
   document.getElementById("siglegend").innerHTML=
-    present.map(tp=>`<span style="color:${SIGMETA[tp].c}">${SIGMETA[tp].gly} ${SIGMETA[tp].nm}</span>`).join("")
-    +`<span style="color:var(--faint)">${sigs.length} markers in range · click a marker for trade detail · from the locked v8.5 backtest</span>`;
+    present.map(tp=>`<span style="color:${TR_STYLE[tp].c}">${GLY[TR_STYLE[tp].sym]} ${TR_STYLE[tp].nm}</span>`).join("")
+    +`<span style="color:var(--muted)">✕ exit (green win / red loss)</span>`
+    +`<span style="color:var(--muted)">○ TBL liquidity buy/sell</span>`
+    +`<span style="color:var(--faint)">click any marker for trade detail · from the locked v8.5 backtest</span>`;
 }
 
 function drawOscillator(){
-  const o=slicePts(DATA.oscillator),z=DATA.zones; if(!o||!o.length)return;
+  const o=slicePts(modeOsc()),z=DATA.zones; if(!o||!o.length)return;
   const x=o.map(p=>p.d),net=o.map(p=>p.net),sm=o.map(p=>p.smooth);
   const ml=slicePts(DATA.mstr_line)||[];
   // AXIS IS FLIPPED: high conviction (BUY) sits at the BOTTOM, low (SELL) at the TOP — so
@@ -397,9 +482,11 @@ function drawOscillator(){
   ];
   if(pinned){shapes.push({type:"line",x0:pinned,x1:pinned,yref:"paper",y0:0,y1:1,line:{color:"#c9a4ff",width:1.6,dash:"dot"}});}
   const traces=[
-    {x:ml.map(p=>p.d),y:ml.map(p=>p.v),type:"scatter",mode:"lines",yaxis:"y2",line:{color:"#c9a4ff",width:1.5},opacity:.65,name:"MSTR",hovertemplate:"MSTR $%{y:.0f}<extra></extra>"},
-    {x,y:net,type:"scatter",mode:"lines",line:{color:"#4aa8ff",width:1},opacity:.4,hovertemplate:"%{y:.0f}<extra>conviction</extra>"},
-    {x,y:sm,type:"scatter",mode:"lines",line:{color:"#eaf0ff",width:2.6},hovertemplate:"%{y:.0f}<extra>conviction (smoothed)</extra>"},
+    {x:ml.map(p=>p.d),y:ml.map(p=>p.v),type:"scatter",mode:"lines",yaxis:"y2",line:{color:"#c9a4ff",width:1.4},opacity:.5,name:"MSTR",hovertemplate:"MSTR $%{y:.2f}<extra></extra>"},
+    // smoothed = the readable trend line: bright sky-blue, bold, full opacity (was a washed-out .55 blue under the white line — per Micah, near-invisible)
+    {x,y:sm,type:"scatter",mode:"lines",line:{color:"#38bdf8",width:3,shape:"spline"},hovertemplate:"%{y:.1f}<extra>conviction (smoothed)</extra>"},
+    // live = the jumpy raw read, receded to a faint thin white so it no longer drowns the smoothed line
+    {x,y:net,type:"scatter",mode:"lines",line:{color:"#ffffff",width:1},opacity:.42,hovertemplate:"%{y:.1f}<extra>conviction (now)</extra>"},
   ];
   Plotly.react("osc",traces,PLOT_LAYOUT({shapes,
     yaxis:{range:[100,-100],gridcolor:"rgba(255,255,255,.05)",zeroline:false,tickvals:[-50,0,50]},
@@ -411,21 +498,124 @@ function drawOscillator(){
   });
 }
 
-function drawStrategy(s){
-  const cls=b=>b; // helper
+// mirror dashboard._cohort_posture — reconstruct the tourist-cohort read for any pinned date
+function cohortPosture(sm,ss){
+  if(sm==null)return"Unknown"; const sopr=ss!=null?ss:1.0;
+  if(sm<1.0&&sopr<1.0)return"Tourists gone — capitulation";
+  if(sm<1.15)return"Tourists thinning out";
+  if(sm>1.6&&sopr>1.05)return"Tourists pouring in — euphoria";
+  if(sm>1.4)return"Tourists arriving";
+  return"Mixed / mid-cycle";
+}
+// mirror dashboard.build_strategy_state's next_action text
+function strategyAction(s){
+  let a; const armed=s.mri_below_12&&(s.days_since_mri12==null||s.days_since_mri12>=30);
+  if(s.mri_below_12)a=armed?"MRI < 12 — Q-FIRE ARMED":`MRI < 12 but ${s.days_since_mri12}d since last (need 30d)`;
+  else if(s.mri!=null)a=`MRI ${s.mri.toFixed(1)} — Q-fire arms below 12`;
+  else a="MRI unavailable";
+  if(s.hedge_gate_open)a+=" · hedge gate OPEN (PUT/SHORT admitted)";
+  return a;
+}
+// Reconstruct the v8.5 strategy-state chips for a pinned historical date from the indicator
+// series already in the payload (IV% has no history → shown as live-only).
+function strategyStateForDate(date){
+  const ind=DATA.indicators||{}; const at=k=>{const s=ind[k]&&ind[k].series; return s?valAt(s,date):null;};
+  const mri=at("mri"), slope=at("slope_5d"), mnav=at("mnav"), sm=at("sth_mvrv"), ss=at("sth_sopr");
+  let daysSince=null; const ms=ind.mri&&ind.mri.series;
+  if(ms){let lastBelow=null;for(const p of ms){if(p.d>date)break;if(p.v<12)lastBelow=p.d;}
+    if(lastBelow)daysSince=Math.round((new Date(date)-new Date(lastBelow))/864e5);}
+  return {mri,slope_5d:slope,mnav,mri_below_12:(mri!=null&&mri<12),
+    hedge_gate_open:(slope!=null&&slope<0),days_since_mri12:daysSince,iv_pct:null,
+    cohort_posture:cohortPosture(sm,ss),mnav_confidence:"high"};
+}
+function drawStrategy(s,pinDate){
   const mriBadge=s.mri_below_12?'<span class="badge long">BELOW · Q-FIRE</span>':'<span class="badge neutral">above</span>';
   const gateBadge=s.hedge_gate_open?'<span class="badge short">OPEN</span>':'<span class="badge neutral">closed</span>';
+  const ivCell=s.iv_pct!=null?FMT(s.iv_pct*100,".0f"):'<span style="color:var(--faint);font-size:14px">live only</span>';
   const chips=[
     {k:"MRI vs 12",v:FMT(s.mri,".1f"),sub:mriBadge},
     {k:"Hedge Gate (slope₅)",v:FMT(s.slope_5d,".2f")+"%",sub:gateBadge},
-    {k:"MSTR IV %ile",v:FMT(s.iv_pct*100,".0f"),sub:""},
-    {k:"mNAV",v:FMT(s.mnav,".2f")+"x",sub:s.mnav_confidence!=="high"?'<span class="badge neutral">'+s.mnav_confidence+'</span>':''},
+    {k:"MSTR IV %ile",v:ivCell,sub:""},
+    {k:"mNAV",v:FMT(s.mnav,".2f")+"x",sub:s.mnav_confidence&&s.mnav_confidence!=="high"?'<span class="badge neutral">'+s.mnav_confidence+'</span>':''},
     {k:"Days since MRI<12",v:s.days_since_mri12==null?"—":s.days_since_mri12,sub:""},
     {k:"Cohort",v:`<span style="font-size:13px;font-weight:600">${s.cohort_posture||"—"}</span>`,sub:""},
   ];
   document.getElementById("chips").innerHTML=chips.map(c=>`<div class="chip"><div class="k">${c.k}</div><div class="v">${c.v} ${c.sub}</div></div>`).join("");
-  document.getElementById("action").innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4aa8ff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${s.next_action}`;
+  document.getElementById("action").innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4aa8ff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${s.next_action||strategyAction(s)}`;
+  const pin=document.getElementById("ssPin");
+  if(pin)pin.innerHTML=pinDate?`<span style="color:#c9a4ff">📌 ${pinDate}</span> · <span class="rb" style="display:inline-block;padding:2px 9px" onclick="resetPin()">↺ live</span>`:"";
 }
+
+// narrative "why" per driver (story-level, not "today it weighs X") — shown in the driver popover
+const NARR={
+  mnav:"MSTR's market value versus the Bitcoin it actually holds. A real discount is rare and screams deep value; a fat premium is the crowd paying up in euphoria. A specialist top-catcher — quiet for years, then loud at blow-offs — so its punch lives in the band's shape, not a heavy weight.",
+  mvrv_z:"How far Bitcoin trades above the average holder's cost basis. Stretched high = late-cycle greed where everyone's in profit; below cost = capitulation. The backbone cycle-value read, and a steady all-round caller.",
+  nupl:"The share of the network sitting in unrealized profit. Euphoria when nearly everyone's green; despair when most are underwater. A classic sentiment-of-the-cycle gauge.",
+  sth_sopr:"Whether recent buyers are selling at a profit or a loss. Below 1 = newcomers capitulating (a bottom tell); hot above = profit-taking froth.",
+  sth_mvrv:"The 'tourist' cohort — recent buyers — and how far their holdings sit above cost. Underwater tourists mark capitulation; tourists piling in at a premium mark tops.",
+  feargreed:"Crowd emotion distilled to one number. Extreme fear reliably marks bottoms; greed marks froth, but tops grind so the greed side is deliberately softer than the fear side.",
+  rsi:"Pure price momentum. Oversold after a flush, overbought into a blow-off. Fast and model-free — it catches the turn the slow on-chain value metrics lag.",
+  mstr_btc_trend:"MSTR's performance versus Bitcoin itself. A blow-off where MSTR rockets past BTC is a euphoric top tell; only deep, sustained underperformance is a genuine bottom — mild lag is just noise, so the bullish side is flattened.",
+  slope_5d:"The structural trend — the slope of MSTR's 200-day average. Its real job is the v8.5 hedge gate (a falling trend admits hedges). As a top/bottom timer it's weak, so it carries little conviction weight; see the discussion below on how we read its sign.",
+  funding:"What leveraged traders pay to stay long perpetual futures. Deeply negative = forced capitulation (a contrarian long); white-hot positive = crowded longs ripe for a squeeze. A fast, coincident contrarian.",
+  tbl_indicator:"The Bitcoin Layer's liquidity momentum — whether the global liquidity tide is accelerating or rolling over. It calls LOCAL tops well (liquidity rolls before price), but lags at bottoms, so its band is local-capped and asymmetric: trusted on the top side, dampened on the bottom.",
+};
+// a smooth-ish curve of how an indicator's VALUE maps to its signed score (the band), with the live value marked
+function bandCurveSVG(band,cur){
+  if(!band||!band.length)return"";
+  const fin=band.map(b=>b[0]).filter(x=>x!=null); if(!fin.length)return"";
+  const lo=fin[0],hi=fin[fin.length-1],rng=(hi-lo)||Math.abs(lo)||1;
+  const xMin=lo-rng*0.20,xMax=hi+rng*0.20,W=300,H=104,pad=5;
+  const sx=x=>pad+((x-xMin)/(xMax-xMin))*(W-2*pad), sy=s=>pad+((100-s)/200)*(H-2*pad);
+  let d="";const N=160;
+  for(let i=0;i<=N;i++){const x=xMin+(i/N)*(xMax-xMin);const s=scoreJS(x,band);d+=(i?"L":"M")+sx(x).toFixed(1)+","+sy(s).toFixed(1)+" ";}
+  const zY=sy(0).toFixed(1);
+  let cx=null,cs=null;if(cur!=null&&!isNaN(cur)){const cc=Math.max(xMin,Math.min(xMax,cur));cx=sx(cc);cs=scoreJS(cur,band);}
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:104px;margin-top:8px">
+    <rect x="${pad}" y="${pad}" width="${W-2*pad}" height="${(H-2*pad)/2}" fill="rgba(234,57,67,.06)"/>
+    <rect x="${pad}" y="${sy(0)}" width="${W-2*pad}" height="${(H-2*pad)/2}" fill="rgba(22,199,132,.06)"/>
+    <line x1="${pad}" y1="${zY}" x2="${W-pad}" y2="${zY}" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+    <path d="${d}" fill="none" stroke="#4aa8ff" stroke-width="2.2"/>
+    ${cx!=null?`<line x1="${cx.toFixed(1)}" y1="${pad}" x2="${cx.toFixed(1)}" y2="${H-pad}" stroke="#c9a4ff" stroke-width="1" stroke-dasharray="3 3"/><circle cx="${cx.toFixed(1)}" cy="${sy(cs).toFixed(1)}" r="4.2" fill="#fff" stroke="#070b14" stroke-width="1.3"/>`:""}
+    <text x="${pad+2}" y="${pad+9}" fill="#16c784" font-size="8.5">long +100</text>
+    <text x="${pad+2}" y="${H-pad-2}" fill="#ea3943" font-size="8.5">short −100</text>
+  </svg>`;
+}
+let driverPinned=null, dpopTimer=null;
+function showDriver(ev,k,pin){
+  clearTimeout(dpopTimer);
+  const pop=document.getElementById("dpop"); const meta=(DATA.indicators||{})[k]||{};
+  const band=((DATA.scoring_config||{}).bands||{})[k];
+  const aud=(((DATA.calibration||{}).audit||{}).core)||[]; const a=aud.find(r=>r.key===k)||{};
+  const m=currentMeters(), c=(m.contributions||{})[k]||{};
+  const auc=v=>v==null?"—":v.toFixed(2);
+  // directional weights for the ACTIVE model (current = AUC-derived; v2 = MSTR judgment)
+  const cfg=DATA.scoring_config||{};
+  const twN=isV2()?((cfg.core_w_top_v2||{})[k]):a.top_w, bwN=isV2()?((cfg.core_w_bot_v2||{})[k]):a.bot_w;
+  const tw=twN!=null?(twN*100).toFixed(1)+"%":"—", bw=bwN!=null?(bwN*100).toFixed(1)+"%":"—";
+  const dirNote=(c.score!=null)?(c.score<0?`now using its <b style="color:var(--short)">top-weight ${tw}</b>`:`now using its <b style="color:var(--long)">bottom-weight ${bw}</b>`):"";
+  pop.innerHTML=`<h4>${meta.label||k}</h4>
+    <div class="stat">Weight when calling a <b style="color:var(--short)">top ${tw}</b> · a <b style="color:var(--long)">bottom ${bw}</b></div>
+    <div class="stat">Measured skill — top-calling <b>${auc(a.top_auc)}</b> · bottom-calling <b>${auc(a.bot_auc)}</b> <span style="color:var(--faint)">(0.50 = coin-flip)</span></div>
+    ${bandCurveSVG(band, meta.value)}
+    <div class="stat" style="text-align:center;color:var(--faint)">value → conviction score · ● = now (${FMT(meta.value,meta.value_fmt)}${meta.value_suffix||""} → ${c.score!=null?(c.score>0?"+":"")+Math.round(c.score):"—"}) · ${dirNote}</div>
+    <div class="why">${NARR[k]||meta.explanation||""}</div>`;
+  pop.classList.add("on");
+  if(pin!==undefined)driverPinned=pin?k:null;
+  // position: immediate right of the cursor (desktop) / bottom-right of screen (mobile tap)
+  const pw=pop.offsetWidth||330, ph=pop.offsetHeight||280, small=window.innerWidth<=720;
+  let left,top;
+  if(pin&&small){left=window.innerWidth-pw-10; top=window.innerHeight-ph-12;}
+  else{left=(ev.clientX||0)+16; top=(ev.clientY||0)-24;
+    if(left+pw>window.innerWidth-8)left=(ev.clientX||0)-pw-16;
+    if(top+ph>window.innerHeight-8)top=window.innerHeight-ph-8; if(top<8)top=8; if(left<8)left=8;}
+  pop.style.left=left+"px"; pop.style.top=top+"px";
+}
+function hideDriver(){dpopTimer=setTimeout(()=>{if(!driverPinned)document.getElementById("dpop").classList.remove("on");},150);}
+(function(){const pop=document.getElementById("dpop");if(!pop)return;
+  pop.addEventListener("mouseenter",()=>clearTimeout(dpopTimer));
+  pop.addEventListener("mouseleave",()=>{if(!driverPinned)pop.classList.remove("on");});})();
+document.addEventListener("click",e=>{if(driverPinned&&!e.target.closest(".brkrow.drv")&&!e.target.closest("#dpop")){driverPinned=null;document.getElementById("dpop").classList.remove("on");}});
 
 function drawBreakdown(m){
   const labels=DATA.indicators;
@@ -433,42 +623,67 @@ function drawBreakdown(m){
   const den=entries.reduce((a,[,v])=>a+(v.weight||0),0)||1;
   const rows=entries.map(([k,v])=>({k,sc:v.score,contrib:v.contrib,wt:(v.eff!=null?v.eff:(v.weight||0)/den),lbl:(labels[k]&&labels[k].label)||k}))
     .sort((a,b)=>Math.abs(b.contrib)-Math.abs(a.contrib));
-  const head=`<div class="brkrow" style="margin-bottom:2px;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px"><span class="nm">Driver · weight</span><span class="bar" style="background:none">SHORT ◀ ▶ LONG</span><span class="sc">score</span></div>`;
+  const head=`<div class="brkrow" style="margin-bottom:2px;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px"><span class="wt">wt</span><span class="nm">Driver — hover for detail</span><span class="bar" style="background:none;text-align:center;line-height:14px">◀ short · long ▶</span><span class="sc">score</span></div>`;
   document.getElementById("brk").innerHTML=head+rows.map(r=>{
     const pos=r.sc>=0, w=Math.min(50,Math.abs(r.sc)/2);
     const bar=pos?`<i style="left:50%;width:${w}%;background:var(--long)"></i>`:`<i style="right:50%;width:${w}%;background:var(--short)"></i>`;
-    return `<div class="brkrow"><span class="nm">${r.lbl} <b style="color:var(--accent);font-weight:600">${Math.round(r.wt*100)}%</b></span><span class="bar"><span class="mid"></span>${bar}</span><span class="sc" style="color:${scoreColor(r.sc)}">${r.sc>0?"+":""}${Math.round(r.sc)}</span></div>`;
+    return `<div class="brkrow drv" onmouseenter="showDriver(event,'${r.k}')" onmouseleave="hideDriver()" onclick="event.stopPropagation();showDriver(event,'${r.k}',true)">
+      <span class="wt">${Math.round(r.wt*100)}%</span>
+      <span class="nm">${r.lbl}</span>
+      <span class="bar"><span class="mid"></span>${bar}</span>
+      <span class="sc" style="color:${scoreColor(r.sc)}">${r.sc>0?"+":""}${Math.round(r.sc)}</span></div>`;
   }).join("");
 }
 
-function drawMacro(m){
-  const el=document.getElementById("macroCard"); if(!el)return;
-  const s=m.macro_score, hex=s==null?"#8c98b8":(s>=30?"#16c784":s>-30?"#f3c623":"#ea3943");
-  const lbl=m.macro_label||"—";
-  const contribs=m.macro_contributions||{};
-  const labels=DATA.indicators||{};
-  const rows=Object.entries(contribs).map(([k,v])=>({k,sc:v.score,lbl:(labels[k]&&labels[k].label)||k}))
-    .sort((a,b)=>Math.abs(b.sc)-Math.abs(a.sc));
-  const bars=rows.map(r=>{
-    const pos=r.sc>=0, w=Math.min(50,Math.abs(r.sc)/2);
-    const bar=pos?`<i style="left:50%;width:${w}%;background:var(--long)"></i>`:`<i style="right:50%;width:${w}%;background:var(--short)"></i>`;
-    return `<div class="brkrow"><span class="nm">${r.lbl}</span><span class="bar"><span class="mid"></span>${bar}</span><span class="sc" style="color:${scoreColor(r.sc)}">${r.sc>0?"+":""}${Math.round(r.sc)}</span></div>`;
-  }).join("");
+// TBL Liquidity section — recreates TBL's two-panel view: the Cycle oscillator (±8) and the
+// Indicator (±0.3, slope of the cycle) with green(buy)/red(sell) dots at its zero-crossings.
+function tblDotPrice(date, series){ // value of `series` nearest `date`, for placing dots on a line
+  if(!series||!series.length)return null; let pick=series[0];
+  for(const p of series){ if(p.d<=date)pick=p; else break; } return pick.v;
+}
+function drawTBL(){
+  const el=document.getElementById("tblCard"); const t=DATA.tbl; if(!el)return;
+  if(!t||t.indicator==null){el.innerHTML=`<div class="cat">TBL Liquidity unavailable${t&&t.stale?" (stale)":""}</div>`;return;}
+  const score=t.score, sHex=score==null?"#8c98b8":(score>=55?"#16c784":score>45?"#f3c623":"#ea3943");
+  const sLbl=score==null?"—":(score>=65?"Expanding":score>=55?"Firm":score>45?"Neutral":score>=35?"Soft":"Contracting");
+  const ind=t.indicator, iHex=ind>=0.02?"#16c784":ind<=-0.02?"#ea3943":"#f3c623";
+  const lastDot=(t.dots||[]).slice(-1)[0];
+  const dotBadge=lastDot?`<span class="badge ${lastDot.type==='BUY'?'long':'short'}">${lastDot.type} · ${lastDot.date}</span>`:"";
   el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:14px">
-      <div>
-        <div class="cat">Macro Score</div>
-        <div class="mono" style="font:800 38px var(--mono);color:${hex};text-shadow:0 0 26px ${hex}55">${s==null?"—":(s>0?"+":"")+s}</div>
-      </div>
-      <div><span class="badge" style="color:${hex};background:${hex}1f;border:1px solid ${hex}55">${lbl}</span>
-        <div class="cat" style="margin-top:6px;max-width:240px">backdrop only — does NOT move the headline conviction</div>
-      </div>
-      <div style="flex:1;min-width:160px">
-        <div class="brkrow" style="opacity:.55"><span class="nm">TBL Liquidity</span><span class="bar"><span class="mid"></span></span><span class="sc" style="color:var(--faint)">soon</span></div>
-        <div class="cat" style="text-align:right">the bitcoin layer supertrend — not yet wired</div>
-      </div>
+    <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:6px">
+      <div><div class="cat">Liquidity Score (the tide)</div>
+        <div class="mono" style="font:800 38px var(--mono);color:${sHex};text-shadow:0 0 26px ${sHex}55">${score==null?"—":score.toFixed(1)}</div>
+        <span class="badge" style="color:${sHex};background:${sHex}1f;border:1px solid ${sHex}55">${sLbl}</span></div>
+      <div><div class="cat">Indicator (momentum)</div>
+        <div class="mono" style="font:800 26px var(--mono);color:${iHex}">${ind>=0?"+":""}${ind.toFixed(3)}</div>
+        <div class="cat" style="margin-top:4px">last signal ${dotBadge||"—"}</div></div>
+      <div style="flex:1;min-width:180px"><div class="cat" style="max-width:340px">A multi-channel liquidity composite (Fed+ECB+BOJ balance sheets, rates, vol, dollar). The Indicator's zero-crossings are the buy/sell dots — liquidity momentum turning up/down. Feeds the conviction; the score is context.</div></div>
     </div>
-    <div class="brk">${bars}</div>`;
+    <div class="chart" style="padding:4px 0 0"><div class="plot" id="tblCycle" style="height:150px"></div></div>
+    <div class="chart" style="padding:0"><div class="plot" id="tblInd" style="height:170px"></div></div>
+    <div class="legend"><span style="color:#16c784">● buy (up-cross)</span><span style="color:#ea3943">● sell (down-cross)</span>
+      <span style="color:var(--faint)">top: Liquidity Cycle (±8) · bottom: Indicator (slope) — TBL's confirmed-dots view</span></div>`;
+  const cyc=slicePts(t.cycle_series)||[], indS=slicePts(t.indicator_series)||[];
+  const dots=(t.dots||[]).filter(d=>RANGE==="All"||d.date>=cutoff());
+  // shared x-range + identical left margin so the two stacked panels line up vertically
+  // (May 11 on top sits directly above May 11 on the bottom).
+  const allx=[...cyc.map(p=>p.d),...indS.map(p=>p.d)].sort();
+  const xr=allx.length?[allx[0],allx[allx.length-1]]:null;
+  const MARGIN={l:50,r:16,t:6,b:18}, XAX={range:xr,gridcolor:"rgba(255,255,255,.04)",automargin:false,hoverformat:"%b %-d, %Y"};
+  // top: cycle oscillator (filled around zero)
+  Plotly.react("tblCycle",[
+    {x:cyc.map(p=>p.d),y:cyc.map(p=>p.v),type:"scatter",mode:"lines",fill:"tozeroy",
+     line:{color:"#7c5cff",width:1.4},fillcolor:"rgba(124,92,255,.10)",hovertemplate:"cycle %{y:.2f}<extra></extra>"}],
+    PLOT_LAYOUT({margin:MARGIN,yaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:true,zerolinecolor:"rgba(255,255,255,.18)",automargin:false},xaxis:Object.assign({showticklabels:false},XAX)}),PCONF);
+  // bottom: indicator with buy/sell dots
+  const buy=dots.filter(d=>d.type==="BUY"), sell=dots.filter(d=>d.type==="SELL");
+  Plotly.react("tblInd",[
+    {x:indS.map(p=>p.d),y:indS.map(p=>p.v),type:"scatter",mode:"lines",line:{color:"#eaf0ff",width:1.8},hovertemplate:"indicator %{y:.3f}<extra></extra>"},
+    {x:buy.map(d=>d.date),y:buy.map(d=>tblDotPrice(d.date,indS)),type:"scatter",mode:"markers",name:"buy",
+     marker:{color:"#16c784",size:11,line:{color:"#070b14",width:1.2}},hovertemplate:"BUY · %{x}<extra></extra>"},
+    {x:sell.map(d=>d.date),y:sell.map(d=>tblDotPrice(d.date,indS)),type:"scatter",mode:"markers",name:"sell",
+     marker:{color:"#ea3943",size:11,line:{color:"#070b14",width:1.2}},hovertemplate:"SELL · %{x}<extra></extra>"},
+  ],PLOT_LAYOUT({margin:Object.assign({},MARGIN,{b:22}),yaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:true,zerolinecolor:"rgba(234,57,67,.35)",automargin:false},xaxis:Object.assign({},XAX)}),PCONF);
 }
 
 // ================= v8.5 STRATEGY SIMULATOR =================
@@ -477,6 +692,13 @@ let SIM_PRESET="era";
 const SIM_PRESETS=[["Full","full"],["MSTR era","era"],["3Y","3y"],["1Y","1y"]];
 function simData(){return DATA.simulator||{trades:[],equity_curve:[],backtest:{}};}
 function curveNAVat(date){const c=simData().equity_curve;if(!c.length)return null;let pick=c[0];for(const p of c){if(p.d<=date)pick=p;else break;}return pick.v;}
+// scale factor tying the backtest's raw P&L to the capital in the simulator below
+// (cap / NAV-at-start). Used by the signal chart so its trade figures track the calculator,
+// not the backtest's $100k base. Defaults sensibly before the sim inputs render.
+function simScale(){const c=simData().equity_curve;if(!c.length)return 1;
+  const sdEl=document.getElementById("simStart"),capEl=document.getElementById("simCap");
+  const sd=(sdEl&&sdEl.value)||c[0].d, cap=Math.max(1,(capEl&&+capEl.value)||100000);
+  return cap/(curveNAVat(sd)||c[0].v||1);}
 function fmtUSD(v){if(v==null||isNaN(v))return"—";const a=Math.abs(v),s=v<0?"-":"";
   if(a>=1e9)return s+"$"+(a/1e9).toFixed(2)+"B";if(a>=1e6)return s+"$"+(a/1e6).toFixed(2)+"M";if(a>=1e3)return s+"$"+(a/1e3).toFixed(1)+"K";return s+"$"+a.toFixed(0);}
 function presetStart(p){const c=simData().equity_curve;if(!c.length)return"";const last=c[c.length-1].d,end=new Date(last);
@@ -519,6 +741,7 @@ function drawSimulator(){
   const op=document.getElementById("simOpen");
   op.innerHTML=openTrades.length?openTrades.map(t=>`<div class="openpos">⚡ OPEN · ${t.type} since ${t.entry_date} @ $${t.entry_price} → mark-to-market ${fmtUSD(t._mtm)} at live $${FMT(t.family==="ENV"?curBtc:curMstr,".2f")}</div>`).join(""):"";
   renderTrades(sd,scale);
+  drawSignalChart(); // keep the backtest-signal $ figures in sync with this calculator's capital
 }
 function renderTrades(sd,scale){
   const trs=simData().trades.filter(t=>t.entry_date>=sd).slice().reverse();
@@ -575,7 +798,8 @@ function drawCalibration(){
     <div class="zlab" style="color:${c}">${z.label}</div><div class="zrange">net ${z.min} … ${z.max}</div><div class="zdesc">${z.desc}</div></div>`;}).join("");
   const a=cal.audit,labels=DATA.indicators||{};
   const bandStr=b=>!b?"—":b.slice(0,3).map(x=>x[1]).join("/")+"…";
-  const aucBar=v=>{const w=Math.max(0,(v-0.5))*200,c=v>=0.55?"#16c784":v>=0.52?"#f3c623":"#586187";
+  const aucBar=v=>{if(v==null||isNaN(v))return '<span style="color:var(--faint)">—</span>';
+    const w=Math.max(0,(v-0.5))*200,c=v>=0.55?"#16c784":v>=0.52?"#f3c623":"#586187";
     return `${v.toFixed(3)}<span class="aucbar" style="width:${w.toFixed(0)}px;background:${c}"></span>`;};
   const rows=a.core.map(r=>{const lbl=(labels[r.key]&&labels[r.key].label)||r.key;
     return `<tr><td>${lbl}<div class="calband">band ${bandStr(r.band)} · cluster ${r.cluster}</div></td>
@@ -590,8 +814,8 @@ function drawCalibration(){
     <div class="calnote"><b>Local vs cycle extremes.</b> ${cal.local_vs_cycle}</div>
     <div class="cat" style="margin:20px 0 2px">Per-indicator measured skill — core net (AUC 0.50 = no skill, higher = sharper)</div>
     <table class="caltable"><tr><th>Indicator</th><th>Top AUC</th><th>Bottom AUC</th><th>Skill</th><th>Weight</th></tr>${rows}</table>
-    <div class="cat" style="margin:20px 0 2px">Macro panel — separate backdrop, not in the core net</div>
-    <table class="caltable"><tr><th>Indicator</th><th>Top AUC</th><th>Bottom AUC</th><th>Skill</th><th>Weight</th></tr>${macroRows}</table>
+    ${a.macro&&a.macro.length?`<div class="cat" style="margin:20px 0 2px">Macro panel — separate backdrop, not in the core net</div>
+    <table class="caltable"><tr><th>Indicator</th><th>Top AUC</th><th>Bottom AUC</th><th>Skill</th><th>Weight</th></tr>${macroRows}</table>`:""}
     <div class="calnote">Panel ${a.panel_start} → ${a.panel_end} (${a.panel_days} days · ${a.near_top_days} near-top, ${a.near_bottom_days} near-bottom labels). Weights = empirical skill (correlated signals cluster-capped at ${a.cluster_cap} of the budget) shrunk ${(a.shrink*100).toFixed(0)}% toward the hand-tuned priors so a noisy fit on few absolute extrema can't wreck the validated turning points. mNAV &amp; MSTR/BTC measure weak <i>general</i> top-AUC (~0.50) — they're specialist top-catchers whose signal lives in their asymmetric bands, not their weight.</div>`;
 }
 
@@ -603,10 +827,11 @@ function sparkSVG(series,color){
 }
 
 function drawTiles(ind){
-  const order=["mri","mvrv_z","nupl","sth_sopr","sth_mvrv","feargreed","rsi","mnav","slope_5d","mstr_btc_trend","hy_oas","funding","netliq_trend","m2_trend"];
+  const order=["mri","mvrv_z","nupl","sth_sopr","sth_mvrv","feargreed","rsi","mnav","slope_5d","mstr_btc_trend","funding","tbl_indicator"];
   const el=document.getElementById("tiles"); el.innerHTML="";
+  const bands=(DATA.scoring_config||{}).bands||{};
   order.forEach(k=>{const t=ind[k]; if(!t)return;
-    const sc=t.score, col=scoreColor(sc);
+    const sc=(t.value!=null&&bands[k])?scoreJS(t.value,bands[k]):t.score, col=scoreColor(sc);
     const div=document.createElement("div"); div.className="card tile"; div.onclick=()=>openModal(k);
     div.innerHTML=`<div class="lab"><span>${t.label}</span><span class="cat">${t.category||""}</span></div>
       <div class="val">${FMT(t.value,t.value_fmt)}${t.value_suffix||""}</div>
@@ -623,7 +848,10 @@ function openModal(k,keepOpen){
   document.getElementById("mCat").textContent=t.category||"";
   document.getElementById("mTitle").textContent=t.label;
   document.getElementById("mVal").textContent=FMT(t.value,t.value_fmt)+(t.value_suffix||"");
-  const sc=t.score,col=scoreColor(sc);
+  // recompute the signed score the same way drawTiles does (mode-aware), so zero-weight/
+  // informational indicators like slope_5d show a consistent number in tile AND modal
+  const bands=(DATA.scoring_config||{}).bands||{};
+  const sc=(t.value!=null&&bands[k])?scoreJS(t.value,bands[k]):t.score,col=scoreColor(sc);
   const ms=document.getElementById("mScore"); ms.textContent=`${scoreLabel(sc)} ${sc==null?"":(sc>0?"+":"")+Math.round(sc)}`; ms.style.background=col+"22"; ms.style.color=col;
   document.getElementById("mExpl").textContent=t.explanation||"";
   document.getElementById("mUse").textContent=t.use||"";
@@ -636,7 +864,7 @@ function openModal(k,keepOpen){
   const traces=[{x,y,type:"scatter",mode:"lines",line:{color:col,width:1.8},hovertemplate:"%{y}<extra></extra>"}];
   const layout=PLOT_LAYOUT({shapes,yaxis:{range:[ymin,ymax],gridcolor:"rgba(255,255,255,.05)",zeroline:false}});
   if(overlayOn&&DATA.mstr_line){const ol=slicePts(DATA.mstr_line);
-    traces.push({x:ol.map(p=>p.d),y:ol.map(p=>p.v),type:"scatter",mode:"lines",yaxis:"y2",line:{color:"#7c5cff",width:1.2},opacity:.55,hovertemplate:"MSTR $%{y:.0f}<extra></extra>"});
+    traces.push({x:ol.map(p=>p.d),y:ol.map(p=>p.v),type:"scatter",mode:"lines",yaxis:"y2",line:{color:"#7c5cff",width:1.2},opacity:.55,hovertemplate:"MSTR $%{y:.2f}<extra></extra>"});
     layout.yaxis2={overlaying:"y",side:"right",type:"log",showgrid:false,color:"#7c5cff"};}
   setTimeout(()=>Plotly.newPlot("mPlot",traces,layout,PCONF),20);
 }
