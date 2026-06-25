@@ -196,8 +196,8 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
     <div class="rangebar" id="rangebar"></div>
     <div class="rangebar modetog" id="modetog" style="margin-top:7px">
       <span style="color:var(--faint);font-size:10.5px;letter-spacing:1px;margin-right:3px">MODEL</span>
-      <span class="rb on" data-m="current" onclick="setMode('current')">Current</span>
-      <span class="rb" data-m="v2" onclick="setMode('v2')">v2 · curves + MSTR weights ✦</span>
+      <span class="rb" data-m="current" onclick="setMode('current')">v1 · step bands + AUC</span>
+      <span class="rb on" data-m="v2" onclick="setMode('v2')">v2 · curves + MSTR weights ✦</span>
       <span style="font-size:11px;color:var(--faint);margin-left:6px" id="modeNote"></span>
     </div>
     <div class="chart" style="padding:8px 0 0"><div class="plot" id="osc" style="height:300px"></div></div>
@@ -287,8 +287,10 @@ const zoneHex=z=>({LONG:"#16c784",SHORT:"#ea3943",NEUTRAL:"#f3c623"}[z]||"#8c98b
 const scoreColor=s=>s==null?"#8c98b8":(s>=15?"#16c784":s<=-15?"#ea3943":"#f3c623");
 const scoreLabel=s=>s==null?"—":(s>=15?"LONG":s<=-15?"SHORT":"NEUTRAL");
 let DATA=null, RANGE="all", curModalKey=null, overlayOn=false, pinned=null;
-// A/B model toggle: "current" (step bands + AUC directional weights) vs "v2" (curve interp + judgment weights)
-let MODE="current";
+// A/B model toggle: "current" = v1 (step bands + AUC directional weights) vs "v2" (curve interp
+// + judgment weights + mNAV top-amplifier). v2 is the DEFAULT (Micah's calibration target);
+// internal key stays "current" for v1 to avoid churning the Python mode param.
+let MODE="v2";
 const isV2=()=>MODE==="v2";
 const modeMeters=()=>isV2()?DATA.meters_v2:DATA.meters;
 const modeOsc=()=>isV2()?DATA.oscillator_v2:DATA.oscillator;
@@ -372,7 +374,7 @@ function applyConviction(){
   if(pinned){sub.innerHTML=`<b style="color:#c9a4ff">📌 ${pinned}</b> — historical reading · Bull +${m.bull_sum} · Bear ${m.bear_sum} · <span class="rb" style="display:inline-block;padding:2px 9px" onclick="resetPin()">↺ Reset to live</span>`;}
   else{const m0=modeMeters(),dl=DATA.net_delta_7d; sub.innerHTML=`Bull +${m0.bull_sum} · Bear ${m0.bear_sum}`+(dl!=null?` · 7d ${dl>0?"▲+":"▼"}${dl}`:"")+` · confidence ${m0.confidence} · <span style="color:var(--faint)">click the chart to inspect any past date</span>`;}
   const a=DATA.meters,b=DATA.meters_v2,mn=document.getElementById("modeNote");
-  if(mn&&a&&b)mn.innerHTML=`current <b>${a.net_conviction>0?"+":""}${a.net_conviction}</b> ${a.label} · v2 <b style="color:var(--accent)">${b.net_conviction>0?"+":""}${b.net_conviction}</b> ${b.label}`;
+  if(mn&&a&&b)mn.innerHTML=`v1 <b>${a.net_conviction>0?"+":""}${a.net_conviction}</b> ${a.label} · v2 <b style="color:var(--accent)">${b.net_conviction>0?"+":""}${b.net_conviction}</b> ${b.label}`;
   drawBreakdown(m);
   // v8.5 Strategy State follows the pin too (reconstructed from series; IV% is live-only)
   drawStrategy(pinned?strategyStateForDate(pinned):DATA.strategy_state, pinned);
