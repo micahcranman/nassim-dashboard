@@ -1,0 +1,230 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Market Note — week of June 22, 2026 · Strategy² Intel</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070b14;--glass:rgba(20,28,48,0.55);--glass-brd:rgba(120,150,220,0.16);
+--ink:#eaf0ff;--muted:#8c98b8;--faint:#586187;--long:#16c784;--short:#ea3943;
+--neutral:#f3c623;--accent:#4aa8ff;--accent2:#7c5cff;
+--mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Inter',system-ui,sans-serif;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(1200px 700px at 12% -8%,rgba(74,168,255,.10),transparent 60%),
+radial-gradient(1000px 600px at 100% 0%,rgba(124,92,255,.10),transparent 55%),
+radial-gradient(900px 700px at 50% 120%,rgba(22,199,132,.06),transparent 60%),var(--bg);min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 16px 80px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.brand small{font-weight:600;color:var(--muted);letter-spacing:2px;font-size:11px}
+.spacer{flex:1}
+.back{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);
+padding:7px 13px;border-radius:10px;background:rgba(255,255,255,.03)}
+.card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;
+backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+box-shadow:0 10px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
+.cat{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--faint)}
+.badge{font:700 10px var(--mono);padding:3px 8px;border-radius:6px;letter-spacing:.5px;display:inline-block}
+.pill{font:700 11px var(--mono);padding:4px 10px;border-radius:8px;letter-spacing:.4px;display:inline-flex;gap:6px;align-items:center}
+
+/* hero */
+.hero{padding:24px;overflow:hidden}
+.hero .meta{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.hero .when{font:700 13px var(--mono);color:var(--muted)}
+.hero h1{font-size:25px;margin:6px 0 2px;font-weight:800;letter-spacing:-.4px}
+.verdict{display:flex;align-items:center;gap:16px;margin:16px 0 4px;flex-wrap:wrap}
+.vbadge{font:800 22px var(--mono);letter-spacing:1px;padding:11px 20px;border-radius:13px;text-transform:uppercase}
+.posture{color:var(--muted);font-size:13.5px;line-height:1.5;margin-top:8px;max-width:760px}
+.conf{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.confcard{padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);min-width:230px;flex:1}
+.confcard .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.confcard .vv{font:800 17px var(--mono);margin-top:6px;display:flex;align-items:center;gap:9px}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16)}
+.confcard .nt{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.45}
+
+/* snapshot chips */
+.sec{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;font-weight:700;font-size:15px;flex-wrap:wrap}
+.sec .hint{font-weight:500;font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{padding:11px 14px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);min-width:130px}
+.chip .k{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:600}
+.chip .v{font:700 19px var(--mono);margin-top:4px}
+.chip .s{font-size:11px;color:var(--faint);margin-top:3px}
+
+/* chart */
+.chart{padding:14px 10px 8px}
+.chart .plot{width:100%;height:360px}
+.clegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 8px 4px}
+.clegend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:3px}
+
+/* voices */
+.voices{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:13px}
+.voice{padding:15px 16px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+.voice.silent{opacity:.5}
+.voice .vh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.voice .nm{font-weight:700;font-size:14.5px}
+.voice .tg{font-size:10.5px;color:var(--faint);margin-top:1px}
+.voice .row2{display:flex;gap:7px;align-items:center;margin:9px 0 2px;flex-wrap:wrap}
+.voice .summ{font-size:12.5px;color:var(--ink);line-height:1.5;margin-top:8px}
+.voice .quote{font-size:12px;color:var(--muted);font-style:italic;border-left:2px solid var(--glass-brd);padding-left:10px;margin-top:9px;line-height:1.45}
+.voice .src{font-size:11px;margin-top:9px}
+.cdots{display:inline-flex;gap:3px;align-items:center}
+.cdots i{width:6px;height:6px;border-radius:50%}
+
+/* narrative */
+.narr{padding:8px 26px 22px;font-size:14.5px;line-height:1.72;color:#dfe6fb}
+.narr h2{font-size:17px;margin:22px 0 8px;color:var(--ink)}
+.narr h3{font-size:15px;margin:18px 0 6px;color:var(--ink)}
+.narr p{margin:11px 0}
+.narr ul{margin:10px 0;padding-left:20px}
+.narr li{margin:7px 0}
+.narr strong{color:#fff}
+.callout{margin:18px 0 2px;padding:15px 18px;border-radius:13px;
+background:linear-gradient(90deg,rgba(74,168,255,.12),rgba(124,92,255,.07));border:1px solid rgba(74,168,255,.2)}
+.callout .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--accent);font-weight:700}
+.callout .v{font-size:15px;line-height:1.6;margin-top:6px;color:#eef2ff}
+.foot{color:var(--faint);font-size:11.5px;margin-top:26px;line-height:1.6}
+
+/* index list */
+.lead{color:var(--muted);font-size:14px;line-height:1.65;max-width:780px;margin:2px 2px 22px}
+.rlist{display:flex;flex-direction:column;gap:13px}
+.rcard{padding:18px 20px;border-radius:15px;display:block;color:inherit;transition:transform .13s,border-color .2s,box-shadow .2s}
+.rcard:hover{transform:translateY(-2px);border-color:rgba(120,150,220,.34);box-shadow:0 12px 36px rgba(0,0,0,.3);text-decoration:none}
+.rcard .rh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.rcard .rdate{font:700 16px var(--sans)}
+.rcard .rcov{font:600 12px var(--mono);color:var(--muted)}
+.rcard .rb{font-size:13px;color:var(--muted);line-height:1.55;margin-top:10px}
+.rcard .rchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+</style></head><body><div class="wrap"><div class="top">
+  <div class="brand"><span class="dot"></span>Strategy²&nbsp;<small>NARRATIVE INTEL</small></div>
+  <div class="spacer"></div><a class="back" href="https://micahcranman.github.io/nassim-dashboard/">← v8.5 Console</a>
+</div>
+<div class="card hero">
+  <div class="meta">
+    <div>
+      <div class="when">MON REPORT · 2026-06-18 → 2026-06-21</div>
+      <h1>Market Note — week of June 22, 2026</h1>
+    </div>
+    <span class="pill" style="background:#ea394322;color:#ea3943;border:1px solid #ea394355;font-size:12px">BEAR REGIME</span>
+  </div>
+  <div class="verdict">
+    <span class="vbadge" style="background:#16c7841f;color:#16c784;border:1px solid #16c78466">MORE CONVICTION</span>
+    <span style="color:var(--muted);font-size:13px;max-width:520px">MORE conviction in the DEFENSIVE posture. Three trusted voices independently confirm risk-off on their good sides, the lone bottom-caller&#x27;s buy signal is unconfirmed in a broken trend, and the capitulation gauge isn&#x27;t oversold — nothing argues for buying weakness yet. Watch STRC holding or losing $100 par, the dollar breakout&#x27;s follow-through, and whether The Bitcoin Layer&#x27;s green dot confirms (it would only matter if the trend stops breaking down).</span>
+  </div>
+  <div class="posture">DEFENSIVE — long-term regime bearish, hedge open (medium-term trend firmly negative), on-chain mean-reversion gauge well above its capitulation extreme (no dip-buy signal), MSTR at a deep ~0.79x discount to its Bitcoin holdings. BTC ~$63,952, MSTR ~$109. Side most needing confirmation this period: TOP.</div>
+  <div class="conf"><div class="confcard">
+  <div class="k"><span>Bear-overlay (defensive / top side)</span><span class="dots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:#16c784"></i></span></div>
+  <div class="vv" style="color:#16c784">CORROBORATE</div>
+  <div class="nt">Strong TOP-side confluence on the voices&#x27; good sides. James Check flags the STRC break as a possible &#x27;damning signal&#x27; that cements recent Strategy-allocation decisions — a risk-OFF read from our best on-chain voice. Macro Ops put fresh positioning behind a confirmed dollar breakout. Howell&#x27;s liquidity tide is falling, peak stimulus behind us. Three independent risk-off reads (on-chain, tactical, liquidity) all point the same way as the open hedge. Discount Howell/Lyn for timing and restatement, but direction is unanimous.</div></div><div class="confcard">
+  <div class="k"><span>Bottom-watch (contrarian buy side)</span><span class="dots"><i></i><i></i><i></i></span></div>
+  <div class="vv" style="color:#586187">SILENT</div>
+  <div class="nt">No buy-side support. The on-chain mean-reversion gauge is well above its oversold extreme, so this is NOT a capitulation — the contrarian-at-extreme &#x27;fear is the bottom&#x27; rule does NOT apply here. The only voice that could add real buy conviction, The Bitcoin Layer, explicitly has an UNCONFIRMED green dot and the trend is a confirmed downtrend where their bottom edge fails. No dip-buy signal, no human corroboration for one. Correctly silent.</div></div></div>
+</div>
+
+<div class="sec">System snapshot <span class="hint">· what the dashboard showed when this note was written</span></div>
+<div class="chips"><div class="chip"><div class="k">Bitcoin</div><div class="v">$63,952</div><div class="s"></div></div><div class="chip"><div class="k">MicroStrategy</div><div class="v">$109.46</div><div class="s"></div></div><div class="chip"><div class="k">On-chain stress</div><div class="v">16.2</div><div class="s">accumulation zone</div></div><div class="chip"><div class="k">Hedge trend</div><div class="v">OPEN</div><div class="s">downtrend</div></div><div class="chip"><div class="k">mNAV</div><div class="v">0.79×</div><div class="s">deep discount</div></div></div>
+
+<div class="sec">Price &amp; on-chain stress <span class="hint">· shaded band = this report's coverage window</span></div>
+<div class="card chart">
+  <div class="clegend"><span><i style="background:#4aa8ff"></i>Bitcoin price</span>
+    <span><i style="background:#f3c623"></i>On-chain stress gauge</span>
+    <span><i style="background:#ea3943;height:2px"></i>capitulation line</span></div>
+  <div id="plot" class="plot"></div>
+</div>
+
+<div class="sec">The trusted voices <span class="hint">· weighted by what each is good at — defensive warnings vs buy-the-dip calls</span></div>
+<div class="voices"><div class="voice">
+  <div class="vh"><div><div class="nm">James Check</div><div class="tg">on-chain</div></div>
+    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#16c784;border:1px solid #16c78455">confirms</span></div></div>
+  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">TOP-side</span><span class="badge" style="background:rgba(74,168,255,.14);color:var(--accent);border:1px solid rgba(74,168,255,.3)">fresh change</span><span class="cdots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
+  <div class="summ">On Strategy&#x27;s preferred stock STRC breaking below its $100 par &#x27;overnight,&#x27; he frames it as possibly &#x27;the market sending a more damning signal&#x27; and says it &#x27;only works towards cementing&#x27; a few allocation decisions he has made in recent weeks regarding his Strategy-related assets. The teaser doesn&#x27;t spell out the direction of those decisions, but the framing is clearly risk-OFF and lands on his good side. His top record is thin/mixed, so size it as a meaningful-but-not-decisive defensive confirmation, not gospel.</div><div class="quote">“the market sending a more damning signal... this event only works towards cementing”</div><div class="src"><a href="https://newsletter.checkonchain.com/p/saylors-sticky-situation" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice">
+  <div class="vh"><div><div class="nm">Lyn Alden</div><div class="tg">macro / liquidity</div></div>
+    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#f3c623;border:1px solid #f3c62355">neutral</span></div></div>
+  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">neutral</span><span class="cdots"><i style="background:#f3c623"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
+  <div class="summ">Her post is geopolitics — the US/Iran MOU peace talks breaking down, with Iran&#x27;s negotiators walking out, which she flags as keeping &#x27;up some inflationary pressures and remain an ongoing political headache.&#x27; No stance change on BTC/MSTR, no liquidity-pivot call. Our best all-rounder, but here she gives macro color, not a same-week top or bottom trigger. Low weight; the inflation-headache lean is mildly risk-off but indirect.</div><div class="quote">“keep up some inflationary pressures and remain an ongoing political headache”</div><div class="src"><a href="https://www.lynalden.com/premium-2026-6-21/" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice">
+  <div class="vh"><div><div class="nm">Michael Howell</div><div class="tg">global liquidity</div></div>
+    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#16c784;border:1px solid #16c78455">confirms</span></div></div>
+  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">TOP-side</span><span class="cdots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
+  <div class="summ">Warsh&#x27;s first FOMC removed the easing bias; Howell reads the new chair as &#x27;more Volcker Red than Greenspan/Bernanke Pink&#x27; and says his US Liquidity Index &#x27;has already been falling for several months,&#x27; so &#x27;the peak in liquidity stimulus is behind us.&#x27; Direction is clearly risk-off and lines up with the bearish regime. But this is a restatement of an existing liquidity-down view, and he is weak on timing (often months early), so treat as directional confirmation, not a fresh trigger.</div><div class="quote">“the peak in liquidity stimulus is behind us”</div><div class="src"><a href="https://capitalwars.substack.com/p/a-new-fed-chair-the-names-bond" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice">
+  <div class="vh"><div><div class="nm">The Bitcoin Layer</div><div class="tg">macro · bottom-caller</div></div>
+    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#f3c623;border:1px solid #f3c62355">neutral</span></div></div>
+  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">neutral</span><span class="cdots"><i style="background:#f3c623"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
+  <div class="summ">Two posts. They walk through &#x27;TBL Liquidity&#x27;s unconfirmed green dot&#x27; — the buy signal has NOT confirmed — describe a &#x27;brutal FOMC&#x27; and a &#x27;liquidation event in STRC,&#x27; and note a stronger dollar correlating with weaker BTC/SPX. As our one bottom-caller, the relevant read is that their dip-buy dot is explicitly unconfirmed AND the broader trend is a confirmed downtrend, where their bottom edge fails anyway. So no buy-side conviction added; if anything the unconfirmed dot and dollar strength quietly support staying defensive.</div><div class="quote">“TBL Liquidity&#x27;s unconfirmed green dot”</div><div class="src"><a href="https://thebitcoinlayer.substack.com/p/when-does-the-next-green-dot-confirm" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice">
+  <div class="vh"><div><div class="nm">Macro Ops</div><div class="tg">tactical macro</div></div>
+    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#16c784;border:1px solid #16c78455">confirms</span></div></div>
+  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">TOP-side</span><span class="badge" style="background:rgba(74,168,255,.14);color:var(--accent);border:1px solid rgba(74,168,255,.3)">fresh change</span><span class="cdots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
+  <div class="summ">They acted on a &#x27;structural shift in the Dollar&#x27;s multi-month range,&#x27; confirmed an &#x27;upside breakout&#x27; this week, and adjusted &#x27;the Macro Ops Portfolio positioning to reflect the move,&#x27; expecting &#x27;significant volatility.&#x27; A dollar breakout is risk-off for BTC/MSTR and it&#x27;s a named-indicator turn they put real positioning behind — their good side. Per profile their defensive calls arrive late confirming a move already underway, which fits a hedge that&#x27;s already open: useful corroboration, not an early warning.</div><div class="quote">“anticipated an upside breakout... adjust the Macro Ops Portfolio positioning”</div><div class="src"><a href="https://research.macro-ops.com/p/stories-we-assume-as-truth" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice silent">
+  <div class="vh"><div><div class="nm">Willy Woo</div><div class="tg">on-chain</div></div>
+    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#586187;border:1px solid #58618755">silent</span></div></div>
+  <div class="row2"></div>
+  <div class="summ" style="color:var(--faint)">No post in the coverage window.</div></div></div>
+
+<div class="sec">The note</div>
+<div class="card"><div class="narr"><p><strong>Where the system stands</strong></p>
+<p>The dashboard is defensive and not subtle about it. Bitcoin sits near $63,952 and MicroStrategy near $109. The medium-term trend that governs our hedge is firmly negative, so the long-term regime reads bearish and defensive positions are open — we're past watching for a top and into a live hedge. The on-chain mean-reversion gauge is still well above its capitulation extreme, so there's no dip-buy signal; on-chain stress is not oversold. MSTR trades at roughly 0.79x the Bitcoin it holds — a deep discount that flips the company's own playbook from issuing stock toward buying it back. The question this period: do the voices we trust confirm the defensive read? They mostly do.</p>
+<p><strong>What the trusted voices actually said</strong></p>
+<ul>
+<li><strong>James Check</strong> — On Strategy's preferred STRC breaking below its $100 par overnight, he calls it the market possibly "sending a more damning signal" and says the event "only works towards cementing" a few decisions he's made in recent weeks on his Strategy-related allocations. The teaser doesn't say which way those decisions cut, but the framing is plainly risk-off, from our richest on-chain voice, on his good side. His top record is thin and mixed, so meaningful confirmation — not gospel. Real weight.</li>
+<li><strong>Michael Howell</strong> — Reads Warsh's first FOMC as removing the easing bias, calls the new chair "more Volcker Red than Greenspan/Bernanke Pink," and notes his liquidity index has been falling for months: "the peak in liquidity stimulus is behind us." Right direction, lines up with the regime — but a restatement, and he's weak on timing. Directional, not a trigger.</li>
+<li><strong>Macro Ops</strong> — Acted on a dollar breakout this week and adjusted "the Macro Ops Portfolio positioning," bracing for "significant volatility." A named-indicator turn with real money behind it, on their good side. Their defensive calls run late, confirming a move underway — which fits a hedge that's already open. Useful corroboration.</li>
+<li><strong>The Bitcoin Layer</strong> — Our one bottom-caller, and they explicitly flag an "unconfirmed green dot." A brutal FOMC, an STRC liquidation, a stronger dollar dragging risk lower. The buy signal has not fired, and in a confirmed downtrend their bottom edge fails anyway. No buy conviction added.</li>
+<li><strong>Lyn Alden</strong> — Geopolitics: the US/Iran MOU collapsed mid-draft, Iran's negotiators walked. She sees "ongoing political headache" and sticky inflation. No stance change on BTC/MSTR, no liquidity pivot. Color, not a trigger.</li>
+</ul>
+<p><strong>Do the voices confirm the system?</strong></p>
+<p>On the top side, yes — and cleanly. Check (on-chain), Macro Ops (tactical), and Howell (liquidity) point risk-off from three independent angles, all aligned with the open hedge. Discount Howell and Lyn for timing and restatement, but the direction is unanimous. On the buy side there's nothing: TBL's dip-buy dot is unconfirmed in a broken trend, and the capitulation gauge isn't oversold — so the "expert fear is the bottom" rule does not apply here. This isn't a capitulation; it's a confirmed downtrend with no oversold tell.</p>
+<p><strong>Bottom line</strong></p>
+<p>MORE conviction in the defensive posture. Watch STRC holding or losing $100, the dollar breakout's follow-through, and whether TBL's green dot confirms — though that only matters once the trend stops breaking.</p>
+<p><em>Coverage note: Willy Woo was silent this window.</em></p>
+  <div class="callout"><div class="k">Bottom line</div><div class="v">MORE conviction in the DEFENSIVE posture. Three trusted voices independently confirm risk-off on their good sides, the lone bottom-caller&#x27;s buy signal is unconfirmed in a broken trend, and the capitulation gauge isn&#x27;t oversold — nothing argues for buying weakness yet. Watch STRC holding or losing $100 par, the dollar breakout&#x27;s follow-through, and whether The Bitcoin Layer&#x27;s green dot confirms (it would only matter if the trend stops breaking down).</div></div>
+</div></div>
+
+<div class="foot">
+  Point-in-time narrative-intelligence note. The system posture is produced by the Strategy² v8.5 dashboard;
+  this note only calibrates conviction in it by reading the trusted voices' actual posts inside the coverage
+  window — it never uses hindsight. Voices weighted by side-specific skill; the one bottom-caller is
+  The Bitcoin Layer, and at a capitulation widespread expert fear is read as confirmation, not conflict.<br>
+  Generated 2026-06-25 14:42 CT · <a href="https://micahcranman.github.io/nassim-dashboard/intel/">all reports</a> · <a href="https://micahcranman.github.io/nassim-dashboard/">v8.5 console</a>
+</div>
+
+<script>
+const D = {"dates": ["2026-05-14", "2026-05-15", "2026-05-16", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-06", "2026-06-07", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-20", "2026-06-21", "2026-06-22"], "btc": [81051.25, 79065.68, 78131.44, 77429.35, 76954.17, 76750.91, 77457.77, 77539.17, 75488.24, 76673.37, 76981.12, 77279.93, 75825.73, 74344.7, 73536.55, 73372.52, 73754.84, 73579.69, 71319.77, 66703.66, 64014.37, 63801.57, 60922.67, 60867.41, 63239.52, 63090.59, 61643.78, 61449.29, 63561.05, 63543.2, 64421.32, 65710.4, 66289.5, 65600.64, 64418.45, 62896.47, 63540.84, 64239.68, 63237.54, 63952.11], "mri": [37.07, 34.26, 32.96, 32.21, 31.0, 30.91, 31.77, 32.18, 29.69, 30.86, 30.89, 31.78, 29.73, 27.68, 26.73, 26.76, 27.32, 27.37, 24.56, 18.27, 15.72, 14.2, 12.37, 11.72, 14.23, 14.53, 12.84, 12.58, 14.83, 15.18, 16.44, 17.66, 18.83, 18.0, 16.7, 14.83, 15.22, 16.81, 15.61, 16.22], "mnav": [1.081, 1.0516, 1.0641, 1.0738, 0.9859, 0.9767, 0.9747, 0.968, 0.9644, 0.9495, 0.9457, 0.942, 0.9603, 0.9444, 0.9389, 0.9872, 0.9821, 0.9845, 0.9527, 0.9255, 0.8968, 0.9199, 0.8969, 0.8977, 0.864, 0.9164, 0.8628, 0.8532, 0.8592, 0.8867, 0.8746, 0.8575, 0.9018, 0.8534, 0.8249, 0.8156, 0.8073, 0.7986, 0.8112, 0.785], "win_start": "2026-06-18", "win_end": "2026-06-21", "report_date": "2026-06-22"};
+(function(){
+  const shade0 = D.win_start, shade1 = D.win_end;
+  const btcVals = D.btc.filter(v=>v!=null);
+  const ylo = Math.min.apply(null,btcVals)*0.985, yhi = Math.max.apply(null,btcVals)*1.012;
+  const t_btc = {x:D.dates,y:D.btc,name:'Bitcoin',type:'scatter',mode:'lines',
+    line:{color:'#4aa8ff',width:3,shape:'spline',smoothing:0.6},yaxis:'y',
+    fill:'tozeroy',fillcolor:'rgba(74,168,255,0.13)',
+    hovertemplate:'%{x}<br>BTC $%{y:,.0f}<extra></extra>'};
+  const t_mri = {x:D.dates,y:D.mri,name:'On-chain stress',type:'scatter',mode:'lines+markers',
+    line:{color:'#f3c623',width:2.2,dash:'dot'},marker:{size:4,color:'#f3c623'},
+    yaxis:'y2',connectgaps:true,hovertemplate:'%{x}<br>stress %{y:.1f}<extra></extra>'};
+  const layout = {
+    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(255,255,255,0.018)',
+    font:{color:'#8c98b8',family:'JetBrains Mono, monospace',size:11},
+    margin:{l:60,r:54,t:10,b:34},showlegend:false,
+    xaxis:{gridcolor:'rgba(255,255,255,.05)',zeroline:false},
+    yaxis:{title:'BTC',gridcolor:'rgba(255,255,255,.06)',zeroline:false,tickprefix:'$',tickformat:',.0f',range:[ylo,yhi]},
+    yaxis2:{title:'stress',overlaying:'y',side:'right',gridcolor:'rgba(0,0,0,0)',zeroline:false,range:[0,Math.max(40,Math.max.apply(null,D.mri.filter(v=>v!=null))+6)]},
+    shapes:[
+      {type:'rect',xref:'x',yref:'paper',x0:shade0,x1:shade1,y0:0,y1:1,
+        fillcolor:'rgba(124,92,255,.16)',line:{color:'rgba(124,92,255,.45)',width:1,dash:'dot'},layer:'below'},
+      {type:'line',xref:'paper',yref:'y2',x0:0,x1:1,y0:12,y1:12,
+        line:{color:'#ea3943',width:1.4,dash:'dash'}}
+    ],
+    annotations:[
+      {xref:'paper',yref:'y2',x:0.012,y:12,yanchor:'bottom',text:'capitulation buy zone (≤12)',
+        showarrow:false,font:{color:'#ea3943',size:9.5}},
+      {xref:'x',yref:'paper',x:shade1,y:1,yanchor:'bottom',xanchor:'right',text:'coverage window',
+        showarrow:false,font:{color:'#7c5cff',size:9.5}}
+    ]
+  };
+  Plotly.newPlot('plot',[t_btc,t_mri],layout,{displayModeBar:false,responsive:true});
+})();
+</script></div></body></html>

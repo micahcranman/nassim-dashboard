@@ -6,3 +6,6 @@ __pycache__/
 .DS_Store
 outputs/logs/
 .env
+
+# narrative-intel pipeline intermediates (regenerable; reports live in docs/intel/)
+intel/build/

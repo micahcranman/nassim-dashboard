@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Strategy² Narrative-Intel — twice-weekly runner (Mon + Thu, 07:15 CT).
+  Generates the current period, renders, deploys to GitHub Pages, and emails Micah.
+  Enable:  cp this to ~/Library/LaunchAgents/ then `launchctl load` it.
+  Disable: `launchctl unload ~/Library/LaunchAgents/com.strategy2.intel.plist`
+  NOTE: assumes the corpus scraper has already run that morning; add a `git pull`
+  in a wrapper if you want the freshest signal (docs/latest.json).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.strategy2.intel</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/micahs-mac-mini/.openclaw/workspace-investing/scripts/dashboard/intel/run_intel.py</string>
+    <string>--deploy</string>
+    <string>--email</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/micahs-mac-mini/.openclaw/workspace-investing/scripts/dashboard/intel</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>INTEL_EMAIL_TO</key>
+    <string>micahcranman@gmail.com</string>
+  </dict>
+
+  <!-- Monday 07:15 and Thursday 07:15 (Weekday: Sun=0, Mon=1 … Thu=4) -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+    <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>7</integer><key>Minute</key><integer>15</integer></dict>
+  </array>
+
+  <key>StandardOutPath</key>
+  <string>/Users/micahs-mac-mini/.openclaw/workspace-investing/scripts/dashboard/intel/build/cron.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/micahs-mac-mini/.openclaw/workspace-investing/scripts/dashboard/intel/build/cron.err</string>
+</dict>
+</plist>
