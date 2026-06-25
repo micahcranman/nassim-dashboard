@@ -1,0 +1,34 @@
+{
+  "_generated_by": "quarterly circularity routine (seeded 2026-06-25 from the ai-capex-groundtruth research pass)",
+  "_methodology": "gross cash-flow-statement capex (FLOWS not commitment headlines) + off-balance-sheet/debt-financed GPUs - circular double-count (end-node rule + Nvidia<->OpenAI vendor-financing recycling) -> split internal-cash vs NEW-EXTERNAL capital. The dashboard's crowding-out leg = NET EXTERNAL CASH DRAIN (new credit/equity), because internally-funded capex recycles corporate cash and does not compete for the marginal liquidity that bids financial assets.",
+  "as_of": "2026-06-25",
+  "quarter": "2026Q1 actuals + FY2026 guidance",
+  "gross_annual_capex_usd_b": { "central": 810, "low": 750, "high": 870 },
+  "circular_double_count_usd_b": { "central": 145, "low": 110, "high": 180 },
+  "debt_funded_share_pct": { "central": 37, "low": 30, "high": 45 },
+  "net_external_cash_drain_usd_b": { "central": 380, "low": 300, "high": 480 },
+  "all_resource_absorption_usd_b": { "central": 575, "low": 450, "high": 700 },
+  "confidence": "medium on the band / low on the point — circularity netting is modeled; always read as a range, never a point",
+  "by_company_capex_quarter_usd_b": { "MSFT": 30.88, "GOOGL": 35.67, "AMZN": 44.20, "META": 19.00, "CoreWeave": 7.70, "ORCL": 13.9 },
+  "deal_ledger": [
+    { "parties": "Nvidia -> OpenAI", "type": "vendor-equity", "headline_size": "$100B", "deployed_estimate": "~$30B (scaled from $100B; Huang called $100B an 'invitation')", "is_flow_or_commitment": "commitment", "source_url": "cnbc.com (May 2026)", "confidence": "medium" },
+    { "parties": "OpenAI -> Oracle/SoftBank (Stargate)", "type": "compute-commitment", "headline_size": "~$300B / 4.5GW", "deployed_estimate": "multi-year backlog, not annual cash", "is_flow_or_commitment": "commitment", "source_url": "openai.com Stargate", "confidence": "high (existence) / low (annual cash)" },
+    { "parties": "Amazon -> Anthropic", "type": "vendor-equity", "headline_size": "up to $25B (>$100B compute, 5GW)", "deployed_estimate": "tranche-based", "is_flow_or_commitment": "commitment", "source_url": "SEC 8-K 0001018724 (2026-04); anthropic.com", "confidence": "high" },
+    { "parties": "Nvidia -> CoreWeave", "type": "take-or-pay", "headline_size": "$6.3B backstop through Apr 2032", "deployed_estimate": "contingent, not deployed cash", "is_flow_or_commitment": "commitment", "source_url": "CoreWeave 8-K/S-1 (CIK 0001769628)", "confidence": "high" },
+    { "parties": "Meta - Blue Owl (Hyperion SPV)", "type": "off-BS-SPV", "headline_size": "~$27B senior secured notes (A+, due 2049)", "deployed_estimate": "off-balance-sheet real-asset build", "is_flow_or_commitment": "flow (financed)", "source_url": "Meta 10-Q VIE/lease note", "confidence": "medium" },
+    { "parties": "AMD -> OpenAI", "type": "vendor-equity", "headline_size": "warrants up to 160M AMD shares", "deployed_estimate": "contingent on milestones", "is_flow_or_commitment": "commitment", "source_url": "AMD/OpenAI 8-K (2025-10-06)", "confidence": "high" }
+  ],
+  "debt_anchor": "BIS Bulletin 120 (Jan 2026): 2025 ~ $120B hyperscaler bonds (5x 2024) + ~$120B off-balance-sheet SPV/private credit = ~$240B new external debt; 2026 scales higher as Big-4 FCF goes flat-to-negative and capex approaches ~100% of operating cash flow.",
+  "sources": [
+    "SEC EDGAR XBRL companyfacts/frames (keyless) - data.sec.gov/api/xbrl - capex/OCF/debt per CIK",
+    "Epoch AI Hyperscaler Capex vs Cash Flow (CC-BY) - epoch.ai/data-insights/hyperscaler-capex-vs-cash-flow",
+    "BIS Bulletin No. 120 'Financing the AI boom' - bis.org/publ/bisbull120.pdf",
+    "Oracle 10-K FY2026 (capex $55.7B); CoreWeave 10-Q (2026-05-08)"
+  ],
+  "flags": [
+    "AI-specific attribution (~75% of public capex) is a SECONDARY industry estimate; companies do not break out AI vs non-AI capex.",
+    "Private labs (OpenAI/Anthropic/xAI) file nothing with the SEC - figures attributed to them are press/secondary, widest error band.",
+    "Vendor-financing round-trip size (~$30-50B/yr) is the weakest link - Nvidia does not disclose GPU revenue from its own investees.",
+    "Two defensible scopes: ~$300-480B new-external-capital (the panel leg) vs ~$450-700B all-AI-resource absorption."
+  ]
+}

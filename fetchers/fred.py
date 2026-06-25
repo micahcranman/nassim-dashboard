@@ -152,6 +152,18 @@ def fetch_m2():
     return _wrap("M2SL", "US M2 Money Supply")
 
 
+def fetch_nominal_gdp():
+    """Nominal GDP (current-$, SAAR, quarterly) — the real-economy 'consumed' leg of the
+    money-gap (M2 YoY% − nominal-GDP YoY%). NOT GDPC1 (that's real/inflation-adjusted)."""
+    return _wrap("GDP", "US Nominal GDP ($B SAAR)")
+
+
+def fetch_federal_deficit():
+    """Federal surplus(+)/deficit(−), monthly NSA ($M) — the fiscal-absorption leg.
+    Roll to a trailing-12-month sum and normalize by GDP downstream."""
+    return _wrap("MTSDS133FMS", "Federal Surplus/Deficit ($M, monthly)")
+
+
 def fetch_real_yield_10y():
     return _wrap("DFII10", "10Y Real Yield (TIPS)")
 

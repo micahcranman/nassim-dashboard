@@ -122,6 +122,10 @@ def fetch_all(logger):
         ("m2",          fred.fetch_m2),
         ("netliq",      fred.fetch_net_liquidity),
         ("hy_oas",      fred.fetch_hy_oas),
+        # NLAFA (net liquidity available to financial assets) legs: nominal GDP (real-economy
+        # money demand) + federal deficit (fiscal absorption). M2 (created) reuses fetch_m2 above.
+        ("nominal_gdp", fred.fetch_nominal_gdp),
+        ("fed_deficit", fred.fetch_federal_deficit),
         ("mstr",        yahoo.fetch_mstr),
         ("mstr_shares", yahoo.fetch_mstr_shares),
         ("mstr_shares_hist", yahoo.fetch_mstr_shares_history),
@@ -465,6 +469,129 @@ def build_strategy_state(derived):
     }
 
 
+def build_liquidity_flow(results, logger):
+    """NLAFA — Net Liquidity Available to Financial Assets.
+
+    Reframes liquidity from a LEVEL (TBL: 'is the tide rising?') to a NET FLOW ('of what's
+    created, how much is free to bid BTC/MSTR after the real economy and AI capex drink first?').
+
+    CORE = the money gap (Marshallian-K momentum): M2 YoY% - nominal-GDP YoY%. >0 = money
+    growing faster than the economy needs -> excess flows to assets; ~0/<0 = the real economy is
+    absorbing it all. AI overlay = the circularity-adjusted NET EXTERNAL cash drain to AI buildout
+    (docs/ai_capex.json, maintained quarterly), expressed vs the money stock so you can see the
+    marginal dollar getting soaked. CONTEXT/LABEL ONLY — never feeds the conviction vote.
+
+    The waterfall is a STYLIZED decomposition in ppts-of-M2/yr, not an accounting identity; fiscal
+    is shown as context (its sign is regime-dependent) rather than a subtractive leg in v1.
+    """
+    def _m(s):
+        if s is None or len(s) == 0:
+            return None
+        s = s.dropna().copy(); s.index = pd.to_datetime(s.index)
+        if getattr(s.index, "tz", None) is not None:
+            s.index = s.index.tz_localize(None)
+        return s[~s.index.duplicated(keep="last")].sort_index()
+
+    m2 = _m(results.get("m2", {}).get("series"))
+    gdp = _m(results.get("nominal_gdp", {}).get("series"))
+    deficit = _m(results.get("fed_deficit", {}).get("series"))
+    if m2 is None or gdp is None or len(m2) < 14 or len(gdp) < 6:
+        logger.warning("  Liquidity-flow (NLAFA): missing M2/GDP series — skipped")
+        return None
+
+    # YoY growth: M2 monthly (12 periods), GDP quarterly (4 periods) ffilled to the monthly index.
+    m2_yoy = (m2 / m2.shift(12) - 1.0) * 100.0
+    gdp_yoy = (gdp / gdp.shift(4) - 1.0) * 100.0
+    idx = m2_yoy.dropna().index
+    gdp_yoy_m = gdp_yoy.reindex(m2.index, method="ffill")
+    gap = (m2_yoy - gdp_yoy_m).dropna()
+    gap = gap[gap.index >= "2016-01-01"]
+    if gap.empty:
+        return None
+    gap_now = float(gap.iloc[-1])
+    gmu, gsd = float(gap.mean()), float(gap.std() or 1.0)
+    gap_z = round((gap_now - gmu) / gsd, 2)
+    m2_yoy_now = float(m2_yoy.dropna().iloc[-1])
+    gdp_yoy_now = float(gdp_yoy.dropna().iloc[-1])
+    m2_level = float(m2.iloc[-1])                       # $B
+    new_m2_yr = m2_level * m2_yoy_now / 100.0           # $B/yr created
+
+    # Fiscal context: trailing-12-month federal deficit, normalized by GDP (annualized $B).
+    fiscal = None
+    if deficit is not None and len(deficit) >= 12:
+        ttm = float(deficit.tail(12).sum()) / 1000.0    # $M -> $B (deficit is negative)
+        fiscal = {"deficit_ttm_usd_b": round(ttm, 1),
+                  "pct_gdp": round(abs(ttm) / float(gdp.iloc[-1]) * 100, 2),
+                  "as_of": deficit.index[-1].strftime("%Y-%m-%d"),
+                  "note": "fiscal impulse — a deficit ADDS money, but the Treasury issuance to fund it competes with risk assets for capital. Sign is regime-dependent; shown as context, not a waterfall subtraction in v1."}
+
+    # AI overlay from the committed quarterly snapshot (docs/ai_capex.json).
+    ai = None
+    try:
+        aj = json.loads((REPO_ROOT / "docs" / "ai_capex.json").read_text())
+        net = aj.get("net_external_cash_drain_usd_b", {})
+        c = net.get("central"); lo = net.get("low"); hi = net.get("high")
+        ai = {
+            "net_external_cash_drain_usd_b": net,
+            "gross_annual_capex_usd_b": aj.get("gross_annual_capex_usd_b"),
+            "all_resource_absorption_usd_b": aj.get("all_resource_absorption_usd_b"),
+            "pct_of_m2": (round(c / m2_level * 100, 2) if c else None),
+            "pct_of_new_m2": (round(c / new_m2_yr * 100, 1) if c and new_m2_yr else None),
+            "as_of": aj.get("as_of"), "quarter": aj.get("quarter"),
+            "confidence": aj.get("confidence"), "deal_ledger": aj.get("deal_ledger", []),
+            "flags": aj.get("flags", []), "debt_anchor": aj.get("debt_anchor"),
+            "sources": aj.get("sources", []),
+        }
+    except Exception as e:
+        logger.warning(f"  Liquidity-flow: ai_capex.json unavailable ({e})")
+
+    # Stylized waterfall (ppts of M2 / yr). Created - real-economy = money gap; then - AI external drain.
+    ai_drag = (ai.get("pct_of_m2") if ai else None) or 0.0
+    residual = round(gap_now - ai_drag, 2)
+    waterfall = [
+        {"label": "Liquidity created (M2 YoY)", "v": round(m2_yoy_now, 2), "kind": "created"},
+        {"label": "− Real economy (nominal GDP YoY)", "v": round(-gdp_yoy_now, 2), "kind": "consumed"},
+        {"label": "Money gap (excess vs economy)", "v": round(gap_now, 2), "kind": "subtotal"},
+        {"label": "− AI buildout (net external ÷ M2)", "v": round(-ai_drag, 2), "kind": "consumed"},
+        {"label": "Residual to financial assets", "v": residual, "kind": "residual"},
+    ]
+
+    # Regime label + TBL cross-read.
+    created_lbl = "Created+" if m2_yoy_now > 0 else "Created−"
+    absorb_lbl = ("Heavily absorbed" if gap_now <= 0.5 else "Lightly absorbed" if gap_now <= 2 else "Loosely absorbed")
+    resid_lbl = ("Thin residual" if residual <= 0.5 else "Moderate residual" if residual <= 2.5 else "Ample residual")
+    regime_label = f"{created_lbl} · {absorb_lbl} · {resid_lbl}"
+    tbl_score = (results.get("tbl", {}) or {}).get("score")
+    if tbl_score is not None and residual <= 0.5:
+        tbl_crossread = (f"TBL tide reads {tbl_score:.0f}/100 (level) but the NET residual is thin "
+                         f"({residual:+.1f} ppts) — a positive-headline regime where the marginal "
+                         f"liquidity dollar is being soaked by the real economy + AI buildout.")
+    elif tbl_score is not None:
+        tbl_crossread = (f"TBL tide {tbl_score:.0f}/100 with residual {residual:+.1f} ppts — "
+                         f"liquidity is reaching the asset pool.")
+    else:
+        tbl_crossread = f"Residual to assets {residual:+.1f} ppts (money gap {gap_now:+.1f}, AI drag −{ai_drag:.1f})."
+
+    series = [{"d": d.strftime("%Y-%m-%d"),
+               "gap": round(float(g), 2),
+               "m2": round(float(m2_yoy.get(d, float('nan'))), 2) if d in m2_yoy.index else None,
+               "gdp": round(float(gdp_yoy_m.get(d, float('nan'))), 2) if d in gdp_yoy_m.index else None}
+              for d, g in gap.items()]
+
+    logger.info(f"  Liquidity-flow (NLAFA): money_gap={gap_now:+.2f}% (z {gap_z}), "
+                f"AI drag −{ai_drag:.2f}ppts, residual {residual:+.2f} → {regime_label}")
+    return {
+        "as_of": gap.index[-1].strftime("%Y-%m-%d"),
+        "m2_yoy": round(m2_yoy_now, 2), "gdp_yoy": round(gdp_yoy_now, 2),
+        "money_gap": round(gap_now, 2), "money_gap_z": gap_z,
+        "m2_level_usd_b": round(m2_level, 0), "new_m2_yr_usd_b": round(new_m2_yr, 0),
+        "residual_to_assets": residual,
+        "waterfall": waterfall, "regime_label": regime_label,
+        "fiscal": fiscal, "ai": ai, "tbl_crossread": tbl_crossread,
+        "series": series,
+    }
+
+
 def compute_oscillator_history(results, derived, scoring, mode="current"):
     """Backfill the net-conviction oscillator over ~5y from the daily indicator series,
     so the centerpiece chart has real history (not one point). Returns (list, last-day meters).
@@ -617,6 +744,7 @@ def main():
     logger.info(f"  Models: current net {meters['net_conviction']} ({meters['label']}) · "
                 f"v2 net {meters_v2['net_conviction']} ({meters_v2['label']})")
     strat = build_strategy_state(derived)
+    liquidity_flow = build_liquidity_flow(results, logger)
     logger.info(f"  Net={meters['net_conviction']} (bull {meters['bull_sum']} / bear {meters['bear_sum']}) "
                 f"→ {meters['zone']} = {meters['verdict']} ({meters['read']})")
 
@@ -781,6 +909,7 @@ def main():
         "meters": meters,
         "meters_v2": meters_v2,
         "tbl": tbl_block,
+        "liquidity_flow": liquidity_flow,
         "signals": signals,
         "simulator": simulator,
         "scoring_config": scoring_cfg,

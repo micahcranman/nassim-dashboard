@@ -243,6 +243,9 @@ button.refresh.spin svg{animation:spin 1s linear infinite}
   <div class="sec">TBL Liquidity <span class="hint">— The Bitcoin Layer's composite: liquidity score (the tide), the Cycle, and the buy/sell Indicator (zero-crossings = dots)</span></div>
   <div class="card" id="tblCard" style="padding:18px 16px"></div>
 
+  <div class="sec">Net Liquidity to Assets <span class="hint">— create vs consume: of the liquidity created, how much is free to bid BTC/MSTR after the real economy &amp; AI capex drink first (context, not a vote)</span></div>
+  <div class="card" id="nlafaCard" style="padding:18px 16px"></div>
+
   <div class="sec">Indicators <span class="hint">— one signed score each · tap for detail</span></div>
   <div class="tiles" id="tiles"></div>
 
@@ -398,7 +401,7 @@ function render(){
   const mnavTip=`${conv} mNAV — MSTR market cap (diluted shares) ÷ BTC NAV. Computed from Strategy's official share/holdings data (strategy.com) + live BTC price; strategy.com is bot-walled so the figure can't be pulled directly. Matches bitcointreasuries.net's diluted mNAV. Strategy's headline EV-mNAV (adds convert debt + preferred − cash) reads ~0.3–0.4x higher.`;
   document.getElementById("mnavTop").innerHTML=`<span title="${mnavTip}" style="cursor:help;border-bottom:1px dotted var(--faint)">mNAV ${FMT(snap.mnav,".2f")}x</span>${cflag} <span style="color:var(--faint);font-size:11px">(${conv})</span> · ${FMT(snap.mstr_btc_holdings,".0f")} BTC${snap.mstr_btc_holdings_stale?" ⚠":""}`;
 
-  drawRangeBar(); applyConviction(); drawSignalChart(); drawTBL(); drawTiles(d.indicators);
+  drawRangeBar(); applyConviction(); drawSignalChart(); drawTBL(); drawLiquidityFlow(); drawTiles(d.indicators);
   initSim(); if(calShown)drawCalibration();
   document.getElementById("foot").textContent=`Generated ${ts.toLocaleString()} · ${(d.data_health||[]).filter(h=>!h.stale).length}/${(d.data_health||[]).length} sources fresh`;
 }
@@ -407,7 +410,7 @@ function drawRangeBar(){
   document.getElementById("rangebar").innerHTML=RANGES.map(r=>`<span class="rb ${r[0]===RANGE?'on':''}" onclick="setRange('${r[0]}')">${r[0]}</span>`).join("")
     +`<span style="font-size:11px;color:var(--faint);margin-left:6px">range applies to all charts</span>`;
 }
-function setRange(r){RANGE=r;drawRangeBar();drawOscillator();drawSignalChart();drawTiles(DATA.indicators);if(curModalKey)openModal(curModalKey,true);}
+function setRange(r){RANGE=r;drawRangeBar();drawOscillator();drawSignalChart();drawLiquidityFlow();drawTiles(DATA.indicators);if(curModalKey)openModal(curModalKey,true);}
 
 // v8.5 backtest signal markers, plotted on a dedicated MSTR price chart (log).
 const SIGMETA={
@@ -686,6 +689,69 @@ function drawTBL(){
     {x:sell.map(d=>d.date),y:sell.map(d=>tblDotPrice(d.date,indS)),type:"scatter",mode:"markers",name:"sell",
      marker:{color:"#ea3943",size:11,line:{color:"#070b14",width:1.2}},hovertemplate:"SELL · %{x}<extra></extra>"},
   ],PLOT_LAYOUT({margin:Object.assign({},MARGIN,{b:22}),yaxis:{gridcolor:"rgba(255,255,255,.05)",zeroline:true,zerolinecolor:"rgba(234,57,67,.35)",automargin:false},xaxis:Object.assign({},XAX)}),PCONF);
+}
+
+// ================= NET LIQUIDITY TO ASSETS (NLAFA) =================
+// Create-vs-consume: money gap (M2 YoY − nominal-GDP YoY) as the rigorous core, minus the
+// circularity-adjusted AI net-external drain, as a stylized waterfall + a money-gap history line.
+// Context/label only — never feeds the conviction vote.
+function drawLiquidityFlow(){
+  const el=document.getElementById("nlafaCard"); if(!el)return;
+  const lf=DATA.liquidity_flow;
+  if(!lf){el.innerHTML=`<div class="cat">Net-liquidity-to-assets unavailable</div>`;return;}
+  const resid=lf.residual_to_assets, gap=lf.money_gap;
+  const rHex=resid>2.5?"#16c784":resid>0.5?"#f3c623":"#ea3943";
+  const gHex=gap>0.5?"#16c784":gap>-0.5?"#f3c623":"#ea3943";
+  const ai=lf.ai||{}, net=ai.net_external_cash_drain_usd_b||{}, gross=ai.gross_annual_capex_usd_b||{}, fis=lf.fiscal||{};
+  const fmtB=v=>v==null?"—":(v<0?"-":"")+"$"+(Math.abs(v)>=1000?(Math.abs(v)/1000).toFixed(2)+"T":Math.round(Math.abs(v))+"B");
+  const aiTip=(ai.confidence||"")+" — gross cash-flow capex (flows, not commitment headlines) + off-B/S debt-financed GPUs − circular double-count (end-node + vendor financing) → net external capital. as-of "+(ai.as_of||"—");
+  el.innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:26px;flex-wrap:wrap;margin-bottom:8px">
+      <div><div class="cat">Residual to financial assets</div>
+        <div class="mono" style="font:800 38px var(--mono);color:${rHex};text-shadow:0 0 26px ${rHex}55">${resid>0?"+":""}${resid.toFixed(1)}<span style="font-size:15px;color:var(--muted)"> ppts</span></div>
+        <span class="badge" style="color:${rHex};background:${rHex}1f;border:1px solid ${rHex}55">${lf.regime_label}</span></div>
+      <div><div class="cat">Money gap (excess vs economy)</div>
+        <div class="mono" style="font:800 26px var(--mono);color:${gHex}">${gap>0?"+":""}${gap.toFixed(2)}%</div>
+        <div class="cat" style="margin-top:4px">M2 ${lf.m2_yoy>0?"+":""}${lf.m2_yoy}% · GDP ${lf.gdp_yoy>0?"+":""}${lf.gdp_yoy}% YoY · z ${lf.money_gap_z}</div></div>
+      <div style="flex:1;min-width:220px"><div class="cat" style="max-width:440px;line-height:1.5">${lf.tbl_crossread}</div></div>
+    </div>
+    <div class="chart" style="padding:4px 0 0"><div class="plot" id="nlafaWf" style="height:230px"></div></div>
+    <div class="legend"><span style="color:var(--faint)">stylized decomposition — ppts of M2/yr, not an accounting identity · context only, does not feed conviction</span></div>
+    <div class="chart" style="padding:8px 0 0"><div class="plot" id="nlafaGap" style="height:150px"></div></div>
+    <div class="legend"><span style="color:#4aa8ff"><i style="background:#4aa8ff"></i>money gap (M2 YoY − nominal-GDP YoY)</span><span style="color:var(--faint)">&gt;0 = excess liquidity free to assets · &lt;0 = real economy absorbs it all</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:14px">
+      <div class="simstat"><div class="k">AI buildout — net external drain</div>
+        <div class="v" style="color:#ea3943;cursor:help" title="${aiTip}">${fmtB(net.central)}/yr</div>
+        <div class="cat" style="margin-top:4px">range ${fmtB(net.low)}–${fmtB(net.high)} · ≈${ai.pct_of_new_m2}% of new M2 · gross ${fmtB(gross.central)}</div></div>
+      <div class="simstat"><div class="k">Fiscal impulse (context)</div>
+        <div class="v" style="color:#f3c623">${fmtB(fis.deficit_ttm_usd_b)}</div>
+        <div class="cat" style="margin-top:4px">TTM deficit · ${fis.pct_gdp}% of GDP</div></div>
+      <div class="simstat"><div class="k">Liquidity created (M2)</div>
+        <div class="v">${fmtB(lf.new_m2_yr_usd_b)}/yr</div>
+        <div class="cat" style="margin-top:4px">M2 ${fmtB(lf.m2_level_usd_b)} · +${lf.m2_yoy}% YoY</div></div>
+    </div>
+    <div class="calnote" style="margin-top:12px">AI leg = circularity-adjusted <b>net external capital</b> (new credit/equity, not recycled corporate cash), maintained quarterly — <b>modeled, shown as a range</b>, as-of ${ai.as_of||"—"}. ${(ai.flags&&ai.flags[0])||""} <span style="color:var(--faint)">Sources: SEC EDGAR XBRL + Epoch AI + BIS Bulletin 120.</span></div>`;
+
+  // stylized waterfall (Created → −RealEcon → Money gap → −AI → Residual)
+  const wf=lf.waterfall||[];
+  const meas=wf.map(w=>(w.kind==="subtotal"||w.kind==="residual")?"total":"relative");
+  Plotly.react("nlafaWf",[{type:"waterfall",orientation:"v",measure:meas,
+    x:wf.map(w=>w.label.replace("− ","−")),y:wf.map(w=>w.v),
+    text:wf.map(w=>(w.v>0?"+":"")+w.v.toFixed(2)),textposition:"outside",textfont:{size:11},
+    connector:{line:{color:"rgba(255,255,255,.18)",width:1}},
+    increasing:{marker:{color:"#16c784"}},decreasing:{marker:{color:"#ea3943"}},totals:{marker:{color:"#4aa8ff"}},
+    hovertemplate:"%{x}: %{y:+.2f} ppts<extra></extra>"}],
+    PLOT_LAYOUT({margin:{l:42,r:14,t:20,b:48},
+      yaxis:{ticksuffix:"%",gridcolor:"rgba(255,255,255,.05)",zeroline:true,zerolinecolor:"rgba(255,255,255,.18)"},
+      xaxis:{tickfont:{size:9.5}}}),PCONF);
+
+  // money-gap history line
+  const gg=slicePts(lf.series)||[];
+  Plotly.react("nlafaGap",[{x:gg.map(p=>p.d),y:gg.map(p=>p.gap),type:"scatter",mode:"lines",
+    line:{color:"#4aa8ff",width:2,shape:"spline"},fill:"tozeroy",fillcolor:"rgba(74,168,255,.08)",
+    hovertemplate:"money gap %{y:.2f}%<extra></extra>"}],
+    PLOT_LAYOUT({margin:{l:42,r:14,t:8,b:24},
+      yaxis:{ticksuffix:"%",gridcolor:"rgba(255,255,255,.05)",zeroline:true,zerolinecolor:"rgba(255,255,255,.22)"}}),PCONF);
 }
 
 // ================= v8.5 STRATEGY SIMULATOR =================
