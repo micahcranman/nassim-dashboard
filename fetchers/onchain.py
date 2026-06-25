@@ -9,6 +9,11 @@ import requests
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+try:
+    from . import lastgood
+except ImportError:  # allow `python onchain.py` direct execution
+    import lastgood
+
 BASE = "https://api.bgeometrics.com/v1"
 HEADERS = {"User-Agent": "nassim-dashboard/1.0", "Accept": "application/json"}
 
@@ -45,11 +50,43 @@ def _save_cache(endpoint, series):
         pass
 
 
+# BGeometrics throttles bursts (separate from the 200/hr cap). Enforce a minimum gap
+# between live calls so many sequential endpoint fetches don't trip a 429.
+_MIN_GAP_S = 2.2
+_last_call = [0.0]
+
+
+def _throttle():
+    import time as _t
+    elapsed = _t.monotonic() - _last_call[0]
+    if elapsed < _MIN_GAP_S:
+        _t.sleep(_MIN_GAP_S - elapsed)
+    _last_call[0] = _t.monotonic()
+
+
 def _fetch(endpoint: str, value_key_candidates=("mvrvZscore", "nupl", "sopr", "liveliness", "value")):
+    import time as _t
     params = {"token": _TOKEN} if _TOKEN else {}
-    r = requests.get(f"{BASE}/{endpoint}", headers=HEADERS, params=params, timeout=30)
-    r.raise_for_status()
-    data = r.json()
+    # Retry on 429 (burst throttle) and 5xx with backoff. Hourly cap (200/hr) is generous;
+    # the throttle is per-burst, so short spacing clears it.
+    last = None
+    data = None
+    for attempt in range(4):
+        try:
+            _throttle()
+            r = requests.get(f"{BASE}/{endpoint}", headers=HEADERS, params=params, timeout=30)
+            if r.status_code in (429, 500, 502, 503, 504):
+                last = requests.HTTPError(f"{r.status_code} for {endpoint}")
+                _t.sleep(1.0 * (attempt + 1))
+                continue
+            r.raise_for_status()
+            data = r.json()
+            break
+        except Exception as e:
+            last = e
+            _t.sleep(1.0 * (attempt + 1))
+    if data is None:
+        raise last if last else RuntimeError(f"fetch failed for {endpoint}")
     if not isinstance(data, list) or not data:
         raise RuntimeError(f"empty response for {endpoint}: {data!r}")
     # Find the date key + value key
@@ -97,6 +134,7 @@ def _wrap(endpoint, label, value_keys):
     try:
         s = _fetch(endpoint, value_keys)
         _save_cache(endpoint, s)
+        lastgood.save(endpoint, float(s.iloc[-1]), s.index[-1].to_pydatetime())
         return {
             "value": float(s.iloc[-1]),
             "series": s,
@@ -117,6 +155,15 @@ def _wrap(endpoint, label, value_keys):
                 "label": label,
                 "stale": True,
                 "error": f"API failed ({e}); using stale cache",
+            }
+        # Last resort: committed last-good (survives fresh CI runners)
+        lg = lastgood.load(endpoint)
+        if lg is not None:
+            return {
+                "value": float(lg["value"]), "series": pd.Series(dtype=float),
+                "timestamp": lastgood.parse_ts(lg),
+                "source": f"bitcoin-data.com/{endpoint} (last-good)", "label": label,
+                "stale": True, "error": str(e),
             }
         return {
             "value": None, "series": pd.Series(dtype=float),
@@ -157,8 +204,39 @@ def fetch_liveliness():
     return _wrap("liveliness", "Liveliness (LTH proxy)", ("liveliness", "value"))
 
 
+# ---- holder-cohort / tourist-detection metrics (BGeometrics) ----
+
+def fetch_sth_sopr():
+    """Short-Term Holder SOPR. <1 = STHs (tourists) realizing losses / capitulating;
+    >1.05 = STHs euphorically taking profit. Cohort-aware replacement for raw SOPR."""
+    return _wrap("sth-sopr", "STH-SOPR", ("sthSopr", "value"))
+
+
+def fetch_lth_sopr():
+    """Long-Term Holder SOPR. Rising >1 = smart money distributing into strength."""
+    return _wrap("lth-sopr", "LTH-SOPR", ("lthSopr", "value"))
+
+
+def fetch_sth_mvrv():
+    """Short-Term Holder MVRV. <1 = tourists underwater (bottoms); high = tourists in
+    heavy unrealized profit (tops)."""
+    return _wrap("sth-mvrv", "STH-MVRV", ("sthMvrv", "value"))
+
+
+def fetch_lth_mvrv():
+    """Long-Term Holder MVRV."""
+    return _wrap("lth-mvrv", "LTH-MVRV", ("lthMvrv", "value"))
+
+
+def fetch_reserve_risk():
+    """Reserve Risk — LTH conviction vs price. Low = strong hands accumulating (bottoms)."""
+    return _wrap("reserve-risk", "Reserve Risk", ("reserveRisk", "value"))
+
+
 if __name__ == "__main__":
-    for fn in [fetch_mvrv_zscore, fetch_nupl, fetch_sopr, fetch_liveliness]:
+    for fn in [fetch_mvrv_zscore, fetch_nupl, fetch_sopr, fetch_liveliness,
+               fetch_sth_sopr, fetch_lth_sopr, fetch_sth_mvrv, fetch_lth_mvrv,
+               fetch_reserve_risk]:
         r = fn()
         print(f"{r['label']}: {r['value']} @ {r['timestamp']} (stale={r['stale']})")
         if r.get("error"):

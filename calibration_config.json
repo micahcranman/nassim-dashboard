@@ -1,0 +1,46 @@
+{
+  "_generated_by": "scripts/calibrate_weights.py",
+  "_method": "DIRECTIONAL top/bottom AUC weights, |r|>0.7 cluster caps, shrink-to-prior \u00b7 slope_5d dropped from conviction (per Micah; gate-only)",
+  "_shrink": 0.45,
+  "_cluster_cap": 0.42,
+  "core_w": {
+    "mri": 0.09,
+    "mvrv_z": 0.106,
+    "nupl": 0.068,
+    "sth_sopr": 0.077,
+    "sth_mvrv": 0.09,
+    "feargreed": 0.085,
+    "rsi": 0.103,
+    "mnav": 0.1,
+    "mstr_btc_trend": 0.087,
+    "funding": 0.1,
+    "tbl_indicator": 0.05
+  },
+  "core_w_top": {
+    "mri": 0.085,
+    "mvrv_z": 0.101,
+    "nupl": 0.061,
+    "sth_sopr": 0.064,
+    "sth_mvrv": 0.085,
+    "feargreed": 0.076,
+    "rsi": 0.082,
+    "mnav": 0.091,
+    "mstr_btc_trend": 0.089,
+    "funding": 0.167,
+    "tbl_indicator": 0.05
+  },
+  "core_w_bot": {
+    "mri": 0.096,
+    "mvrv_z": 0.111,
+    "nupl": 0.075,
+    "sth_sopr": 0.09,
+    "sth_mvrv": 0.096,
+    "feargreed": 0.094,
+    "rsi": 0.123,
+    "mnav": 0.109,
+    "mstr_btc_trend": 0.085,
+    "funding": 0.034,
+    "tbl_indicator": 0.05
+  },
+  "macro_w": {}
+}

@@ -2,8 +2,8 @@ name: Build Dashboard
 
 on:
   schedule:
-    # Monday 12:30 UTC = 7:30 AM CT (during CDT)
-    - cron: '30 12 * * 1'
+    # Every 30 minutes — keeps the data-age badge fresh; client-side tiles refresh between.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       reason:
@@ -38,29 +38,38 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install Playwright chromium (TBL liquidity fetcher)
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run tests
+        run: pytest tests/ -q
+
       - name: Run dashboard build
         env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           BGEO_TOKEN: ${{ secrets.BGEO_TOKEN }}
+          EODHD_API_TOKEN: ${{ secrets.EODHD_API_TOKEN }}
+          BMP_API_KEY: ${{ secrets.BMP_API_KEY }}
+          TBL_EMAIL: ${{ secrets.TBL_EMAIL }}
+          TBL_PASSWORD: ${{ secrets.TBL_PASSWORD }}
         run: python dashboard.py
 
-      - name: Move outputs to docs/
+      - name: Publish outputs to docs/
         run: |
           mkdir -p docs
-          cp -f outputs/latest.png docs/latest.png
           cp -f outputs/latest.json docs/latest.json
-          cp -f outputs/history.csv docs/history.csv
-          # Copy archived PNGs into docs/
-          if [ -d outputs/archive ]; then
-            cp -f outputs/archive/*.png docs/ 2>/dev/null || true
-          fi
-          # Generate archive.json
-          python -c "import os, json; files = sorted([f for f in os.listdir('docs') if f.endswith('.png') and f != 'latest.png']); open('docs/archive.json','w').write(json.dumps(files))"
+          cp -f outputs/history.csv docs/history.csv 2>/dev/null || true
+          # signals.json is regenerated only on strategy re-lock (committed); keep whatever is there.
 
       - name: Commit & push artifacts
         run: |
           git config user.name "nassim-bot"
           git config user.email "nassim-bot@users.noreply.github.com"
-          git add docs/ outputs/
+          # Persist last-good + caches so a source outage on a fresh runner shows yesterday's
+          # number (flagged stale) instead of a blank.
+          git add docs/latest.json docs/history.csv docs/signals.json \
+                  outputs/latest.json outputs/history.csv \
+                  outputs/lastgood outputs/cache 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

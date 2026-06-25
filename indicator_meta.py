@@ -5,6 +5,164 @@ hover tooltips, click-to-zoom modals with explanations, and value formatting.
 """
 
 INDICATOR_META = {
+    "mri": {
+        "label": "Mean Reversion Index (MRI)",
+        "category": "Strategy Signal",
+        "value_fmt": ".1f",
+        "value_suffix": "",
+        "direction": "lower = bullish (capitulation)",
+        "regime_bands": [
+            {"lo": 0,   "hi": 12,  "label": "Q-fire zone (capitulation)", "color": "#16c784"},
+            {"lo": 12,  "hi": 30,  "label": "Accumulation",               "color": "#7bd88f"},
+            {"lo": 30,  "hi": 60,  "label": "Mid-range",                  "color": "#f3c623"},
+            {"lo": 60,  "hi": 100, "label": "Extended",                   "color": "#f9844a"},
+            {"lo": 100, "hi": 200, "label": "Overheated",                 "color": "#ea3943"},
+        ],
+        "explanation": (
+            "Checkonchain's Mean Reversion Index — a composite oscillator of BTC price vs its "
+            "fair-value models (200WMA, realized price, VWAPs, power law). This is the SAME "
+            "series v8.5 reads: when MRI prints below 12, the t1b Q-fire deploys 100% of cash "
+            "long MSTR (≥30 days since the last fire). MRI is an exceptional bottom-caller and "
+            "a weak top-caller — weighted accordingly."
+        ),
+        "use": (
+            "Below 12 = the strategy's long trigger arms. The dashboard tracks the live value "
+            "against that line so you see the Q-fire approaching."
+        ),
+    },
+    "sth_sopr": {
+        "label": "STH-SOPR",
+        "category": "Cohort",
+        "value_fmt": ".3f",
+        "value_suffix": "",
+        "direction": "sub-1 = tourists capitulating (bullish)",
+        "regime_bands": [
+            {"lo": 0.90, "hi": 0.97, "label": "STH capitulation",      "color": "#16c784"},
+            {"lo": 0.97, "hi": 1.00, "label": "Reclaim zone",          "color": "#7bd88f"},
+            {"lo": 1.00, "hi": 1.03, "label": "Healthy profit-taking", "color": "#f3c623"},
+            {"lo": 1.03, "hi": 1.05, "label": "Heavy realization",     "color": "#f9844a"},
+            {"lo": 1.05, "hi": 1.15, "label": "Euphoric realization",  "color": "#ea3943"},
+        ],
+        "explanation": (
+            "Short-Term Holder SOPR — whether coins held <155 days are being spent at a profit "
+            "(>1) or loss (<1). The clearest read on the 'tourist' cohort: sustained sub-1 means "
+            "recent buyers are capitulating (bottoms); >1.05 means they're euphorically realizing "
+            "gains (tops)."
+        ),
+        "use": "Sub-1 at an entry = tourists flushed, low risk of being late. >1.05 = late-cycle.",
+    },
+    "sth_mvrv": {
+        "label": "Cohort Posture (STH-MVRV)",
+        "category": "Cohort",
+        "value_fmt": ".2f",
+        "value_suffix": "x",
+        "direction": "lower = tourists underwater (bullish)",
+        "regime_bands": [
+            {"lo": 0.6, "hi": 1.0, "label": "Tourists underwater",  "color": "#16c784"},
+            {"lo": 1.0, "hi": 1.2, "label": "Break-even",           "color": "#7bd88f"},
+            {"lo": 1.2, "hi": 1.4, "label": "Modest profit",        "color": "#f3c623"},
+            {"lo": 1.4, "hi": 1.7, "label": "Tourists arriving",    "color": "#f9844a"},
+            {"lo": 1.7, "hi": 3.0, "label": "Tourists pouring in",  "color": "#ea3943"},
+        ],
+        "explanation": (
+            "Short-Term Holder MVRV — market value vs cost basis for the <155-day cohort. The "
+            "core of the 'are the tourists here or gone' read: below 1.0 the recent crowd is "
+            "underwater (they leave / capitulate → bottoms); well above 1.4 they're sitting on "
+            "fat gains and piling in (→ tops). Paired with STH-SOPR for the posture label."
+        ),
+        "use": "Tourists gone (<1.0) is a strong accumulation tell; pouring in (>1.6) is a top warning.",
+    },
+    "feargreed": {
+        "label": "Fear & Greed Index",
+        "category": "Sentiment",
+        "value_fmt": ".0f",
+        "value_suffix": "",
+        "direction": "extreme fear = bullish",
+        "regime_bands": [
+            {"lo": 0,  "hi": 25,  "label": "Extreme Fear", "color": "#16c784"},
+            {"lo": 25, "hi": 45,  "label": "Fear",         "color": "#7bd88f"},
+            {"lo": 45, "hi": 55,  "label": "Neutral",      "color": "#f3c623"},
+            {"lo": 55, "hi": 75,  "label": "Greed",        "color": "#f9844a"},
+            {"lo": 75, "hi": 100, "label": "Extreme Greed","color": "#ea3943"},
+        ],
+        "explanation": (
+            "Crypto Fear & Greed Index (alternative.me, 0–100). Composite of volatility, momentum, "
+            "social, and survey signals. Extreme fear historically marks accumulation; extreme "
+            "greed marks froth. Asymmetric: fear bottoms snap, greed tops grind — so extreme fear "
+            "is weighted heavier for longs than extreme greed is for shorts. Also v8.5's PUT IV input."
+        ),
+        "use": "Extreme fear (<25) corroborates a long; greed (>75) corroborates a hedge, more loosely.",
+    },
+    "tbl_indicator": {
+        "label": "TBL Liquidity Indicator",
+        "category": "Liquidity Momentum",
+        "value_fmt": ".3f",
+        "value_suffix": "",
+        "direction": "rising = bullish",
+        "regime_bands": [
+            {"lo": -0.30, "hi": -0.06, "label": "Falling (risk-off)", "color": "#ea3943"},
+            {"lo": -0.06, "hi": -0.02, "label": "Rolling over",       "color": "#f9844a"},
+            {"lo": -0.02, "hi": 0.02,  "label": "Neutral",            "color": "#f3c623"},
+            {"lo": 0.02,  "hi": 0.06,  "label": "Turning up",         "color": "#7bd88f"},
+            {"lo": 0.06,  "hi": 0.30,  "label": "Rising (risk-on)",   "color": "#16c784"},
+        ],
+        "explanation": (
+            "The Bitcoin Layer's Liquidity Indicator — the slope of their liquidity cycle (±0.26), "
+            "i.e. liquidity MOMENTUM. Rising = liquidity accelerating, risk-on (long-supportive); "
+            "rolling over = risk-off. Its zero-crossings are TBL's green(buy)/red(sell) dots. This "
+            "is the clean, composite version of net-liq acceleration — a coincident 'what now' read. "
+            "From TBL's public Supabase history (since 2024-03). The liquidity LEVEL (score 0–100) "
+            "and cycle live in the dedicated TBL Liquidity section."
+        ),
+        "use": "A green (up-cross) corroborates a long; a red (down-cross) corroborates a hedge.",
+    },
+    "rsi": {
+        "label": "BTC RSI-14",
+        "category": "Momentum",
+        "value_fmt": ".1f",
+        "value_suffix": "",
+        "direction": "oversold = bullish",
+        "regime_bands": [
+            {"lo": 0,  "hi": 30,  "label": "Oversold (long)",  "color": "#16c784"},
+            {"lo": 30, "hi": 45,  "label": "Weak",             "color": "#7bd88f"},
+            {"lo": 45, "hi": 55,  "label": "Neutral",          "color": "#f3c623"},
+            {"lo": 55, "hi": 70,  "label": "Strong",           "color": "#f9844a"},
+            {"lo": 70, "hi": 100, "label": "Overbought (hedge)","color": "#ea3943"},
+        ],
+        "explanation": (
+            "14-day Relative Strength Index on daily BTC close (Wilder's smoothing) — pure price "
+            "momentum. RSI sinks below 30 at capitulation and pushes above 70 at blow-off tops, so "
+            "as a signed score it leans long when cold and short when hot. It's the fast transition "
+            "read that the slow on-chain value metrics (MVRV, NUPL) structurally lag — a momentum "
+            "complement, lightly weighted, not a standalone call."
+        ),
+        "use": "Oversold (<30) corroborates a long entry; overbought (>70) corroborates a hedge.",
+    },
+    "slope_5d": {
+        "label": "MA200 Slope (structural)",
+        "category": "Structural",
+        "value_fmt": ".2f",
+        "value_suffix": "%",
+        "direction": "positive = uptrend (bullish)",
+        "regime_bands": [
+            {"lo": -6, "hi": -1,  "label": "Downtrend (hedge armed)", "color": "#ea3943"},
+            {"lo": -1, "hi": 0,   "label": "Rolling over",            "color": "#f9844a"},
+            {"lo": 0,  "hi": 1,   "label": "Turning up",              "color": "#7bd88f"},
+            {"lo": 1,  "hi": 6,   "label": "Uptrend",                 "color": "#16c784"},
+        ],
+        "explanation": (
+            "5-trading-day percent slope of MSTR's 200-day moving average — the structural "
+            "trend, and v8.5's hedge gate. Negative = structural downtrend, where v8.5 admits "
+            "PUT/SHORT hedges. This is the signal that flagged the November-2025 short even "
+            "while BTC on-chain looked mid-cycle, and it's why the oscillator tempers a 'buy' "
+            "when the trend is still falling. Positive = structural uptrend."
+        ),
+        "use": (
+            "The transition/top catcher. Negative slope pulls net conviction toward sell even "
+            "when valuation looks cheap — exactly what kept the model from screaming buy into "
+            "the Nov-2025 top before the drop to $112."
+        ),
+    },
     "mvrv_z": {
         "label": "MVRV Z-Score",
         "category": "Cycle Phase",
