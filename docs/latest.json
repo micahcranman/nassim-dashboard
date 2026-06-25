@@ -1,16 +1,16 @@
 {
-  "timestamp": "2026-06-25T12:23:33.405977",
+  "timestamp": "2026-06-25T17:45:13.624798",
   "strategy_state": {
     "mri": 11.755555555555556,
     "mri_threshold": 12,
     "mri_below_12": true,
     "days_since_mri12": 1,
     "qfire_armed": false,
-    "slope_5d": -3.0024812973553208,
+    "slope_5d": -3.00305465722323,
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
-    "iv_pct": 1.0078174609375,
-    "mnav": 0.6675978302966931,
+    "iv_pct": 1.0800827246093752,
+    "mnav": 0.6654763512887928,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI < 12 but 1d since last (need 30d) \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
@@ -64,19 +64,19 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 29.777532411372434,
+        "value": 29.8470151939284,
         "score": 62.0,
         "weight": 0.123,
         "contrib": 7.63
       },
       "mnav": {
-        "value": 0.6675978302966931,
+        "value": 0.6654763512887928,
         "score": 100.0,
         "weight": 0.109,
         "contrib": 10.9
       },
       "mstr_btc_trend": {
-        "value": -36.55308625712139,
+        "value": -36.754706588274594,
         "score": 50.0,
         "weight": 0.085,
         "contrib": 4.25
@@ -159,19 +159,19 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 29.777532411372434,
-        "score": 62.6,
+        "value": 29.8470151939284,
+        "score": 62.4,
         "weight": 0.12,
-        "contrib": 7.51
+        "contrib": 7.49
       },
       "mnav": {
-        "value": 0.6675978302966931,
+        "value": 0.6654763512887928,
         "score": 100.0,
         "weight": 0.13,
         "contrib": 13.0
       },
       "mstr_btc_trend": {
-        "value": -36.55308625712139,
+        "value": -36.754706588274594,
         "score": 50.0,
         "weight": 0.03,
         "contrib": 1.5
@@ -32074,28 +32074,28 @@
     },
     {
       "d": "2024-08-12",
-      "net": 19.2,
-      "smooth": 12.6
+      "net": 20.5,
+      "smooth": 12.8
     },
     {
       "d": "2024-08-13",
       "net": 17.8,
-      "smooth": 13.3
+      "smooth": 13.4
     },
     {
       "d": "2024-08-14",
       "net": 21.4,
-      "smooth": 14.4
+      "smooth": 14.5
     },
     {
       "d": "2024-08-15",
       "net": 24.0,
-      "smooth": 15.7
+      "smooth": 15.8
     },
     {
       "d": "2024-08-16",
       "net": 20.2,
-      "smooth": 16.3
+      "smooth": 16.4
     },
     {
       "d": "2024-08-17",
@@ -32105,7 +32105,7 @@
     {
       "d": "2024-08-18",
       "net": 18.5,
-      "smooth": 16.9
+      "smooth": 17.0
     },
     {
       "d": "2024-08-19",
@@ -32115,7 +32115,7 @@
     {
       "d": "2024-08-20",
       "net": 16.7,
-      "smooth": 16.9
+      "smooth": 17.0
     },
     {
       "d": "2024-08-21",
@@ -32130,7 +32130,7 @@
     {
       "d": "2024-08-23",
       "net": 1.5,
-      "smooth": 13.7
+      "smooth": 13.8
     },
     {
       "d": "2024-08-24",
@@ -97112,7 +97112,7 @@
           "color": "#ea3943"
         }
       ],
-      "value": 29.777532411372434,
+      "value": 29.8470151939284,
       "score": 62.0,
       "series": [
         {
@@ -107333,7 +107333,7 @@
         },
         {
           "d": "2026-06-25",
-          "v": 29.7775
+          "v": 29.847
         }
       ]
     },
@@ -107376,7 +107376,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6675978302966931,
+      "value": 0.6654763512887928,
       "score": 100.0,
       "series": [
         {
@@ -112657,7 +112657,7 @@
         },
         {
           "d": "2024-08-12",
-          "v": 1.9567
+          "v": 1.9002
         },
         {
           "d": "2024-08-13",
@@ -115385,7 +115385,7 @@
         },
         {
           "d": "2026-06-25",
-          "v": 0.6676
+          "v": 0.6655
         }
       ]
     },
@@ -115422,7 +115422,7 @@
           "color": "#B22222"
         }
       ],
-      "value": -36.55308625712139,
+      "value": -36.754706588274594,
       "score": 50.0,
       "series": [
         {
@@ -125643,7 +125643,7 @@
         },
         {
           "d": "2026-06-25",
-          "v": -36.5531
+          "v": -36.7547
         }
       ]
     },
@@ -125680,7 +125680,7 @@
           "color": "#16c784"
         }
       ],
-      "value": -3.0024812973553208,
+      "value": -3.00305465722323,
       "score": null,
       "series": [
         {
@@ -135901,7 +135901,7 @@
         },
         {
           "d": "2026-06-25",
-          "v": -3.0025
+          "v": -3.0031
         }
       ]
     },
@@ -135944,7 +135944,7 @@
           "color": "#B22222"
         }
       ],
-      "value": -3.34641610053975,
+      "value": -3.8649068011152,
       "score": 40.0,
       "series": [
         {
@@ -148073,7 +148073,7 @@
     },
     {
       "d": "2026-06-25",
-      "v": 59367.96
+      "v": 59404.71
     }
   ],
   "mstr_line": [
@@ -153999,19 +153999,19 @@
     },
     {
       "d": "2026-06-25",
-      "v": 86.42
+      "v": 86.2
     }
   ],
   "snapshot": {
-    "btc_price": 59367.9609375,
-    "mstr_price": 86.42009735107422,
-    "mnav": 0.6675978302966931,
+    "btc_price": 59404.7109375,
+    "mstr_price": 86.19879913330078,
+    "mnav": 0.6654763512887928,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.6676,
-      "basic_shares": 0.5809,
+      "diluted": 0.6655,
+      "basic_shares": 0.579,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
@@ -154019,7 +154019,7 @@
     },
     "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
-    "mstr_iv_atm": 1.0078174609375
+    "mstr_iv_atm": 1.0800827246093752
   },
   "data_health": [
     {
@@ -154043,7 +154043,7 @@
     {
       "name": "sth_sopr",
       "stale": false,
-      "source": "bitcoin-data.com/sth-sopr (cache, age 1:37:48.670779)",
+      "source": "bitcoin-data.com/sth-sopr",
       "error": null
     },
     {
@@ -154090,8 +154090,8 @@
     },
     {
       "name": "mstr_history",
-      "stale": true,
-      "source": "strategy.com/purchases [cache]",
+      "stale": false,
+      "source": "strategy.com/purchases",
       "error": null
     }
   ]
