@@ -545,32 +545,45 @@ def build_liquidity_flow(results, logger):
     except Exception as e:
         logger.warning(f"  Liquidity-flow: ai_capex.json unavailable ({e})")
 
-    # Stylized waterfall (ppts of M2 / yr). Created - real-economy = money gap; then - AI external drain.
-    ai_drag = (ai.get("pct_of_m2") if ai else None) or 0.0
-    residual = round(gap_now - ai_drag, 2)
+    # The waterfall is PURELY MONETARY (Created - Real economy = Money gap), a clean same-units
+    # decomposition. AI is NOT chained in as a subtraction: AI capex SPENDING is already inside
+    # nominal GDP (it's the "I" the GDP leg subtracts), so subtracting it again would DOUBLE-COUNT.
+    # The AI leg is a DISTINCT, ORTHOGONAL lens — capital-market crowding-out: new bond/credit/equity
+    # issuance funding AI that investors must absorb, diverting capital from financial assets. That
+    # financing competition is invisible to both nominal GDP (output, not financing) and M2 (a deposit
+    # swapped for a new bond barely moves it), so it is additive, reported ALONGSIDE not within.
+    ai_share_new_credit = (ai.get("pct_of_new_m2") if ai else None)   # ~% of new broad money (scale ref)
     waterfall = [
         {"label": "Liquidity created (M2 YoY)", "v": round(m2_yoy_now, 2), "kind": "created"},
         {"label": "− Real economy (nominal GDP YoY)", "v": round(-gdp_yoy_now, 2), "kind": "consumed"},
         {"label": "Money gap (excess vs economy)", "v": round(gap_now, 2), "kind": "subtotal"},
-        {"label": "− AI buildout (net external ÷ M2)", "v": round(-ai_drag, 2), "kind": "consumed"},
-        {"label": "Residual to financial assets", "v": residual, "kind": "residual"},
     ]
 
-    # Regime label + TBL cross-read.
-    created_lbl = "Created+" if m2_yoy_now > 0 else "Created−"
-    absorb_lbl = ("Heavily absorbed" if gap_now <= 0.5 else "Lightly absorbed" if gap_now <= 2 else "Loosely absorbed")
-    resid_lbl = ("Thin residual" if residual <= 0.5 else "Moderate residual" if residual <= 2.5 else "Ample residual")
-    regime_label = f"{created_lbl} · {absorb_lbl} · {resid_lbl}"
-    tbl_score = (results.get("tbl", {}) or {}).get("score")
-    if tbl_score is not None and residual <= 0.5:
-        tbl_crossread = (f"TBL tide reads {tbl_score:.0f}/100 (level) but the NET residual is thin "
-                         f"({residual:+.1f} ppts) — a positive-headline regime where the marginal "
-                         f"liquidity dollar is being soaked by the real economy + AI buildout.")
-    elif tbl_score is not None:
-        tbl_crossread = (f"TBL tide {tbl_score:.0f}/100 with residual {residual:+.1f} ppts — "
-                         f"liquidity is reaching the asset pool.")
+    # Qualitative synthesis of the TWO orthogonal lenses (monetary excess + capital crowding-out).
+    crowd = ai_share_new_credit or 0.0
+    money_lbl = ("Excess money" if gap_now > 0.5 else "Money balanced" if gap_now >= -0.5 else "Money tight")
+    crowd_lbl = ("AI soaking new credit" if crowd >= 20 else "AI drawing credit" if crowd >= 8 else "AI light")
+    if gap_now <= 0.5 and crowd >= 20:
+        assets_read = "Thin to assets"
+    elif gap_now > 2 and crowd < 12:
+        assets_read = "Ample to assets"
     else:
-        tbl_crossread = f"Residual to assets {residual:+.1f} ppts (money gap {gap_now:+.1f}, AI drag −{ai_drag:.1f})."
+        assets_read = "Moderate to assets"
+    regime_label = f"{money_lbl} · {crowd_lbl} · {assets_read}"
+    tbl_score = (results.get("tbl", {}) or {}).get("score")
+    tide = f"TBL tide {tbl_score:.0f}/100 (level)" if tbl_score is not None else "TBL tide n/a"
+    if gap_now <= 0.5 or crowd >= 20:
+        tbl_crossread = (f"{tide}; the money gap is {gap_now:+.1f}% (money ≈ keeping pace with the "
+                         f"economy, little excess) AND AI buildout is absorbing ~{crowd:.0f}% of new "
+                         f"credit/equity — a separate capital-market competition GDP doesn't capture. "
+                         f"Together: little is reaching financial assets.")
+    else:
+        tbl_crossread = (f"{tide}; money gap {gap_now:+.1f}% with AI drawing ~{crowd:.0f}% of new "
+                         f"credit — liquidity is still reaching the asset pool.")
+    lenses_note = ("Money gap = MONETARY lens (M2 vs nominal GDP). AI external drain = CAPITAL-MARKET "
+                   "lens (new credit/equity diverted from financial assets). Orthogonal axes: AI capex "
+                   "spending is ALREADY in GDP, so it is NOT subtracted from the money gap — that would "
+                   "double-count. Shown alongside, never chained.")
 
     series = [{"d": d.strftime("%Y-%m-%d"),
                "gap": round(float(g), 2),
@@ -579,13 +592,14 @@ def build_liquidity_flow(results, logger):
               for d, g in gap.items()]
 
     logger.info(f"  Liquidity-flow (NLAFA): money_gap={gap_now:+.2f}% (z {gap_z}), "
-                f"AI drag −{ai_drag:.2f}ppts, residual {residual:+.2f} → {regime_label}")
+                f"AI capital-market share ~{crowd:.0f}% of new credit → {regime_label}")
     return {
         "as_of": gap.index[-1].strftime("%Y-%m-%d"),
         "m2_yoy": round(m2_yoy_now, 2), "gdp_yoy": round(gdp_yoy_now, 2),
         "money_gap": round(gap_now, 2), "money_gap_z": gap_z,
         "m2_level_usd_b": round(m2_level, 0), "new_m2_yr_usd_b": round(new_m2_yr, 0),
-        "residual_to_assets": residual,
+        "ai_share_new_credit_pct": (round(crowd, 1) if ai else None),
+        "assets_read": assets_read, "lenses_note": lenses_note,
         "waterfall": waterfall, "regime_label": regime_label,
         "fiscal": fiscal, "ai": ai, "tbl_crossread": tbl_crossread,
         "series": series,
