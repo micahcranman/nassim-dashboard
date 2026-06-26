@@ -1,14 +1,15 @@
 """
-render.py — turn generated reports (+ their packets) into the live dashboard sub-folder.
+render.py — turn generated reports into the live dashboard sub-folder.
+
+Deliberately simple: each report is the clean narrative note, nothing else. The only
+interactive touch is that analyst NAMES in the prose are hover-able — hovering shows a short
+description of how good that voice is and how to treat their calls (from profiles.md).
 
 Outputs into docs/intel/ (GitHub Pages serves docs/ from main):
   index.html              -> https://micahcranman.github.io/nassim-dashboard/intel/
-  <slug>.html             -> one page per report
-  data/<slug>.json        -> merged structured data (report + signal) for reuse
-  email/<slug>.html       -> inline-styled email body
-
-Design matches the Strategy² v8.5 console (docs/index.html): dark glass, Inter + JetBrains
-Mono, Plotly via CDN, the same color tokens.
+  <slug>.html             -> one clean page per report
+  data/<slug>.json        -> {period, summary, conviction, narrative_md} for reuse
+  email/<slug>.html       -> inline-styled email body (same clean prose)
 """
 import os
 import re
@@ -18,43 +19,77 @@ import glob
 import datetime
 from pathlib import Path
 
-from intel_lib import BUILD_DIR, DOCS_INTEL, REPO
+from intel_lib import BUILD_DIR, DOCS_INTEL, PROFILES_MD
 
 DASH_URL = "https://micahcranman.github.io/nassim-dashboard/"
 INTEL_URL = DASH_URL + "intel/"
 
-# ---- color tokens (mirror docs/index.html) --------------------------------
 C = dict(bg="#070b14", ink="#eaf0ff", muted="#8c98b8", faint="#586187",
          long="#16c784", short="#ea3943", neutral="#f3c623", accent="#4aa8ff", accent2="#7c5cff")
 
-DELTA_COLOR = {"MORE": C["long"], "SAME": C["neutral"], "LESS": C["short"]}
-DELTA_LABEL = {"MORE": "MORE CONVICTION", "SAME": "SAME CONVICTION", "LESS": "LESS CONVICTION"}
-VERDICT_COLOR = {"CORROBORATE": C["long"], "CONFLICT": C["short"], "SILENT": C["faint"]}
-LEAN_COLOR = {"confirms": C["long"], "contradicts": C["short"], "neutral": C["neutral"], "silent": C["faint"]}
-LEAN_LABEL = {"confirms": "confirms", "contradicts": "contradicts", "neutral": "neutral", "silent": "silent"}
-SIDE_LABEL = {"TOP": "TOP-side", "BOTTOM": "BOTTOM-side", "NEUTRAL": "neutral", "NA": "—"}
+# ---------------------------------------------------------------------------
+# analyst profiles -> hover popovers
+# ---------------------------------------------------------------------------
 
-ROSTER_ORDER = ["James Check", "Lyn Alden", "Michael Howell",
-                "The Bitcoin Layer", "Macro Ops", "Willy Woo"]
-ANALYST_TAG = {"James Check": "on-chain", "Lyn Alden": "macro / liquidity",
-               "Michael Howell": "global liquidity", "The Bitcoin Layer": "macro · bottom-caller",
-               "Macro Ops": "tactical macro", "Willy Woo": "on-chain"}
+def load_profiles():
+    """Parse profiles.md into {canonical_name: html_popover_body}, plus name aliases."""
+    txt = PROFILES_MD.read_text()
+    profs = {}
+    for m in re.finditer(r"\*\*(.+?)\*\*\s*—\s*(.+?)\n(.*?)(?=\n\*\*|\n---|\Z)", txt, re.S):
+        name, tag, body = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
+        body = re.sub(r"\s+", " ", body)
+        profs[name] = {"tag": tag, "body": body}
+    return profs
+
+
+# names to make hover-able in the prose (longest first; only safe proper-noun short forms)
+def _alias_map(profs):
+    aliases = {
+        "James Check": "James Check", "Lyn Alden": "Lyn Alden", "Lyn": "Lyn Alden",
+        "Michael Howell": "Michael Howell", "Howell": "Michael Howell",
+        "The Bitcoin Layer": "The Bitcoin Layer", "TBL": "The Bitcoin Layer",
+        "Macro Ops": "Macro Ops", "Willy Woo": "Willy Woo", "Woo": "Willy Woo",
+    }
+    return {a: c for a, c in aliases.items() if c in profs}
+
+
+def _popover_html(canonical, prof):
+    tag = html.escape(prof["tag"].rstrip("."))
+    body = html.escape(prof["body"])
+    return (f'<span class="who-pop"><b>{html.escape(canonical)}</b>'
+            f'<span class="who-tag">{tag}</span>{body}</span>')
+
+
+def wrap_analyst_names(html_str, profs):
+    """Wrap analyst-name occurrences (in text only, not inside tags) with a hover popover."""
+    aliases = _alias_map(profs)
+    names = sorted(aliases, key=len, reverse=True)
+    pat = re.compile(r"(?<![\w>])(" + "|".join(re.escape(n) for n in names) + r")(?![\w<])")
+    pops = {c: _popover_html(c, profs[c]) for c in set(aliases.values())}
+
+    def repl(m):
+        alias = m.group(1)
+        canon = aliases[alias]
+        return f'<span class="who" tabindex="0">{alias}{pops[canon]}</span>'
+
+    # only operate on text segments, never inside HTML tags
+    parts = re.split(r"(<[^>]+>)", html_str)
+    for i in range(0, len(parts), 2):       # even indices are text
+        parts[i] = pat.sub(repl, parts[i])
+    return "".join(parts)
+
 
 # ---------------------------------------------------------------------------
-# tiny markdown -> html (bold, italic, headings, bullets, links, paragraphs)
+# tiny markdown -> html
 # ---------------------------------------------------------------------------
 
 def md_to_html(md: str) -> str:
     md = md.replace("\r\n", "\n")
-    out = []
-    lines = md.split("\n")
-    i = 0
-    in_ul = False
+    out, lines, i = [], md.split("\n"), 0
 
     def inline(s):
         s = html.escape(s, quote=False)
-        s = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)",
-                   r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
+        s = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
         s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
         s = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<em>\1</em>", s)
         return s
@@ -62,462 +97,222 @@ def md_to_html(md: str) -> str:
     while i < len(lines):
         ln = lines[i].rstrip()
         if not ln.strip():
-            if in_ul:
-                out.append("</ul>"); in_ul = False
             i += 1; continue
         m = re.match(r"^(#{1,4})\s+(.*)$", ln)
         if m:
-            if in_ul: out.append("</ul>"); in_ul = False
-            lvl = len(m.group(1)); out.append(f"<h{lvl+1}>{inline(m.group(2))}</h{lvl+1}>")
-            i += 1; continue
+            out.append(f"<h3>{inline(m.group(2))}</h3>"); i += 1; continue
         m = re.match(r"^[-*]\s+(.*)$", ln)
         if m:
-            if not in_ul: out.append("<ul>"); in_ul = True
-            out.append(f"<li>{inline(m.group(1))}</li>")
-            i += 1; continue
-        # paragraph (gather until blank)
-        if in_ul: out.append("</ul>"); in_ul = False
+            items = []
+            while i < len(lines) and re.match(r"^[-*]\s+", lines[i]):
+                items.append(f"<li>{inline(re.sub(r'^[-*][ ]+','',lines[i].rstrip()))}</li>"); i += 1
+            out.append("<ul>" + "".join(items) + "</ul>"); continue
         buf = [ln]
         while i + 1 < len(lines) and lines[i + 1].strip() and not re.match(r"^(#{1,4}\s|[-*]\s)", lines[i + 1]):
             i += 1; buf.append(lines[i].rstrip())
-        out.append(f"<p>{inline(' '.join(buf))}</p>")
-        i += 1
-    if in_ul: out.append("</ul>")
+        out.append(f"<p>{inline(' '.join(buf))}</p>"); i += 1
     return "\n".join(out)
 
 
 # ---------------------------------------------------------------------------
-# shared HTML head / chrome
+# page chrome
 # ---------------------------------------------------------------------------
 
-CSS = """
-:root{--bg:#070b14;--glass:rgba(20,28,48,0.55);--glass-brd:rgba(120,150,220,0.16);
+CSS = f"""
+:root{{--bg:#070b14;--glass:rgba(20,28,48,0.55);--glass-brd:rgba(120,150,220,0.16);
 --ink:#eaf0ff;--muted:#8c98b8;--faint:#586187;--long:#16c784;--short:#ea3943;
 --neutral:#f3c623;--accent:#4aa8ff;--accent2:#7c5cff;
---mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Inter',system-ui,sans-serif;}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-body{background:radial-gradient(1200px 700px at 12% -8%,rgba(74,168,255,.10),transparent 60%),
-radial-gradient(1000px 600px at 100% 0%,rgba(124,92,255,.10),transparent 55%),
-radial-gradient(900px 700px at 50% 120%,rgba(22,199,132,.06),transparent 60%),var(--bg);min-height:100vh}
-.wrap{max-width:1080px;margin:0 auto;padding:18px 16px 80px}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-.top{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
-.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
-.brand small{font-weight:600;color:var(--muted);letter-spacing:2px;font-size:11px}
-.spacer{flex:1}
-.back{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);
-padding:7px 13px;border-radius:10px;background:rgba(255,255,255,.03)}
-.card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;
-backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
-box-shadow:0 10px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
-.cat{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--faint)}
-.badge{font:700 10px var(--mono);padding:3px 8px;border-radius:6px;letter-spacing:.5px;display:inline-block}
-.pill{font:700 11px var(--mono);padding:4px 10px;border-radius:8px;letter-spacing:.4px;display:inline-flex;gap:6px;align-items:center}
+--sans:'Inter',system-ui,sans-serif;}}
+*{{box-sizing:border-box}}
+html,body{{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}}
+body{{background:radial-gradient(1100px 640px at 15% -10%,rgba(74,168,255,.07),transparent 60%),
+radial-gradient(900px 560px at 100% 0%,rgba(124,92,255,.06),transparent 55%),var(--bg);min-height:100vh}}
+.wrap{{max-width:720px;margin:0 auto;padding:20px 20px 90px}}
+a{{color:var(--accent);text-decoration:none}}a:hover{{text-decoration:underline}}
+.top{{display:flex;align-items:center;gap:12px;margin-bottom:30px}}
+.brand{{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.3px;font-size:15px}}
+.brand .dot{{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}}
+.brand small{{font-weight:600;color:var(--muted);letter-spacing:2px;font-size:10.5px}}
+.spacer{{flex:1}}
+.back{{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);padding:7px 12px;border-radius:9px;background:rgba(255,255,255,.03)}}
 
-/* hero */
-.hero{padding:24px;overflow:hidden}
-.hero .meta{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
-.hero .when{font:700 13px var(--mono);color:var(--muted)}
-.hero h1{font-size:25px;margin:6px 0 2px;font-weight:800;letter-spacing:-.4px}
-.verdict{display:flex;align-items:center;gap:16px;margin:16px 0 4px;flex-wrap:wrap}
-.vbadge{font:800 22px var(--mono);letter-spacing:1px;padding:11px 20px;border-radius:13px;text-transform:uppercase}
-.posture{color:var(--muted);font-size:13.5px;line-height:1.5;margin-top:8px;max-width:760px}
-.conf{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-.confcard{padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);min-width:230px;flex:1}
-.confcard .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px}
-.confcard .vv{font:800 17px var(--mono);margin-top:6px;display:flex;align-items:center;gap:9px}
-.dots{display:inline-flex;gap:3px}
-.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16)}
-.confcard .nt{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.45}
+.eyebrow{{font:600 12px var(--sans);color:var(--faint);letter-spacing:.4px;text-transform:none;margin-bottom:4px}}
+h1.title{{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}}
+.convtag{{display:inline-block;font:700 11px var(--sans);letter-spacing:.4px;padding:4px 11px;border-radius:20px;margin-top:6px}}
 
-/* snapshot chips */
-.sec{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;font-weight:700;font-size:15px;flex-wrap:wrap}
-.sec .hint{font-weight:500;font-size:12px;color:var(--muted)}
-.chips{display:flex;gap:10px;flex-wrap:wrap}
-.chip{padding:11px 14px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);min-width:130px}
-.chip .k{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:600}
-.chip .v{font:700 19px var(--mono);margin-top:4px}
-.chip .s{font-size:11px;color:var(--faint);margin-top:3px}
+/* the article */
+.note{{font-size:16.5px;line-height:1.72;color:#dde4f7;margin-top:26px}}
+.note p{{margin:0 0 17px}}
+.note h3{{font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);
+margin:30px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--glass-brd)}}
+.note strong{{color:#fff;font-weight:700}}
+.note ul{{margin:0 0 17px;padding-left:20px}} .note li{{margin:8px 0}}
+.note em{{color:#cdd6ef}}
 
-/* chart */
-.chart{padding:14px 10px 8px}
-.chart .plot{width:100%;height:360px}
-.clegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 8px 4px}
-.clegend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:3px}
+/* hover popover on analyst names */
+.who{{position:relative;color:#fff;font-weight:700;border-bottom:1px dotted rgba(74,168,255,.6);cursor:help;outline:none}}
+.who-pop{{visibility:hidden;opacity:0;position:absolute;left:0;top:calc(100% + 9px);z-index:50;
+width:330px;max-width:78vw;padding:14px 16px;border-radius:13px;
+background:rgba(10,15,28,.985);border:1px solid var(--glass-brd);
+box-shadow:0 16px 48px rgba(0,0,0,.6);backdrop-filter:blur(8px);
+font:400 13.5px var(--sans);line-height:1.58;color:var(--muted);letter-spacing:0;
+transition:opacity .14s ease;pointer-events:none}}
+.who-pop::before{{content:"";position:absolute;left:18px;top:-6px;width:11px;height:11px;
+background:rgba(10,15,28,.985);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg)}}
+.who-pop b{{display:block;color:var(--ink);font-size:14.5px;font-weight:700;margin-bottom:1px}}
+.who-pop .who-tag{{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}}
+.who:hover .who-pop,.who:focus .who-pop,.who:focus-within .who-pop{{visibility:visible;opacity:1}}
+@media (max-width:560px){{.who-pop{{left:auto;right:0}}.who-pop::before{{left:auto;right:18px}}}}
 
-/* voices */
-.voices{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:13px}
-.voice{padding:15px 16px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
-.voice.silent{opacity:.5}
-.voice .vh{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.voice .nm{font-weight:700;font-size:14.5px}
-.voice .tg{font-size:10.5px;color:var(--faint);margin-top:1px}
-.voice .row2{display:flex;gap:7px;align-items:center;margin:9px 0 2px;flex-wrap:wrap}
-.voice .summ{font-size:12.5px;color:var(--ink);line-height:1.5;margin-top:8px}
-.voice .quote{font-size:12px;color:var(--muted);font-style:italic;border-left:2px solid var(--glass-brd);padding-left:10px;margin-top:9px;line-height:1.45}
-.voice .src{font-size:11px;margin-top:9px}
-.cdots{display:inline-flex;gap:3px;align-items:center}
-.cdots i{width:6px;height:6px;border-radius:50%}
+.foot{{color:var(--faint);font-size:12px;margin-top:40px;line-height:1.65;border-top:1px solid var(--glass-brd);padding-top:18px}}
 
-/* narrative */
-.narr{padding:8px 26px 22px;font-size:14.5px;line-height:1.72;color:#dfe6fb}
-.narr h2{font-size:17px;margin:22px 0 8px;color:var(--ink)}
-.narr h3{font-size:15px;margin:18px 0 6px;color:var(--ink)}
-.narr p{margin:11px 0}
-.narr ul{margin:10px 0;padding-left:20px}
-.narr li{margin:7px 0}
-.narr strong{color:#fff}
-.callout{margin:18px 0 2px;padding:15px 18px;border-radius:13px;
-background:linear-gradient(90deg,rgba(74,168,255,.12),rgba(124,92,255,.07));border:1px solid rgba(74,168,255,.2)}
-.callout .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--accent);font-weight:700}
-.callout .v{font-size:15px;line-height:1.6;margin-top:6px;color:#eef2ff}
-.foot{color:var(--faint);font-size:11.5px;margin-top:26px;line-height:1.6}
-
-/* index list */
-.lead{color:var(--muted);font-size:14px;line-height:1.65;max-width:780px;margin:2px 2px 22px}
-.rlist{display:flex;flex-direction:column;gap:13px}
-.rcard{padding:18px 20px;border-radius:15px;display:block;color:inherit;transition:transform .13s,border-color .2s,box-shadow .2s}
-.rcard:hover{transform:translateY(-2px);border-color:rgba(120,150,220,.34);box-shadow:0 12px 36px rgba(0,0,0,.3);text-decoration:none}
-.rcard .rh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.rcard .rdate{font:700 16px var(--sans)}
-.rcard .rcov{font:600 12px var(--mono);color:var(--muted)}
-.rcard .rb{font-size:13px;color:var(--muted);line-height:1.55;margin-top:10px}
-.rcard .rchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+/* index */
+.lead{{color:var(--muted);font-size:15px;line-height:1.7;margin:6px 0 30px}}
+.rlist{{display:flex;flex-direction:column;gap:2px}}
+.rrow{{display:block;color:inherit;padding:18px 4px;border-bottom:1px solid rgba(120,150,220,.10);transition:background .12s}}
+.rrow:hover{{background:rgba(74,168,255,.05);text-decoration:none}}
+.rrow .rd{{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}}
+.rrow .rdate{{font:700 18px var(--sans)}}
+.rrow .rcov{{font:500 12.5px var(--sans);color:var(--faint)}}
+.rrow .rsum{{color:var(--muted);font-size:14.5px;line-height:1.55;margin-top:7px}}
+.rrow .rconv{{font:700 10.5px var(--sans);letter-spacing:.3px;padding:3px 9px;border-radius:20px;white-space:nowrap}}
 """
+
+CONV = {  # (label, text color, bg)
+    "MORE": ("More conviction", C["long"]),
+    "SAME": ("Same conviction", C["neutral"]),
+    "LESS": ("Less conviction", C["short"]),
+}
+
+
+def _conv_tag(conv, big=False):
+    label, col = CONV.get(conv, ("", C["faint"]))
+    if not label:
+        return ""
+    cls = "convtag" if big else "rconv"
+    return f'<span class="{cls}" style="color:{col};background:{col}1c;border:1px solid {col}44">{label}</span>'
+
 
 HEAD = """<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>{title}</title>
-{plotly}
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>{css}</style></head><body><div class="wrap">"""
 
-PLOTLY = '<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>'
+
+def _topbar():
+    return ('<div class="top"><div class="brand"><span class="dot"></span>Strategy²&nbsp;'
+            '<small>NARRATIVE INTEL</small></div><div class="spacer"></div>'
+            f'<a class="back" href="{DASH_URL}">← v8.5 Console</a></div>')
 
 
-def _topbar(subtitle, with_back=True):
-    back = f'<a class="back" href="{DASH_URL}">← v8.5 Console</a>' if with_back else ""
-    return f"""<div class="top">
-  <div class="brand"><span class="dot"></span>Strategy²&nbsp;<small>{subtitle}</small></div>
-  <div class="spacer"></div>{back}
-</div>"""
-
-
-def _dots(n, color):
-    return '<span class="dots">' + "".join(
-        f'<i style="background:{color}"></i>' if k < n else '<i></i>' for k in range(3)) + "</span>"
-
-
-def _cdots(n, color):
-    return '<span class="cdots">' + "".join(
-        f'<i style="background:{color}"></i>' if k < n else '<i style="background:rgba(255,255,255,.16)"></i>'
-        for k in range(5)) + "</span>"
-
-
-def _fmt_num(v, kind):
-    if v is None:
-        return "—"
-    if kind == "usd0":
-        return f"${v:,.0f}"
-    if kind == "usd2":
-        return f"${v:,.2f}"
-    if kind == "x":
-        return f"{v:.2f}×"
-    return f"{v:.1f}"
+def _week_title(period):
+    s = datetime.date.fromisoformat(period["cover_start"])
+    return f"Week of {s.strftime('%B %-d, %Y')}"
 
 
 # ---------------------------------------------------------------------------
-# report page
+# pages
 # ---------------------------------------------------------------------------
 
-def render_report(slug):
+def render_report(slug, profs):
     pkt = json.loads((BUILD_DIR / f"packet-{slug}.json").read_text())
     rep = json.loads((BUILD_DIR / f"final-{slug}.json").read_text())
     period = pkt["period"]
-    sig = pkt["signal"]; der = sig["derived"]
-    delta = rep.get("conviction_delta", "SAME")
-    dcol = DELTA_COLOR.get(delta, C["neutral"])
+    note = wrap_analyst_names(md_to_html(rep.get("narrative_md", "")), profs)
+    cov = f"{datetime.date.fromisoformat(period['cover_start']).strftime('%b %-d')} – {datetime.date.fromisoformat(period['cover_end']).strftime('%b %-d, %Y')}"
 
-    # ---- hero
-    bear, qf = rep["bear_overlay"], rep["qfire"]
-    conf_cards = []
-    for title, obj, side_hint in [("Bear-overlay (defensive / top side)", bear, "Does the chorus back the hedge?"),
-                                  ("Bottom-watch (contrarian buy side)", qf, "Does the chorus back the dip-buy?")]:
-        vc = VERDICT_COLOR.get(obj["verdict"], C["faint"])
-        conf_cards.append(f"""<div class="confcard">
-  <div class="k"><span>{title}</span>{_dots(obj['strength'], vc)}</div>
-  <div class="vv" style="color:{vc}">{obj['verdict']}</div>
-  <div class="nt">{html.escape(obj['note'])}</div></div>""")
-
-    # ---- snapshot chips
-    chips = [
-        ("Bitcoin", _fmt_num(sig["btc"]["value"], "usd0"), ""),
-        ("MicroStrategy", _fmt_num(sig["mstr"]["value"], "usd2"), ""),
-        ("On-chain stress", _fmt_num(sig["mri"]["value"], "num"), der["mri_zone"].split(" (")[0]),
-        ("Hedge trend", "OPEN" if der["hedge_gate_open"] else "shut", der["trend_label"].split(" — ")[0]),
-        ("mNAV", _fmt_num(sig["mnav"]["value"], "x"), der["mnav_label"].split(" (")[0].split(" —")[0]),
-    ]
-    chip_html = "".join(
-        f'<div class="chip"><div class="k">{k}</div><div class="v">{v}</div>'
-        f'<div class="s">{html.escape(s)}</div></div>' for k, v, s in chips)
-
-    # ---- voices
-    by_name = {a["name"]: a for a in rep.get("analysts", [])}
-    vcards = []
-    for name in ROSTER_ORDER:
-        a = by_name.get(name, {"name": name, "published": False, "side": "NA",
-                               "lean": "silent", "conviction": 0, "summary": "", "quote": "", "url": "", "stance_change": False})
-        silent = not a.get("published")
-        lcol = LEAN_COLOR.get(a.get("lean", "silent"), C["faint"])
-        side = a.get("side", "NA")
-        side_badge = f'<span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">{SIDE_LABEL.get(side, side)}</span>' if not silent else ""
-        change = '<span class="badge" style="background:rgba(74,168,255,.14);color:var(--accent);border:1px solid rgba(74,168,255,.3)">fresh change</span>' if a.get("stance_change") and not silent else ""
-        lean_badge = f'<span class="pill" style="background:rgba(0,0,0,.18);color:{lcol};border:1px solid {lcol}55">{LEAN_LABEL.get(a.get("lean","silent"))}</span>'
-        conv = _cdots(a.get("conviction", 0), lcol) if not silent else ""
-        summ = f'<div class="summ">{html.escape(a.get("summary",""))}</div>' if a.get("summary") else ""
-        quote = f'<div class="quote">“{html.escape(a.get("quote",""))}”</div>' if a.get("quote") else ""
-        src = f'<div class="src"><a href="{html.escape(a.get("url",""))}" target="_blank" rel="noopener">source ↗</a></div>' if a.get("url") else ""
-        if silent:
-            summ = '<div class="summ" style="color:var(--faint)">No post in the coverage window.</div>'
-        vcards.append(f"""<div class="voice{' silent' if silent else ''}">
-  <div class="vh"><div><div class="nm">{name}</div><div class="tg">{ANALYST_TAG.get(name,'')}</div></div>
-    <div style="text-align:right">{lean_badge}</div></div>
-  <div class="row2">{side_badge}{change}{conv}</div>
-  {summ}{quote}{src}</div>""")
-
-    # ---- chart data
-    traj = sig["trajectory"]
-    chart_json = json.dumps({
-        "dates": [t["d"] for t in traj],
-        "btc": [t["btc"] for t in traj],
-        "mri": [t["mri"] for t in traj],
-        "mnav": [t["mnav"] for t in traj],
-        "win_start": period["cover_start"], "win_end": period["cover_end"],
-        "report_date": period["report_date"],
-    })
-
-    narrative = md_to_html(rep.get("narrative_md", ""))
-    regime = rep.get("regime", "—")
-    regime_col = {"BULL": C["long"], "BEAR": C["short"], "NEUTRAL": C["neutral"]}.get(regime, C["faint"])
-
-    body = f"""{_topbar('NARRATIVE INTEL')}
-<div class="card hero">
-  <div class="meta">
-    <div>
-      <div class="when">{period['kind'].upper()} REPORT · {period['cover_start']} → {period['cover_end']}</div>
-      <h1>{html.escape(period['title'])}</h1>
-    </div>
-    <span class="pill" style="background:{regime_col}22;color:{regime_col};border:1px solid {regime_col}55;font-size:12px">{regime} REGIME</span>
-  </div>
-  <div class="verdict">
-    <span class="vbadge" style="background:{dcol}1f;color:{dcol};border:1px solid {dcol}66">{DELTA_LABEL.get(delta, delta)}</span>
-    <span style="color:var(--muted);font-size:13px;max-width:520px">{html.escape(rep.get('bottom_line',''))}</span>
-  </div>
-  <div class="posture">{html.escape(rep.get('system_state',''))}</div>
-  <div class="conf">{''.join(conf_cards)}</div>
-</div>
-
-<div class="sec">System snapshot <span class="hint">· what the dashboard showed when this note was written</span></div>
-<div class="chips">{chip_html}</div>
-
-<div class="sec">Price &amp; on-chain stress <span class="hint">· shaded band = this report's coverage window</span></div>
-<div class="card chart">
-  <div class="clegend"><span><i style="background:{C['accent']}"></i>Bitcoin price</span>
-    <span><i style="background:{C['neutral']}"></i>On-chain stress gauge</span>
-    <span><i style="background:{C['short']};height:2px"></i>capitulation line</span></div>
-  <div id="plot" class="plot"></div>
-</div>
-
-<div class="sec">The trusted voices <span class="hint">· weighted by what each is good at — defensive warnings vs buy-the-dip calls</span></div>
-<div class="voices">{''.join(vcards)}</div>
-
-<div class="sec">The note</div>
-<div class="card"><div class="narr">{narrative}
-  <div class="callout"><div class="k">Bottom line</div><div class="v">{html.escape(rep.get('bottom_line',''))}</div></div>
-</div></div>
-
+    body = f"""{_topbar()}
+<div class="eyebrow">Covers {cov}</div>
+<h1 class="title">{_week_title(period)}</h1>
+{_conv_tag(rep.get('conviction'), big=True)}
+<article class="note">{note}</article>
 <div class="foot">
-  Point-in-time narrative-intelligence note. The system posture is produced by the Strategy² v8.5 dashboard;
-  this note only calibrates conviction in it by reading the trusted voices' actual posts inside the coverage
-  window — it never uses hindsight. Voices weighted by side-specific skill; the one bottom-caller is
-  The Bitcoin Layer, and at a capitulation widespread expert fear is read as confirmation, not conflict.<br>
+  A point-in-time read of the trusted voices against the Strategy² v8.5 system — it calibrates
+  conviction, it doesn't generate signals, and it never uses hindsight. Hover any analyst's name
+  to see how much to trust them and how to read their calls.<br>
   Generated {rep.get('_generated_at','')} · <a href="{INTEL_URL}">all reports</a> · <a href="{DASH_URL}">v8.5 console</a>
-</div>
-
-<script>
-const D = {chart_json};
-(function(){{
-  const shade0 = D.win_start, shade1 = D.win_end;
-  const btcVals = D.btc.filter(v=>v!=null);
-  const ylo = Math.min.apply(null,btcVals)*0.985, yhi = Math.max.apply(null,btcVals)*1.012;
-  const t_btc = {{x:D.dates,y:D.btc,name:'Bitcoin',type:'scatter',mode:'lines',
-    line:{{color:'{C['accent']}',width:3,shape:'spline',smoothing:0.6}},yaxis:'y',
-    fill:'tozeroy',fillcolor:'rgba(74,168,255,0.13)',
-    hovertemplate:'%{{x}}<br>BTC $%{{y:,.0f}}<extra></extra>'}};
-  const t_mri = {{x:D.dates,y:D.mri,name:'On-chain stress',type:'scatter',mode:'lines+markers',
-    line:{{color:'{C['neutral']}',width:2.2,dash:'dot'}},marker:{{size:4,color:'{C['neutral']}'}},
-    yaxis:'y2',connectgaps:true,hovertemplate:'%{{x}}<br>stress %{{y:.1f}}<extra></extra>'}};
-  const layout = {{
-    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(255,255,255,0.018)',
-    font:{{color:'{C['muted']}',family:'JetBrains Mono, monospace',size:11}},
-    margin:{{l:60,r:54,t:10,b:34}},showlegend:false,
-    xaxis:{{gridcolor:'rgba(255,255,255,.05)',zeroline:false}},
-    yaxis:{{title:'BTC',gridcolor:'rgba(255,255,255,.06)',zeroline:false,tickprefix:'$',tickformat:',.0f',range:[ylo,yhi]}},
-    yaxis2:{{title:'stress',overlaying:'y',side:'right',gridcolor:'rgba(0,0,0,0)',zeroline:false,range:[0,Math.max(40,Math.max.apply(null,D.mri.filter(v=>v!=null))+6)]}},
-    shapes:[
-      {{type:'rect',xref:'x',yref:'paper',x0:shade0,x1:shade1,y0:0,y1:1,
-        fillcolor:'rgba(124,92,255,.16)',line:{{color:'rgba(124,92,255,.45)',width:1,dash:'dot'}},layer:'below'}},
-      {{type:'line',xref:'paper',yref:'y2',x0:0,x1:1,y0:12,y1:12,
-        line:{{color:'{C['short']}',width:1.4,dash:'dash'}}}}
-    ],
-    annotations:[
-      {{xref:'paper',yref:'y2',x:0.012,y:12,yanchor:'bottom',text:'capitulation buy zone (≤12)',
-        showarrow:false,font:{{color:'{C['short']}',size:9.5}}}},
-      {{xref:'x',yref:'paper',x:shade1,y:1,yanchor:'bottom',xanchor:'right',text:'coverage window',
-        showarrow:false,font:{{color:'{C['accent2']}',size:9.5}}}}
-    ]
-  }};
-  Plotly.newPlot('plot',[t_btc,t_mri],layout,{{displayModeBar:false,responsive:true}});
-}})();
-</script>"""
-    page = HEAD.format(title=f"{period['title']} · Strategy² Intel", plotly=PLOTLY, css=CSS) + body + "</div></body></html>"
+</div>"""
+    page = HEAD.format(title=f"{_week_title(period)} · Strategy² Intel", css=CSS) + body + "</div></body></html>"
     (DOCS_INTEL / f"{slug}.html").write_text(page)
 
-    # merged data for reuse / future dashboard integration
     (DOCS_INTEL / "data" / f"{slug}.json").write_text(json.dumps({
-        "period": period, "signal": sig, "signal_plain": pkt["signal_plain"], "report": rep,
+        "period": period, "conviction": rep.get("conviction"),
+        "summary": rep.get("summary", ""), "narrative_md": rep.get("narrative_md", ""),
     }, indent=2))
     return rep, period
 
 
-# ---------------------------------------------------------------------------
-# index page
-# ---------------------------------------------------------------------------
-
 def render_index(cards):
     rows = []
     for rep, period in cards:
-        delta = rep.get("conviction_delta", "SAME"); dcol = DELTA_COLOR.get(delta, C["neutral"])
-        regime = rep.get("regime", "—"); rcol = {"BULL": C["long"], "BEAR": C["short"], "NEUTRAL": C["neutral"]}.get(regime, C["faint"])
-        bear, qf = rep["bear_overlay"], rep["qfire"]
-        bc, qc = VERDICT_COLOR.get(bear["verdict"], C["faint"]), VERDICT_COLOR.get(qf["verdict"], C["faint"])
-        rows.append(f"""<a class="card rcard" href="{period['slug']}.html">
-  <div class="rh">
-    <div><div class="rdate">{html.escape(period['title'].replace('Market Note — ',''))}</div>
-      <div class="rcov">{period['kind'].upper()} · {period['cover_start']} → {period['cover_end']}</div></div>
-    <span class="pill" style="background:{dcol}1f;color:{dcol};border:1px solid {dcol}66">{DELTA_LABEL.get(delta,delta)}</span>
-  </div>
-  <div class="rb">{html.escape(rep.get('bottom_line',''))}</div>
-  <div class="rchips">
-    <span class="pill" style="background:{rcol}18;color:{rcol};border:1px solid {rcol}44">{regime}</span>
-    <span class="pill" style="background:rgba(255,255,255,.04);color:{bc};border:1px solid {bc}44">Hedge: {bear['verdict']}</span>
-    <span class="pill" style="background:rgba(255,255,255,.04);color:{qc};border:1px solid {qc}44">Buy-watch: {qf['verdict']}</span>
-  </div>
+        cov = f"{datetime.date.fromisoformat(period['cover_start']).strftime('%b %-d')} – {datetime.date.fromisoformat(period['cover_end']).strftime('%b %-d')}"
+        rows.append(f"""<a class="rrow" href="{period['slug']}.html">
+  <div class="rd"><span class="rdate">{_week_title(period)}</span>
+    <span class="rcov">{cov}</span>
+    <span class="spacer"></span>{_conv_tag(rep.get('conviction'))}</div>
+  <div class="rsum">{html.escape(rep.get('summary',''))}</div>
 </a>""")
-
-    lead = ("A twice-weekly read of the analysts we actually trust, set against the Strategy² v8.5 "
-            "system. It does not generate signals — it tells you whether the trusted voices raise or "
-            "lower conviction in what the dashboard is already saying, weighting each voice only on the "
-            "side it has earned (defensive top-warnings vs buy-the-dip calls). Mondays cover the prior "
-            "Thursday–Sunday; Thursdays cover Monday–Wednesday. Strictly point-in-time — each note knows "
-            "nothing published after its window.")
-    body = f"""{_topbar('NARRATIVE INTEL')}
-<div class="card hero" style="padding:22px 24px">
-  <h1 style="margin:0 0 4px">Narrative Intelligence</h1>
-  <div class="cat">conviction layer · MSTR / BTC · v8.5</div>
-  <div class="lead" style="margin-top:14px">{lead}</div>
-</div>
-<div class="sec">Recent reports <span class="hint">· newest first</span></div>
+    lead = ("A twice-weekly read of the analysts we trust, set against the Strategy² v8.5 system. "
+            "It doesn't call trades — it tells you whether the voices we trust make the dashboard's "
+            "current stance more or less convincing this week, and which voices to weight. "
+            "Mondays cover Thursday–Sunday; Thursdays cover Monday–Wednesday.")
+    body = f"""{_topbar()}
+<div class="eyebrow">conviction layer · MSTR / BTC</div>
+<h1 class="title">Narrative Intelligence</h1>
+<div class="lead">{lead}</div>
 <div class="rlist">{''.join(rows)}</div>
-<div class="foot">Generated by the narrative-intel pipeline · <a href="{DASH_URL}">v8.5 console</a></div>"""
-    page = HEAD.format(title="Narrative Intelligence · Strategy²", plotly="", css=CSS) + body + "</div></body></html>"
+<div class="foot">Hover any analyst's name in a report to see how to read their calls. · <a href="{DASH_URL}">v8.5 console</a></div>"""
+    page = HEAD.format(title="Narrative Intelligence · Strategy²", css=CSS) + body + "</div></body></html>"
     (DOCS_INTEL / "index.html").write_text(page)
 
 
-# ---------------------------------------------------------------------------
-# email body (inline-styled, no JS)
-# ---------------------------------------------------------------------------
-
-def render_email(slug):
-    rep = json.loads((DOCS_INTEL / "data" / f"{slug}.json").read_text())["report"]
-    pkt = json.loads((BUILD_DIR / f"packet-{slug}.json").read_text())
-    period = pkt["period"]
-    delta = rep.get("conviction_delta", "SAME"); dcol = DELTA_COLOR.get(delta, C["neutral"])
-    bear, qf = rep["bear_overlay"], rep["qfire"]
+def render_email(slug, profs):
+    data = json.loads((DOCS_INTEL / "data" / f"{slug}.json").read_text())
+    period, rep = data["period"], data
+    # email: clean prose, inline styles, no JS / no hover (link out instead)
+    note = md_to_html(rep.get("narrative_md", ""))
+    note = (note.replace("<h3>", '<h3 style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#8c98b8;margin:26px 0 10px;border-bottom:1px solid rgba(120,150,220,.2);padding-bottom:6px">')
+                .replace("<p>", '<p style="margin:0 0 15px">')
+                .replace("<strong>", '<strong style="color:#fff">'))
+    label, col = CONV.get(rep.get("conviction"), ("", C["faint"]))
     url = f"{INTEL_URL}{slug}.html"
-
-    def vrow(a):
-        if not a.get("published"):
-            return f'<tr><td style="padding:6px 0;color:#586187">{a["name"]}</td><td style="padding:6px 0;color:#586187">silent</td></tr>'
-        lcol = LEAN_COLOR.get(a.get("lean", "neutral"), C["muted"])
-        return (f'<tr><td style="padding:6px 10px 6px 0;color:#eaf0ff;font-weight:600;vertical-align:top;white-space:nowrap">{a["name"]} '
-                f'<span style="color:{lcol};font-size:12px">· {a.get("lean")}</span></td>'
-                f'<td style="padding:6px 0;color:#b8c2da;font-size:13px">{html.escape(a.get("summary",""))}</td></tr>')
-
-    voices = "".join(vrow(a) for a in sorted(rep.get("analysts", []),
-                     key=lambda x: ROSTER_ORDER.index(x["name"]) if x["name"] in ROSTER_ORDER else 9))
-    narrative = md_to_html(rep.get("narrative_md", ""))
-
-    html_doc = f"""<div style="background:#070b14;color:#eaf0ff;font-family:-apple-system,Segoe UI,Inter,sans-serif;padding:0;margin:0">
-<div style="max-width:640px;margin:0 auto;padding:24px 22px">
-  <div style="font-weight:800;letter-spacing:.3px;color:#eaf0ff;font-size:15px">Strategy² <span style="color:#8c98b8;font-weight:600;font-size:11px;letter-spacing:2px">NARRATIVE INTEL</span></div>
-  <div style="color:#8c98b8;font:600 12px ui-monospace,monospace;margin-top:14px">{period['kind'].upper()} REPORT · {period['cover_start']} → {period['cover_end']}</div>
-  <h1 style="font-size:21px;margin:4px 0 14px;color:#fff">{html.escape(period['title'])}</h1>
-  <div style="display:inline-block;background:{dcol}1f;color:{dcol};border:1px solid {dcol}66;border-radius:10px;padding:9px 16px;font:800 16px ui-monospace,monospace;letter-spacing:1px">{DELTA_LABEL.get(delta, delta)}</div>
-  <p style="color:#b8c2da;font-size:14px;line-height:1.6;margin:14px 0">{html.escape(rep.get('system_state',''))}</p>
-  <table style="width:100%;border-collapse:collapse;margin:14px 0">
-    <tr><td style="padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(120,150,220,.16)">
-      <span style="color:#8c98b8;font-size:11px;text-transform:uppercase;letter-spacing:1px">Hedge / top side</span><br>
-      <b style="color:{VERDICT_COLOR.get(bear['verdict'],C['faint'])};font-size:15px">{bear['verdict']}</b>
-      <span style="color:#8c98b8;font-size:12px"> — {html.escape(bear['note'])}</span></td></tr>
-    <tr><td style="height:8px"></td></tr>
-    <tr><td style="padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(120,150,220,.16)">
-      <span style="color:#8c98b8;font-size:11px;text-transform:uppercase;letter-spacing:1px">Buy-the-dip / bottom side</span><br>
-      <b style="color:{VERDICT_COLOR.get(qf['verdict'],C['faint'])};font-size:15px">{qf['verdict']}</b>
-      <span style="color:#8c98b8;font-size:12px"> — {html.escape(qf['note'])}</span></td></tr>
-  </table>
-  <h3 style="font-size:13px;color:#8c98b8;text-transform:uppercase;letter-spacing:1px;margin:18px 0 6px">The voices</h3>
-  <table style="width:100%;border-collapse:collapse">{voices}</table>
-  <div style="margin:20px 0;border-top:1px solid rgba(120,150,220,.16)"></div>
-  <div style="font-size:14px;line-height:1.7;color:#dfe6fb">{narrative}</div>
-  <div style="margin:18px 0;padding:14px 16px;background:rgba(74,168,255,.10);border:1px solid rgba(74,168,255,.2);border-radius:11px">
-    <span style="color:#4aa8ff;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700">Bottom line</span><br>
-    <span style="font-size:14px;color:#eef2ff;line-height:1.6">{html.escape(rep.get('bottom_line',''))}</span></div>
-  <p style="margin:18px 0"><a href="{url}" style="background:linear-gradient(180deg,#4aa8ff,#2b6fd0);color:#fff;text-decoration:none;padding:11px 20px;border-radius:11px;font-weight:600;font-size:14px;display:inline-block">View the interactive report ↗</a></p>
-  <p style="color:#586187;font-size:11px;line-height:1.6;margin-top:20px">Point-in-time narrative layer over the Strategy² v8.5 system. Calibrates conviction; does not generate signals. No hindsight used.</p>
+    cov = f"{datetime.date.fromisoformat(period['cover_start']).strftime('%b %-d')} – {datetime.date.fromisoformat(period['cover_end']).strftime('%b %-d, %Y')}"
+    doc = f"""<div style="background:#070b14;color:#dde4f7;font-family:-apple-system,Segoe UI,Inter,sans-serif;margin:0;padding:0">
+<div style="max-width:600px;margin:0 auto;padding:26px 22px">
+  <div style="font-weight:800;color:#eaf0ff;font-size:14px">Strategy² <span style="color:#8c98b8;font-weight:600;font-size:10.5px;letter-spacing:2px">NARRATIVE INTEL</span></div>
+  <div style="color:#586187;font-size:12px;margin-top:16px">Covers {cov}</div>
+  <h1 style="font-size:25px;margin:3px 0 8px;color:#fff;font-weight:800">{_week_title(period)}</h1>
+  {'<span style="display:inline-block;font-size:11px;font-weight:700;color:'+col+';background:'+col+'1c;border:1px solid '+col+'44;border-radius:20px;padding:4px 11px">'+label+'</span>' if label else ''}
+  <div style="font-size:15.5px;line-height:1.72;color:#dde4f7;margin-top:22px">{note}</div>
+  <p style="margin:26px 0 6px"><a href="{url}" style="background:linear-gradient(180deg,#4aa8ff,#2b6fd0);color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-weight:600;font-size:14px;display:inline-block">Open on the dashboard ↗</a></p>
+  <p style="color:#586187;font-size:11px;line-height:1.6;margin-top:22px">A point-in-time read of the trusted voices against the Strategy² v8.5 system. Calibrates conviction; no signals; no hindsight. On the dashboard you can hover any analyst's name to see how to read their calls.</p>
 </div></div>"""
-    out = DOCS_INTEL / "email"
-    out.mkdir(exist_ok=True)
-    (out / f"{slug}.html").write_text(html_doc)
+    out = DOCS_INTEL / "email"; out.mkdir(exist_ok=True)
+    (out / f"{slug}.html").write_text(doc)
     return out / f"{slug}.html"
 
 
-# ---------------------------------------------------------------------------
 def main():
     os.chdir(Path(__file__).resolve().parent)
     DOCS_INTEL.mkdir(parents=True, exist_ok=True)
     (DOCS_INTEL / "data").mkdir(exist_ok=True)
+    profs = load_profiles()
     slugs = sorted((Path(p).stem.replace("final-", "")
                     for p in glob.glob(str(BUILD_DIR / "final-*.json"))), reverse=True)
     if not slugs:
-        print("No final-*.json reports found in build/. Run generation first.")
-        return
+        print("No final-*.json reports in build/. Run generation first."); return
     cards = []
     for slug in slugs:
-        # stamp generation time if absent
         fp = BUILD_DIR / f"final-{slug}.json"
         rep = json.loads(fp.read_text())
         rep.setdefault("_generated_at", datetime.datetime.now().strftime("%Y-%m-%d %H:%M CT"))
         fp.write_text(json.dumps(rep, indent=2))
-        rep, period = render_report(slug)
-        render_email(slug)
-        cards.append((rep, period))
-        print("rendered", slug)
+        rep, period = render_report(slug, profs)
+        render_email(slug, profs)
+        cards.append((rep, period)); print("rendered", slug)
     render_index(cards)
     print(f"index.html + {len(cards)} reports -> {DOCS_INTEL}")
 

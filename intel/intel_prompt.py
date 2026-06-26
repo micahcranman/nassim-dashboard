@@ -11,61 +11,19 @@ The writer sees ONLY: plain-language signal + sanitized profiles + that week's p
 import json
 
 
-# The structured object every report agent must return (drives the dashboard visuals).
+# The structured object every report agent returns. Deliberately small — the report IS the
+# prose. `summary` + `conviction` are only used for the one-line teaser on the index page.
 REPORT_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["system_state", "regime", "focus_side", "analysts",
-                 "bear_overlay", "qfire", "conviction_delta", "bottom_line", "narrative_md"],
+    "required": ["narrative_md", "summary", "conviction"],
     "properties": {
-        "system_state": {"type": "string", "description": "One plain-language line: where the system stands this period (no codenames)."},
-        "regime": {"type": "string", "enum": ["BULL", "BEAR", "NEUTRAL"]},
-        "focus_side": {"type": "string", "enum": ["TOP", "BOTTOM", "BOTH"],
-                       "description": "Which side the voices most need to confirm this period."},
-        "analysts": {
-            "type": "array",
-            "description": "One entry per scored voice (all six, even if silent).",
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["name", "published", "side", "lean", "stance_change", "conviction", "summary", "quote", "url"],
-                "properties": {
-                    "name": {"type": "string"},
-                    "published": {"type": "boolean"},
-                    "side": {"type": "string", "enum": ["TOP", "BOTTOM", "NEUTRAL", "NA"],
-                             "description": "TOP = a defensive/top warning; BOTTOM = a buy-weakness call; NEUTRAL/NA otherwise."},
-                    "lean": {"type": "string", "enum": ["confirms", "contradicts", "neutral", "silent"],
-                             "description": "Does this voice confirm or contradict the system's posture this period?"},
-                    "stance_change": {"type": "boolean", "description": "True only if a genuine fresh change of view (not a restatement)."},
-                    "conviction": {"type": "integer", "minimum": 0, "maximum": 5},
-                    "summary": {"type": "string", "description": "One sentence on what they actually said this period."},
-                    "quote": {"type": "string", "description": "A short verbatim quote from their in-window post, or '' if silent."},
-                    "url": {"type": "string"}
-                }
-            }
-        },
-        "bear_overlay": {
-            "type": "object", "additionalProperties": False,
-            "required": ["verdict", "strength", "note"],
-            "properties": {
-                "verdict": {"type": "string", "enum": ["CORROBORATE", "CONFLICT", "SILENT"]},
-                "strength": {"type": "integer", "minimum": 0, "maximum": 3},
-                "note": {"type": "string"}
-            }
-        },
-        "qfire": {
-            "type": "object", "additionalProperties": False,
-            "required": ["verdict", "strength", "note"],
-            "properties": {
-                "verdict": {"type": "string", "enum": ["CORROBORATE", "CONFLICT", "SILENT"]},
-                "strength": {"type": "integer", "minimum": 0, "maximum": 3},
-                "note": {"type": "string"}
-            }
-        },
-        "conviction_delta": {"type": "string", "enum": ["MORE", "SAME", "LESS"],
-                             "description": "Does the narrative this period add MORE conviction in the system's posture, leave it the SAME, or argue for LESS?"},
-        "bottom_line": {"type": "string", "description": "1-2 sentence takeaway."},
-        "narrative_md": {"type": "string", "description": "The full human-readable note in markdown (see length/voice guidance)."}
+        "narrative_md": {"type": "string",
+                         "description": "The full human-readable note in markdown (see structure + voice guidance). This is the deliverable."},
+        "summary": {"type": "string",
+                    "description": "ONE plain sentence for the index list — the single most useful takeaway of this note."},
+        "conviction": {"type": "string", "enum": ["MORE", "SAME", "LESS"],
+                       "description": "Does this week's reading give MORE / the SAME / LESS conviction in the system's current posture?"},
     }
 }
 
@@ -121,24 +79,38 @@ Rules for weighting (apply the sanitized profiles — they tell you who is good 
 """
 
 VOICE = """\
-## Output — voice and shape of `narrative_md`
+## Output — `narrative_md` (this is the whole deliverable; make it clean and human)
 
-Write a punchy, plain-English market note a sharp trader would actually read. Structure:
-  - **Where the system stands** — one short paragraph restating the posture above in plain
-    words (NO internal codenames — never write "Q-fire", "MRI", "slope_5d", "t1b", "t2a";
-    say "the on-chain capitulation gauge", "the hedge slope", etc.).
-  - **What the trusted voices actually said** — one tight bullet per voice that published,
-    naming what they said, whether it's a genuine change or a restatement, and how much weight
-    it earns *given their profile*. Be specific; quote a few words where it lands.
-  - **Do the voices confirm the system?** — a short synthesis: who lines up, who doesn't, and
-    why, weighted by side and trust.
-  - **Bottom line** — does this period give MORE / the SAME / LESS conviction in the system's
-    posture, and what to watch next (a level, a voice, an event).
-  - End with a one-line **coverage note** listing who was silent.
+Write a plain-English note a smart person reads top-to-bottom and immediately understands.
+NO jargon, NO codenames (never "Q-fire", "MRI", "slope_5d", "t1b/t2a", "composite", "v8.5"),
+NO labels like "TOP-side / BOTTOM-side", NO scores, dots, or tables. Just clear prose.
 
-Rules: 300–600 words. Have opinions. Vary sentence length. No hedging stacks. Do not invent
-quotes or facts — everything must trace to the posts provided. Never reference anything that
-happened after the coverage window — you do not know the future.
+Follow THIS exact structure (it is the house format — match it closely):
+
+**The system this week:** one short paragraph, plain words, restating the posture you were given
+(trend, hedge, whether there's a buy or sell, on-chain stress). End it with the one question the
+voices need to answer this week.
+
+**What the trusted voices actually said:** then ONE short paragraph per voice that published.
+Start each with the analyst's name in bold, followed by a brief plain-English descriptor of how
+much to trust them in parentheses — drawn from their profile, e.g. "(our best all-rounder)",
+"(liquidity tide — good on direction, weak on timing)", "(our richest on-chain read; lean on his
+defensive warnings, fade his bottom calls)", "(good fire alarm, poor all-clear; fade their
+dip-buying)", "(our bottom-caller; ignore their top warnings)", "(structural bull — only his rare
+bearish turns matter)" — then an em-dash and the prose: what they said, whether it's a genuine
+change of view or just restating an old one, and the net read. Quote a few of their own words where
+it lands. Keep each voice to a tight paragraph. For a silent voice, a single line ("**Willy Woo** —
+Quiet. No posts in the window.").
+
+**Does the narrative confirm the system?** one paragraph of synthesis: who lines up with the
+system, who doesn't, and why — leaning on the voices that are actually good at this week's question.
+
+**Bottom line:** one paragraph — does this week give MORE, the SAME, or LESS conviction in the
+system's posture, and the one or two concrete things to watch next (a price level, a voice, an event).
+
+Rules: ~350–650 words. Have opinions; vary sentence length; no hedging stacks. Do not invent quotes
+or facts — everything traces to the posts provided. Never reference anything after the coverage
+window. Do NOT put the date title inside narrative_md (the page adds it).
 """
 
 
@@ -170,12 +142,9 @@ coverage window. This is strictly point-in-time.
 
 {VOICE}
 
-# Also return the structured fields (they drive the dashboard visuals)
-Fill every field of the schema. For `analysts`, include an entry for ALL SIX voices
-(James Check, Lyn Alden, Michael Howell, The Bitcoin Layer, Macro Ops, Willy Woo) — mark the
-silent ones published=false, lean="silent". `bear_overlay` summarizes the TOP-side confluence;
-`qfire` summarizes the BOTTOM-side confluence (remember the contrarian-at-extreme rule when
-the system is at capitulation). `conviction_delta` is MORE/SAME/LESS conviction in the posture.
+# Return the object
+Return `narrative_md` (the full note above), `summary` (one plain sentence for the index list),
+and `conviction` (MORE / SAME / LESS conviction in the system's posture this week).
 Return ONLY the structured object."""
 
 
@@ -190,18 +159,19 @@ object and the EXACT source material the writer was given. Check the draft hard 
 2. **Fabrication** — is every quote and factual claim traceable to the provided posts? Flag any
    quote not found in the source, any analyst attributed something they didn't say, any invented
    number. (The signal/system numbers in 'Where the system stands' are given facts — those are fine.)
-3. **Codename leakage** — does `narrative_md` contain internal jargon that must NOT appear
-   ("Q-fire", "MRI", "slope_5d", "t1b", "t2a", "t2b", "composite", "v8.5")? Plain-English
-   equivalents are required.
+3. **Jargon / codename leakage** — does `narrative_md` contain internal jargon that must NOT
+   appear ("Q-fire", "MRI", "slope_5d", "t1b/t2a/t2b", "composite", "v8.5") OR clunky labels
+   like "TOP-side"/"BOTTOM-side"/scores/dots? Require plain-English. The note must read cleanly.
 4. **Mis-weighting** — does it lean on a voice's WEAK side, treat a restatement as a fresh
    signal, or (critically) read broad expert fear at a capitulation as CONFLICTING with the buy
    setup rather than confirming it? Flag profile-inconsistent weighting.
+5. **Readability** — is it clean human prose matching the house structure (The system this week
+   / What the trusted voices actually said, one paragraph per voice / Does the narrative confirm
+   the system? / Bottom line)? If it's cluttered or hard to follow, smooth it.
 
-Then return a CORRECTED version of the SAME object (same schema, all fields) with every fault
-fixed — keep everything that was already correct, only fix faults. If the draft was clean,
-return it essentially unchanged. In `narrative_md`, preserve the writer's voice; only repair faults.
-
-Add nothing that isn't supported by the sources. Do not soften a correct, well-grounded read.
+Then return a CORRECTED version of the SAME object (narrative_md, summary, conviction) with every
+fault fixed — keep what was already correct, only fix faults and improve clarity. Preserve the
+writer's voice. Add nothing unsupported by the sources; do not soften a correct, well-grounded read.
 
 # Coverage window: {p['cover_start']} → {p['cover_end']} (know nothing after this)
 

@@ -1,229 +1,84 @@
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Market Note — week of June 18, 2026 · Strategy² Intel</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<title>Week of June 15, 2026 · Strategy² Intel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#070b14;--glass:rgba(20,28,48,0.55);--glass-brd:rgba(120,150,220,0.16);
 --ink:#eaf0ff;--muted:#8c98b8;--faint:#586187;--long:#16c784;--short:#ea3943;
 --neutral:#f3c623;--accent:#4aa8ff;--accent2:#7c5cff;
---mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Inter',system-ui,sans-serif;}
+--sans:'Inter',system-ui,sans-serif;}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-body{background:radial-gradient(1200px 700px at 12% -8%,rgba(74,168,255,.10),transparent 60%),
-radial-gradient(1000px 600px at 100% 0%,rgba(124,92,255,.10),transparent 55%),
-radial-gradient(900px 700px at 50% 120%,rgba(22,199,132,.06),transparent 60%),var(--bg);min-height:100vh}
-.wrap{max-width:1080px;margin:0 auto;padding:18px 16px 80px}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+body{background:radial-gradient(1100px 640px at 15% -10%,rgba(74,168,255,.07),transparent 60%),
+radial-gradient(900px 560px at 100% 0%,rgba(124,92,255,.06),transparent 55%),var(--bg);min-height:100vh}
+.wrap{max-width:720px;margin:0 auto;padding:20px 20px 90px}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-.top{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
-.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
-.brand small{font-weight:600;color:var(--muted);letter-spacing:2px;font-size:11px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:30px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.3px;font-size:15px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.brand small{font-weight:600;color:var(--muted);letter-spacing:2px;font-size:10.5px}
 .spacer{flex:1}
-.back{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);
-padding:7px 13px;border-radius:10px;background:rgba(255,255,255,.03)}
-.card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;
-backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
-box-shadow:0 10px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
-.cat{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--faint)}
-.badge{font:700 10px var(--mono);padding:3px 8px;border-radius:6px;letter-spacing:.5px;display:inline-block}
-.pill{font:700 11px var(--mono);padding:4px 10px;border-radius:8px;letter-spacing:.4px;display:inline-flex;gap:6px;align-items:center}
+.back{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);padding:7px 12px;border-radius:9px;background:rgba(255,255,255,.03)}
 
-/* hero */
-.hero{padding:24px;overflow:hidden}
-.hero .meta{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
-.hero .when{font:700 13px var(--mono);color:var(--muted)}
-.hero h1{font-size:25px;margin:6px 0 2px;font-weight:800;letter-spacing:-.4px}
-.verdict{display:flex;align-items:center;gap:16px;margin:16px 0 4px;flex-wrap:wrap}
-.vbadge{font:800 22px var(--mono);letter-spacing:1px;padding:11px 20px;border-radius:13px;text-transform:uppercase}
-.posture{color:var(--muted);font-size:13.5px;line-height:1.5;margin-top:8px;max-width:760px}
-.conf{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-.confcard{padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);min-width:230px;flex:1}
-.confcard .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px}
-.confcard .vv{font:800 17px var(--mono);margin-top:6px;display:flex;align-items:center;gap:9px}
-.dots{display:inline-flex;gap:3px}
-.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16)}
-.confcard .nt{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.45}
+.eyebrow{font:600 12px var(--sans);color:var(--faint);letter-spacing:.4px;text-transform:none;margin-bottom:4px}
+h1.title{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
+.convtag{display:inline-block;font:700 11px var(--sans);letter-spacing:.4px;padding:4px 11px;border-radius:20px;margin-top:6px}
 
-/* snapshot chips */
-.sec{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;font-weight:700;font-size:15px;flex-wrap:wrap}
-.sec .hint{font-weight:500;font-size:12px;color:var(--muted)}
-.chips{display:flex;gap:10px;flex-wrap:wrap}
-.chip{padding:11px 14px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);min-width:130px}
-.chip .k{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:600}
-.chip .v{font:700 19px var(--mono);margin-top:4px}
-.chip .s{font-size:11px;color:var(--faint);margin-top:3px}
+/* the article */
+.note{font-size:16.5px;line-height:1.72;color:#dde4f7;margin-top:26px}
+.note p{margin:0 0 17px}
+.note h3{font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);
+margin:30px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--glass-brd)}
+.note strong{color:#fff;font-weight:700}
+.note ul{margin:0 0 17px;padding-left:20px} .note li{margin:8px 0}
+.note em{color:#cdd6ef}
 
-/* chart */
-.chart{padding:14px 10px 8px}
-.chart .plot{width:100%;height:360px}
-.clegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 8px 4px}
-.clegend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:3px}
+/* hover popover on analyst names */
+.who{position:relative;color:#fff;font-weight:700;border-bottom:1px dotted rgba(74,168,255,.6);cursor:help;outline:none}
+.who-pop{visibility:hidden;opacity:0;position:absolute;left:0;top:calc(100% + 9px);z-index:50;
+width:330px;max-width:78vw;padding:14px 16px;border-radius:13px;
+background:rgba(10,15,28,.985);border:1px solid var(--glass-brd);
+box-shadow:0 16px 48px rgba(0,0,0,.6);backdrop-filter:blur(8px);
+font:400 13.5px var(--sans);line-height:1.58;color:var(--muted);letter-spacing:0;
+transition:opacity .14s ease;pointer-events:none}
+.who-pop::before{content:"";position:absolute;left:18px;top:-6px;width:11px;height:11px;
+background:rgba(10,15,28,.985);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg)}
+.who-pop b{display:block;color:var(--ink);font-size:14.5px;font-weight:700;margin-bottom:1px}
+.who-pop .who-tag{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.who:hover .who-pop,.who:focus .who-pop,.who:focus-within .who-pop{visibility:visible;opacity:1}
+@media (max-width:560px){.who-pop{left:auto;right:0}.who-pop::before{left:auto;right:18px}}
 
-/* voices */
-.voices{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:13px}
-.voice{padding:15px 16px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
-.voice.silent{opacity:.5}
-.voice .vh{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.voice .nm{font-weight:700;font-size:14.5px}
-.voice .tg{font-size:10.5px;color:var(--faint);margin-top:1px}
-.voice .row2{display:flex;gap:7px;align-items:center;margin:9px 0 2px;flex-wrap:wrap}
-.voice .summ{font-size:12.5px;color:var(--ink);line-height:1.5;margin-top:8px}
-.voice .quote{font-size:12px;color:var(--muted);font-style:italic;border-left:2px solid var(--glass-brd);padding-left:10px;margin-top:9px;line-height:1.45}
-.voice .src{font-size:11px;margin-top:9px}
-.cdots{display:inline-flex;gap:3px;align-items:center}
-.cdots i{width:6px;height:6px;border-radius:50%}
+.foot{color:var(--faint);font-size:12px;margin-top:40px;line-height:1.65;border-top:1px solid var(--glass-brd);padding-top:18px}
 
-/* narrative */
-.narr{padding:8px 26px 22px;font-size:14.5px;line-height:1.72;color:#dfe6fb}
-.narr h2{font-size:17px;margin:22px 0 8px;color:var(--ink)}
-.narr h3{font-size:15px;margin:18px 0 6px;color:var(--ink)}
-.narr p{margin:11px 0}
-.narr ul{margin:10px 0;padding-left:20px}
-.narr li{margin:7px 0}
-.narr strong{color:#fff}
-.callout{margin:18px 0 2px;padding:15px 18px;border-radius:13px;
-background:linear-gradient(90deg,rgba(74,168,255,.12),rgba(124,92,255,.07));border:1px solid rgba(74,168,255,.2)}
-.callout .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--accent);font-weight:700}
-.callout .v{font-size:15px;line-height:1.6;margin-top:6px;color:#eef2ff}
-.foot{color:var(--faint);font-size:11.5px;margin-top:26px;line-height:1.6}
-
-/* index list */
-.lead{color:var(--muted);font-size:14px;line-height:1.65;max-width:780px;margin:2px 2px 22px}
-.rlist{display:flex;flex-direction:column;gap:13px}
-.rcard{padding:18px 20px;border-radius:15px;display:block;color:inherit;transition:transform .13s,border-color .2s,box-shadow .2s}
-.rcard:hover{transform:translateY(-2px);border-color:rgba(120,150,220,.34);box-shadow:0 12px 36px rgba(0,0,0,.3);text-decoration:none}
-.rcard .rh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.rcard .rdate{font:700 16px var(--sans)}
-.rcard .rcov{font:600 12px var(--mono);color:var(--muted)}
-.rcard .rb{font-size:13px;color:var(--muted);line-height:1.55;margin-top:10px}
-.rcard .rchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
-</style></head><body><div class="wrap"><div class="top">
-  <div class="brand"><span class="dot"></span>Strategy²&nbsp;<small>NARRATIVE INTEL</small></div>
-  <div class="spacer"></div><a class="back" href="https://micahcranman.github.io/nassim-dashboard/">← v8.5 Console</a>
-</div>
-<div class="card hero">
-  <div class="meta">
-    <div>
-      <div class="when">THU REPORT · 2026-06-15 → 2026-06-17</div>
-      <h1>Market Note — week of June 18, 2026</h1>
-    </div>
-    <span class="pill" style="background:#ea394322;color:#ea3943;border:1px solid #ea394355;font-size:12px">BEAR REGIME</span>
-  </div>
-  <div class="verdict">
-    <span class="vbadge" style="background:#f3c6231f;color:#f3c623;border:1px solid #f3c62366">SAME CONVICTION</span>
-    <span style="color:var(--muted);font-size:13px;max-width:520px">SAME conviction. The TOP-side voices (Macro Ops&#x27; fresh cyclical-top flag, Howell&#x27;s late-stage fragility) reinforce the bearish trend and open hedge. On the BOTTOM side — the side the system most needs confirmed — the picture is exactly what a real capitulation looks like: expert fear and silence dominate (the crowd can&#x27;t buy the low), while James Check&#x27;s tonal thaw and The Bitcoin Layer&#x27;s UNCONFIRMED green dot lean buyable but stay discounted by the firmly-negative trend. Nothing forces a change. Watch: a CONFIRMED green dot from The Bitcoin Layer, the on-chain gauge tagging its capitulation extreme, and a retest of the ~$60K prior low Howell cites. Silent this window: Lyn Alden, Willy Woo.</span>
-  </div>
-  <div class="posture">DEFENSIVE — long-term regime bearish, hedge open; on-chain capitulation gauge falling toward its deep-value extreme but not yet triggered; MSTR at ~0.82x deep discount. Bottom-watch building.</div>
-  <div class="conf"><div class="confcard">
-  <div class="k"><span>Bear-overlay (defensive / top side)</span><span class="dots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i></i></span></div>
-  <div class="vv" style="color:#16c784">CORROBORATE</div>
-  <div class="nt">Two top-side voices reinforce the open hedge. Macro Ops, on its good side, newly flags a &#x27;high probability of a cyclical top within the next 12 months&#x27; off a flipping structural tailwind (net equity supply positive for the first time since COVID, margin debt nearing its sell signal, China conditions deteriorating). Howell restates the &#x27;speculative late-stage&#x27; where risk assets are &#x27;more vulnerable to setbacks.&#x27; Both point at late-cycle fragility, firming the bearish trend — but neither is a fresh top call beyond Macro Ops&#x27;, and macro gives direction, not timing. Solid corroboration of the defensive regime, short of high conviction.</div></div><div class="confcard">
-  <div class="k"><span>Bottom-watch (contrarian buy side)</span><span class="dots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i></i></span></div>
-  <div class="vv" style="color:#16c784">CORROBORATE</div>
-  <div class="nt">With the on-chain gauge pinned just above its capitulation extreme, the contrarian-at-extreme rule applies: broad expert fear/silence near the low is itself weak confirmation of the buy setup, not conflict. James Check&#x27;s tonal pivot (&#x27;rate of change starting to tell a different story,&#x27; weak hands being shaken out) leans toward a forming bottom on his weak side — small weight. The genuine add is The Bitcoin Layer, the one real bottom-caller, posting an &#x27;🟢 Unconfirmed Green Dot&#x27; and a downside-risk-dampening view. But two discounts hold it to weak-moderate: the dot is UNCONFIRMED, and the trend is firmly negative. No confirmed dip-buy yet; this corroborates the watch, not a trigger.</div></div></div>
-</div>
-
-<div class="sec">System snapshot <span class="hint">· what the dashboard showed when this note was written</span></div>
-<div class="chips"><div class="chip"><div class="k">Bitcoin</div><div class="v">$62,896</div><div class="s"></div></div><div class="chip"><div class="k">MicroStrategy</div><div class="v">$112.53</div><div class="s"></div></div><div class="chip"><div class="k">On-chain stress</div><div class="v">14.8</div><div class="s">accumulation zone</div></div><div class="chip"><div class="k">Hedge trend</div><div class="v">OPEN</div><div class="s">downtrend</div></div><div class="chip"><div class="k">mNAV</div><div class="v">0.82×</div><div class="s">deep discount</div></div></div>
-
-<div class="sec">Price &amp; on-chain stress <span class="hint">· shaded band = this report's coverage window</span></div>
-<div class="card chart">
-  <div class="clegend"><span><i style="background:#4aa8ff"></i>Bitcoin price</span>
-    <span><i style="background:#f3c623"></i>On-chain stress gauge</span>
-    <span><i style="background:#ea3943;height:2px"></i>capitulation line</span></div>
-  <div id="plot" class="plot"></div>
-</div>
-
-<div class="sec">The trusted voices <span class="hint">· weighted by what each is good at — defensive warnings vs buy-the-dip calls</span></div>
-<div class="voices"><div class="voice">
-  <div class="vh"><div><div class="nm">James Check</div><div class="tg">on-chain</div></div>
-    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#16c784;border:1px solid #16c78455">confirms</span></div></div>
-  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">BOTTOM-side</span><span class="badge" style="background:rgba(74,168,255,.14);color:var(--accent);border:1px solid rgba(74,168,255,.3)">fresh change</span><span class="cdots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
-  <div class="summ">On-chain commentary leaning toward a bottom forming. Notes the monthly/weekly/daily charts are all red but argues the rate of change is &#x27;starting to tell a different story&#x27; as capitulation grinds out weak hands, leaving a &#x27;hardened holder-base of tenured HODLers.&#x27; A genuine tonal pivot toward a thawing bottom — but it&#x27;s his weak side (he&#x27;s a coin-flip and prone to fearfulness at lows), so size the confidence small. As partial corroboration of the capitulation read, it counts; at an extreme, his on-chain regime read still earns moderate weight.</div><div class="quote">“each day now feels marginally less miserable than the last”</div><div class="src"><a href="https://newsletter.checkonchain.com/p/momentum-sprouts" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice silent">
-  <div class="vh"><div><div class="nm">Lyn Alden</div><div class="tg">macro / liquidity</div></div>
-    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#586187;border:1px solid #58618755">silent</span></div></div>
-  <div class="row2"></div>
-  <div class="summ" style="color:var(--faint)">No post in the coverage window.</div></div><div class="voice">
-  <div class="vh"><div><div class="nm">Michael Howell</div><div class="tg">global liquidity</div></div>
-    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#f3c623;border:1px solid #f3c62355">neutral</span></div></div>
-  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">neutral</span><span class="cdots"><i style="background:#f3c623"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
-  <div class="summ">Liquidity weekly restating his late-cycle frame: global liquidity edged up to $193.7tr with 3m annualized growth at a 7-month high (10.7%), but &#x27;risk appetite softens,&#x27; non-US CB liquidity and a strong dollar restrain expansion, and we&#x27;re in the &#x27;speculative late-stage&#x27; calling for selectivity. A restatement, not a high-conviction shift — and macro gives direction, not timing. Mildly constructive on liquidity direction but with a defensive late-cycle caveat; little same-week signal either way.</div><div class="quote">“the &#x27;speculative&#x27; late-stage of the liquidity cycle where risk assets become more vulnerable to setbacks”</div><div class="src"><a href="https://capitalwars.substack.com/p/global-liquidity-watch-weekly-update-680" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice">
-  <div class="vh"><div><div class="nm">The Bitcoin Layer</div><div class="tg">macro · bottom-caller</div></div>
-    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#16c784;border:1px solid #16c78455">confirms</span></div></div>
-  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">BOTTOM-side</span><span class="badge" style="background:rgba(74,168,255,.14);color:var(--accent);border:1px solid rgba(74,168,255,.3)">fresh change</span><span class="cdots"><i style="background:#16c784"></i><i style="background:#16c784"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
-  <div class="summ">Three posts, all leaning constructive: war-ending/summer-malaise should &#x27;dampen some outsized, downside risks,&#x27; an extended defense that &#x27;Strategy Doesn&#x27;t Have to Unwind for Bitcoin to Recover,&#x27; and an &#x27;🟢 Unconfirmed Green Dot&#x27; on their liquidity indicator. TBL is the group&#x27;s one genuine bottom-caller around liquidity pivots — exactly the add the system wants on the buy side. The catch: the dot is explicitly UNCONFIRMED, and our trend is firmly negative. So real buy-side voice, but discounted by the broken trend and the unconfirmed signal.</div><div class="quote">“🟢 Unconfirmed Green Dot”</div><div class="src"><a href="https://thebitcoinlayer.substack.com/p/unconfirmed-green-dot" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice">
-  <div class="vh"><div><div class="nm">Macro Ops</div><div class="tg">tactical macro</div></div>
-    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#ea3943;border:1px solid #ea394355">contradicts</span></div></div>
-  <div class="row2"><span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--glass-brd)">TOP-side</span><span class="cdots"><i style="background:#ea3943"></i><i style="background:#ea3943"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i><i style="background:rgba(255,255,255,.16)"></i></span></div>
-  <div class="summ">Tactically constructive near-term (likely ceasefire &#x27;juicing risk assets,&#x27; path of least resistance higher, crowded bearish positioning set up for reversion) but structurally bearish: &#x27;high probability of a cyclical top within the next 12 months,&#x27; net equity supply flipped positive for the first time since COVID, margin debt approaching sell-signal territory, China financial conditions deteriorating to levels not seen outside COVID. On their good side (newly-named structural top flags off a flipping indicator) this is a TOP warning that supports the defensive trend — not the bottom. Their near-term &#x27;buy the dip / long&#x27; tilt is their weak side; fade it. Net: corroborates the bearish regime, not the capitulation buy.</div><div class="quote">“high probability of a cyclical top within the next 12 months”</div><div class="src"><a href="https://research.macro-ops.com/p/the-structural-tailwind-flips" target="_blank" rel="noopener">source ↗</a></div></div><div class="voice silent">
-  <div class="vh"><div><div class="nm">Willy Woo</div><div class="tg">on-chain</div></div>
-    <div style="text-align:right"><span class="pill" style="background:rgba(0,0,0,.18);color:#586187;border:1px solid #58618755">silent</span></div></div>
-  <div class="row2"></div>
-  <div class="summ" style="color:var(--faint)">No post in the coverage window.</div></div></div>
-
-<div class="sec">The note</div>
-<div class="card"><div class="narr"><h3>Where the system stands</h3>
-<p>Bitcoin near $62,900, MicroStrategy near $113. The medium-term trend that governs our hedge is firmly negative, so the regime is bearish and defensive positions are open — we're past watching for a top and into a live hedge. The on-chain capitulation gauge is falling toward its deep-value extreme and sits just above it: close to a buyable low, but not triggered. MSTR trades at roughly 0.82x the value of its own Bitcoin, a deep discount that inverts the company's own playbook toward buying back stock. Posture: DEFENSIVE, with a bottom-watch building. The side the voices most need to confirm is the BOTTOM.</p>
-<h3>What the trusted voices actually said</h3>
-<ul>
-<li><strong>Macro Ops</strong> (TOP, real weight) — newly flags a 'high probability of a cyclical top within the next 12 months' off named indicators flipping: net equity supply positive for the first time since COVID, margin debt nearing its sell signal, China financial conditions deteriorating to levels not seen outside COVID. That's their good side. Their near-term 'path of least resistance higher / long' tilt is their weak side — fade it. Net: corroborates the bearish regime, not the buy.</li>
-<li><strong>Michael Howell</strong> (NEUTRAL, low weight) — a restatement, not a shift. Liquidity edged up to $193.7tr but 'risk appetite softens' and we're in the 'speculative late-stage… more vulnerable to setbacks.' Macro gives direction, not timing. Mildly defensive caveat, no same-week trigger.</li>
-<li><strong>James Check</strong> (BOTTOM, small weight) — a genuine tonal pivot. The monthly, weekly and daily charts are all red, but the rate of change is 'starting to tell a different story' as capitulation grinds out weak hands, leaving a 'hardened holder-base of tenured HODLers.' It's his weak side (coin-flip at bottoms, prone to fear at lows), so size it small — but it leans toward a forming bottom.</li>
-<li><strong>The Bitcoin Layer</strong> (BOTTOM, the meaningful add) — the group's one real bottom-caller, posting an '🟢 Unconfirmed Green Dot,' a war-ends/summer-malaise view that should 'dampen some outsized, downside risks,' and a defense that 'Strategy doesn't have to unwind for Bitcoin to recover.' This is the buy-side voice the system wants — discounted twice over: the dot is UNCONFIRMED, and the trend is firmly against it.</li>
-</ul>
-<h3>Do the voices confirm the system?</h3>
-<p>The defensive side gets clean corroboration: Macro Ops and Howell both point at late-cycle fragility, firming the open hedge. The bottom side is the interesting one. With the gauge pinned near capitulation, the contrarian-at-extreme rule says widespread expert fear and silence <em>is</em> weak confirmation — the crowd can't buy the low. Check's thaw and TBL's green dot lean buyable, but neither clears the bar: Check is weak at bottoms, and TBL's signal is unconfirmed with the trend against it. No confirmed dip-buy.</p>
-<h3>Bottom line</h3>
-<p><strong>SAME</strong> conviction. Nothing this period forces a change — the bears are corroborated, the bottom is a watch, not a trigger. Watch for a <em>confirmed</em> green dot from The Bitcoin Layer, the on-chain gauge tagging its capitulation extreme, and Bitcoin retesting the ~$60K prior low Howell cites.</p>
-<p><em>Coverage note: Lyn Alden and Willy Woo were silent this window.</em></p>
-  <div class="callout"><div class="k">Bottom line</div><div class="v">SAME conviction. The TOP-side voices (Macro Ops&#x27; fresh cyclical-top flag, Howell&#x27;s late-stage fragility) reinforce the bearish trend and open hedge. On the BOTTOM side — the side the system most needs confirmed — the picture is exactly what a real capitulation looks like: expert fear and silence dominate (the crowd can&#x27;t buy the low), while James Check&#x27;s tonal thaw and The Bitcoin Layer&#x27;s UNCONFIRMED green dot lean buyable but stay discounted by the firmly-negative trend. Nothing forces a change. Watch: a CONFIRMED green dot from The Bitcoin Layer, the on-chain gauge tagging its capitulation extreme, and a retest of the ~$60K prior low Howell cites. Silent this window: Lyn Alden, Willy Woo.</div></div>
-</div></div>
-
+/* index */
+.lead{color:var(--muted);font-size:15px;line-height:1.7;margin:6px 0 30px}
+.rlist{display:flex;flex-direction:column;gap:2px}
+.rrow{display:block;color:inherit;padding:18px 4px;border-bottom:1px solid rgba(120,150,220,.10);transition:background .12s}
+.rrow:hover{background:rgba(74,168,255,.05);text-decoration:none}
+.rrow .rd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.rrow .rdate{font:700 18px var(--sans)}
+.rrow .rcov{font:500 12.5px var(--sans);color:var(--faint)}
+.rrow .rsum{color:var(--muted);font-size:14.5px;line-height:1.55;margin-top:7px}
+.rrow .rconv{font:700 10.5px var(--sans);letter-spacing:.3px;padding:3px 9px;border-radius:20px;white-space:nowrap}
+</style></head><body><div class="wrap"><div class="top"><div class="brand"><span class="dot"></span>Strategy²&nbsp;<small>NARRATIVE INTEL</small></div><div class="spacer"></div><a class="back" href="https://micahcranman.github.io/nassim-dashboard/">← v8.5 Console</a></div>
+<div class="eyebrow">Covers Jun 15 – Jun 17, 2026</div>
+<h1 class="title">Week of June 15, 2026</h1>
+<span class="convtag" style="color:#f3c623;background:#f3c6231c;border:1px solid #f3c62344">Same conviction</span>
+<article class="note"><p><strong>The system this week:</strong> Bitcoin is near $62,900 and MicroStrategy near $113. The trend that governs our hedge is firmly down, so we're defensive and the hedge is open — past watching for a top, into an active bearish stance. At the same time, the on-chain stress gauge is sliding toward its capitulation extreme, sitting just above the deep-value buy zone. There's no confirmed signal to buy weakness yet, but it's the thing to watch. MicroStrategy itself trades at a steep discount to the Bitcoin it holds (about 0.82 times), low enough that the company's own playbook would tilt toward buying back stock rather than issuing it. So we're defensive with a bottom-watch building. The question the voices need to answer: is this falling market close enough to a real bottom to start trusting the buy side?</p>
+<p><strong>What the trusted voices actually said:</strong></p>
+<p><strong>James Check</strong> is our richest on-chain read — strong when he warns, less reliable when he calls a low. His "Momentum Sprouts" note concedes the tape is ugly: "the monthly chart is red, the weekly chart is red, and the daily chart is red." But he argues the rate of change matters more than the level, and "to my eye it is starting to tell a different story." He frames the moment as late-stage capitulation grinding out weak hands, leaving "a hardened holder-base of tenured HODLers." Read against where the on-chain gauge actually sits — pinned near its capitulation extreme — this is not a brave bottom call to fade. It's the on-chain specialist describing the exact capitulation dynamics our gauge is flagging. That makes it quiet confirmation of the bottom-watch, not a conflict, and not yet a buy signal.</p>
+<p><strong><span class="who" tabindex="0">Lyn Alden<span class="who-pop"><b>Lyn Alden</b><span class="who-tag">macro / liquidity</span>The best all-rounder of the group. Strong and early at calling tops and getting defensive ahead of them. Decent at bottoms, but only when a genuine liquidity shift is behind the call — otherwise she tends to turn positive too early into a still-falling market. Most trustworthy when she genuinely changes her stance; discount her when she&#x27;s just restating a long-standing bullish view. Not a source for specific price levels.</span></span></strong> — quiet. No posts in the window.</p>
+<p><strong><span class="who" tabindex="0">Michael Howell<span class="who-pop"><b>Michael Howell</b><span class="who-tag">global liquidity</span>Reads the liquidity tide well — good at the DIRECTION of the next big move, weak on TIMING (often months early or late). Better at flagging tops than bottoms; his buy-the-dip calls tend to be early. Use him for which way the wind is blowing, not for when to act. Weight his genuine high-conviction shifts; ignore routine restatements.</span></span></strong> reads the liquidity tide — good on direction, weak on timing. His weekly update is mixed-to-cautious. Global liquidity edged up to $193.7 trillion, but he flags softening risk appetite and says we're "in the 'speculative' late-stage of the liquidity cycle where risk assets become more vulnerable to setbacks," calling for "a more selective investment approach." He notes Bitcoin "recently climbed above US$80,000 supported by the Q1 liquidity expansion, but have lately lost momentum." This is direction, not timing, and the lean is defensive — consistent with our open hedge, not a bottom call.</p>
+<p><strong><span class="who" tabindex="0">Macro Ops<span class="who-pop"><b>Macro Ops</b><span class="who-tag">tactical macro</span>A good fire alarm, a poor all-clear. Their &quot;get defensive&quot; calls are real but usually arrive late, confirming a downturn already underway. Their &quot;buy the dip&quot; calls are unreliable to actively wrong — fade them. Trust them most when they newly turn cautious off a named indicator flipping; ignore repeated bullish &quot;buy the dip&quot; refrains.</span></span></strong> is a good fire alarm and a poor all-clear, so we lean on their warnings and fade their dip-buying. Their note is two-sided, but the durable signal is bearish: intermediate and longer-term indicators are "flashing elevated fragility and a high probability of a cyclical top within the next 12 months." The fresh, named catalyst is net equity supply flipping positive for the first time since 2021 — buybacks no longer outrunning issuance, so "a structural tailwind is now a headwind." Their short-term bullishness rests on a ceasefire juicing risk assets, which is exactly the dip-buy lean we fade. The newly-flagged structural top warning is the part that carries weight, and it backs the defensive side.</p>
+<p><strong><span class="who" tabindex="0">The Bitcoin Layer<span class="who-pop"><b>The Bitcoin Layer</b><span class="who-tag">macro / liquidity (a house voice, several authors)</span>The one genuine bottom-caller of the group — strong at identifying buyable lows, especially around Federal Reserve and liquidity pivots. But this edge only holds while the broader trend is still up; in a confirmed downtrend their bottom calls fail, so discount them then. Their top calls are mostly noise — frequent false &quot;be careful up here&quot; warnings that often reverse within days, so ignore those. Weight their structural bottom / liquidity-turn calls in an uptrend; ignore the rest.</span></span></strong> is our one genuine bottom-caller, but their edge only holds while the broader trend is still up — and ours has broken. Three posts, constructive in tone. They expect "a reduction in volatility from the Spring months" and a summer that should "dampen some outsized, downside risks." They push back on the idea that Strategy must unwind before Bitcoin can recover. And most concretely, they published a post titled "Unconfirmed Green Dot" — an early, not-yet-confirmed turn on their liquidity signal. That's their good side: a lean toward a buyable low. The catch is the one that matters here. Their bottom edge depends on the broader trend still pointing up, and ours has decisively broken, so we discount it. Note the operative word: unconfirmed.</p>
+<p><strong><span class="who" tabindex="0">Willy Woo<span class="who-pop"><b>Willy Woo</b><span class="who-tag">on-chain</span>A structural bull by default, so his everyday optimism carries little information. The signal is the rare moment he turns against himself — a genuine bearish flip, or taking personal defensive action — which is worth a lot as a top warning. His bottom calls are unreliable. When he&#x27;s just restating optimism near a stretched market, treat it as complacency, not insight. Ignore his price targets entirely.</span></span></strong> — quiet. No posts in the window.</p>
+<p><strong>Does the narrative confirm the system?</strong> The defensive side gets clean corroboration. <span class="who" tabindex="0">Howell<span class="who-pop"><b>Michael Howell</b><span class="who-tag">global liquidity</span>Reads the liquidity tide well — good at the DIRECTION of the next big move, weak on TIMING (often months early or late). Better at flagging tops than bottoms; his buy-the-dip calls tend to be early. Use him for which way the wind is blowing, not for when to act. Weight his genuine high-conviction shifts; ignore routine restatements.</span></span> and <span class="who" tabindex="0">Macro Ops<span class="who-pop"><b>Macro Ops</b><span class="who-tag">tactical macro</span>A good fire alarm, a poor all-clear. Their &quot;get defensive&quot; calls are real but usually arrive late, confirming a downturn already underway. Their &quot;buy the dip&quot; calls are unreliable to actively wrong — fade them. Trust them most when they newly turn cautious off a named indicator flipping; ignore repeated bullish &quot;buy the dip&quot; refrains.</span></span> — the two voices we trust on warnings — both lean cautious, and <span class="who" tabindex="0">Macro Ops<span class="who-pop"><b>Macro Ops</b><span class="who-tag">tactical macro</span>A good fire alarm, a poor all-clear. Their &quot;get defensive&quot; calls are real but usually arrive late, confirming a downturn already underway. Their &quot;buy the dip&quot; calls are unreliable to actively wrong — fade them. Trust them most when they newly turn cautious off a named indicator flipping; ignore repeated bullish &quot;buy the dip&quot; refrains.</span></span> did it off a freshly-named indicator, which is when they're worth most. The buy side is softer but not empty. Check is describing capitulation playing out, and <span class="who" tabindex="0">The Bitcoin Layer<span class="who-pop"><b>The Bitcoin Layer</b><span class="who-tag">macro / liquidity (a house voice, several authors)</span>The one genuine bottom-caller of the group — strong at identifying buyable lows, especially around Federal Reserve and liquidity pivots. But this edge only holds while the broader trend is still up; in a confirmed downtrend their bottom calls fail, so discount them then. Their top calls are mostly noise — frequent false &quot;be careful up here&quot; warnings that often reverse within days, so ignore those. Weight their structural bottom / liquidity-turn calls in an uptrend; ignore the rest.</span></span> flagged an unconfirmed early turn — but Check's read is an observation of the process rather than a firm call, and <span class="who" tabindex="0">TBL<span class="who-pop"><b>The Bitcoin Layer</b><span class="who-tag">macro / liquidity (a house voice, several authors)</span>The one genuine bottom-caller of the group — strong at identifying buyable lows, especially around Federal Reserve and liquidity pivots. But this edge only holds while the broader trend is still up; in a confirmed downtrend their bottom calls fail, so discount them then. Their top calls are mostly noise — frequent false &quot;be careful up here&quot; warnings that often reverse within days, so ignore those. Weight their structural bottom / liquidity-turn calls in an uptrend; ignore the rest.</span></span>'s bottom edge evaporates in a confirmed downtrend like this one. So no voice gives us a buy signal we'd act on yet. And here's the subtle part: with the on-chain gauge pinned near capitulation, the fact that even our bottom-callers are tentative is itself consistent with the setup. The crowd can't bring itself to buy the low — that's what a low tends to feel like.</p>
+<p><strong>Bottom line:</strong> SAME conviction. The defensive posture is well-supported, and the bottom-watch is alive but not yet confirmed by anyone we'd trust to call it. Watch two things: whether the on-chain stress gauge actually touches its capitulation extreme — the trigger we're waiting on — and whether <span class="who" tabindex="0">The Bitcoin Layer<span class="who-pop"><b>The Bitcoin Layer</b><span class="who-tag">macro / liquidity (a house voice, several authors)</span>The one genuine bottom-caller of the group — strong at identifying buyable lows, especially around Federal Reserve and liquidity pivots. But this edge only holds while the broader trend is still up; in a confirmed downtrend their bottom calls fail, so discount them then. Their top calls are mostly noise — frequent false &quot;be careful up here&quot; warnings that often reverse within days, so ignore those. Weight their structural bottom / liquidity-turn calls in an uptrend; ignore the rest.</span></span>'s unconfirmed turn becomes a confirmed one, since that's the buy-side voice whose pivot would genuinely matter even after we discount it for the broken trend. A close below the recent Bitcoin lows would deepen the hedge. A confirmed signal from <span class="who" tabindex="0">The Bitcoin Layer<span class="who-pop"><b>The Bitcoin Layer</b><span class="who-tag">macro / liquidity (a house voice, several authors)</span>The one genuine bottom-caller of the group — strong at identifying buyable lows, especially around Federal Reserve and liquidity pivots. But this edge only holds while the broader trend is still up; in a confirmed downtrend their bottom calls fail, so discount them then. Their top calls are mostly noise — frequent false &quot;be careful up here&quot; warnings that often reverse within days, so ignore those. Weight their structural bottom / liquidity-turn calls in an uptrend; ignore the rest.</span></span>, plus the gauge hitting its extreme, is what would flip us toward the buy.</p></article>
 <div class="foot">
-  Point-in-time narrative-intelligence note. The system posture is produced by the Strategy² v8.5 dashboard;
-  this note only calibrates conviction in it by reading the trusted voices' actual posts inside the coverage
-  window — it never uses hindsight. Voices weighted by side-specific skill; the one bottom-caller is
-  The Bitcoin Layer, and at a capitulation widespread expert fear is read as confirmation, not conflict.<br>
-  Generated 2026-06-25 14:42 CT · <a href="https://micahcranman.github.io/nassim-dashboard/intel/">all reports</a> · <a href="https://micahcranman.github.io/nassim-dashboard/">v8.5 console</a>
-</div>
-
-<script>
-const D = {"dates": ["2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-16", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-05-31", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-06", "2026-06-07", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18"], "btc": [81728.3, 80477.49, 79277.12, 81051.25, 79065.68, 78131.44, 77429.35, 76954.17, 76750.91, 77457.77, 77539.17, 75488.24, 76673.37, 76981.12, 77279.93, 75825.73, 74344.7, 73536.55, 73372.52, 73754.84, 73579.69, 71319.77, 66703.66, 64014.37, 63801.57, 60922.67, 60867.41, 63239.52, 63090.59, 61643.78, 61449.29, 63561.05, 63543.2, 64421.32, 65710.4, 66289.5, 65600.64, 64418.45, 62896.47], "mri": [37.47, 35.93, 34.68, 37.07, 34.26, 32.96, 32.21, 31.0, 30.91, 31.77, 32.18, 29.69, 30.86, 30.89, 31.78, 29.73, 27.68, 26.73, 26.76, 27.32, 27.37, 24.56, 18.27, 15.72, 14.2, 12.37, 11.72, 14.23, 14.53, 12.84, 12.58, 14.83, 15.18, 16.44, 17.66, 18.83, 18.0, 16.7, 14.83], "mnav": [1.1235, 1.0739, 1.0524, 1.081, 1.0516, 1.0641, 1.0738, 0.9859, 0.9767, 0.9747, 0.968, 0.9644, 0.9495, 0.9457, 0.942, 0.9603, 0.9444, 0.9389, 0.9872, 0.9821, 0.9845, 0.9527, 0.9255, 0.8968, 0.9199, 0.8969, 0.8977, 0.864, 0.9164, 0.8628, 0.8532, 0.8592, 0.8867, 0.8746, 0.8575, 0.9018, 0.8534, 0.8249, 0.8156], "win_start": "2026-06-15", "win_end": "2026-06-17", "report_date": "2026-06-18"};
-(function(){
-  const shade0 = D.win_start, shade1 = D.win_end;
-  const btcVals = D.btc.filter(v=>v!=null);
-  const ylo = Math.min.apply(null,btcVals)*0.985, yhi = Math.max.apply(null,btcVals)*1.012;
-  const t_btc = {x:D.dates,y:D.btc,name:'Bitcoin',type:'scatter',mode:'lines',
-    line:{color:'#4aa8ff',width:3,shape:'spline',smoothing:0.6},yaxis:'y',
-    fill:'tozeroy',fillcolor:'rgba(74,168,255,0.13)',
-    hovertemplate:'%{x}<br>BTC $%{y:,.0f}<extra></extra>'};
-  const t_mri = {x:D.dates,y:D.mri,name:'On-chain stress',type:'scatter',mode:'lines+markers',
-    line:{color:'#f3c623',width:2.2,dash:'dot'},marker:{size:4,color:'#f3c623'},
-    yaxis:'y2',connectgaps:true,hovertemplate:'%{x}<br>stress %{y:.1f}<extra></extra>'};
-  const layout = {
-    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(255,255,255,0.018)',
-    font:{color:'#8c98b8',family:'JetBrains Mono, monospace',size:11},
-    margin:{l:60,r:54,t:10,b:34},showlegend:false,
-    xaxis:{gridcolor:'rgba(255,255,255,.05)',zeroline:false},
-    yaxis:{title:'BTC',gridcolor:'rgba(255,255,255,.06)',zeroline:false,tickprefix:'$',tickformat:',.0f',range:[ylo,yhi]},
-    yaxis2:{title:'stress',overlaying:'y',side:'right',gridcolor:'rgba(0,0,0,0)',zeroline:false,range:[0,Math.max(40,Math.max.apply(null,D.mri.filter(v=>v!=null))+6)]},
-    shapes:[
-      {type:'rect',xref:'x',yref:'paper',x0:shade0,x1:shade1,y0:0,y1:1,
-        fillcolor:'rgba(124,92,255,.16)',line:{color:'rgba(124,92,255,.45)',width:1,dash:'dot'},layer:'below'},
-      {type:'line',xref:'paper',yref:'y2',x0:0,x1:1,y0:12,y1:12,
-        line:{color:'#ea3943',width:1.4,dash:'dash'}}
-    ],
-    annotations:[
-      {xref:'paper',yref:'y2',x:0.012,y:12,yanchor:'bottom',text:'capitulation buy zone (≤12)',
-        showarrow:false,font:{color:'#ea3943',size:9.5}},
-      {xref:'x',yref:'paper',x:shade1,y:1,yanchor:'bottom',xanchor:'right',text:'coverage window',
-        showarrow:false,font:{color:'#7c5cff',size:9.5}}
-    ]
-  };
-  Plotly.newPlot('plot',[t_btc,t_mri],layout,{displayModeBar:false,responsive:true});
-})();
-</script></div></body></html>
+  A point-in-time read of the trusted voices against the Strategy² v8.5 system — it calibrates
+  conviction, it doesn't generate signals, and it never uses hindsight. Hover any analyst's name
+  to see how much to trust them and how to read their calls.<br>
+  Generated 2026-06-25 19:35 CT · <a href="https://micahcranman.github.io/nassim-dashboard/intel/">all reports</a> · <a href="https://micahcranman.github.io/nassim-dashboard/">v8.5 console</a>
+</div></div></body></html>
