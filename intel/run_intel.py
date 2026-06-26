@@ -93,7 +93,7 @@ def main():
             emit(p["slug"])
             print(f"  generating {p['slug']} ({p['n_posts']} posts, silent: {', '.join(p['silent']) or 'none'}) …")
             rep = generate_report(p["slug"], verify=not args.no_verify)
-            print(f"    -> {rep.get('conviction_delta')} | bear={rep['bear_overlay']['verdict']} | qfire={rep['qfire']['verdict']}")
+            print(f"    -> {rep.get('conviction')} conviction · {rep.get('summary','')[:80]}")
             fresh.append(p["slug"])
 
     # render everything that has a final

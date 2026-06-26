@@ -8,6 +8,12 @@ nothing published after its coverage window.
 
 Live: **https://micahcranman.github.io/nassim-dashboard/intel/**
 
+**Design:** each report is just the clean point-in-time note — plain prose, no charts/scores/badges.
+The only interaction is a **hover popover on every analyst's name** (skill + how to read their calls,
+pulled from `profiles.md`). The note follows a fixed structure: *The system this week / What the
+trusted voices actually said* (one paragraph per voice) */ Does the narrative confirm the system? /
+Bottom line.*
+
 ## Cadence
 
 - **Monday** report covers the prior **Thursday → Sunday**.
@@ -41,7 +47,7 @@ conviction is **The Bitcoin Layer** (and only while the trend hasn't fully broke
 | `intel_prompt.py` | write + verify prompts and the structured-output schema (single source of truth) |
 | `emit_prompts.py` | renders prompts to `build/` so headless + workflow read identical text |
 | `generate.py` | headless generation via `claude -p` (write → adversarial verify) |
-| `render.py` | HTML report pages + index + Plotly charts + email bodies → `docs/intel/` |
+| `render.py` | clean prose HTML report pages + index + email bodies → `docs/intel/` (analyst names get hover popovers from `profiles.md`) |
 | `send_email.py` | deliver a report via `gog gmail send` (idempotent; tracks `build/sent.json`) |
 | `run_intel.py` | **end-to-end runner** — the single entry point for cron / OpenClaw |
 

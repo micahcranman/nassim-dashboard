@@ -13,6 +13,8 @@ from pathlib import Path
 from intel_lib import BUILD_DIR, DOCS_INTEL
 
 DEFAULT_TO = os.environ.get("INTEL_EMAIL_TO", "micahcranman@gmail.com")
+# gog has multiple authed accounts; pin the send-from account (his main, = recipient).
+GOG_ACCOUNT = os.environ.get("INTEL_GOG_ACCOUNT", "micahcranman@gmail.com")
 SENT_LOG = BUILD_DIR / "sent.json"
 
 
@@ -32,17 +34,16 @@ def send_report(slug: str, to: str = DEFAULT_TO, force: bool = False) -> bool:
     email_html = DOCS_INTEL / "email" / f"{slug}.html"
     if not email_html.exists():
         raise FileNotFoundError(f"missing email body {email_html} — run render.py first")
+    import datetime
     data = json.loads((DOCS_INTEL / "data" / f"{slug}.json").read_text())
-    rep, period = data["report"], data["period"]
-    delta = {"MORE": "↑ more", "SAME": "→ same", "LESS": "↓ less"}.get(rep.get("conviction_delta"), "")
-    subject = (f"Strategy² Intel · {period['title'].replace('Market Note — ','')} "
-               f"· {delta} conviction")
-    plain = (f"{rep.get('system_state','')}\n\n"
-             f"Hedge/top side: {rep['bear_overlay']['verdict']}. "
-             f"Buy/bottom side: {rep['qfire']['verdict']}.\n\n"
-             f"{rep.get('bottom_line','')}\n\n"
-             f"Full report: https://micahcranman.github.io/nassim-dashboard/intel/{slug}.html")
-    cmd = ["gog", "gmail", "send", "--to", to, "--subject", subject,
+    period = data["period"]
+    week = f"Week of {datetime.date.fromisoformat(period['cover_start']).strftime('%B %-d, %Y')}"
+    delta = {"MORE": "↑ more", "SAME": "→ same", "LESS": "↓ less"}.get(data.get("conviction"), "")
+    subject = f"Strategy² Intel · {week} · {delta} conviction"
+    plain = (f"{data.get('summary','')}\n\n"
+             f"Read the full note (hover analyst names for how to read their calls):\n"
+             f"https://micahcranman.github.io/nassim-dashboard/intel/{slug}.html")
+    cmd = ["gog", "gmail", "send", "--account", GOG_ACCOUNT, "--to", to, "--subject", subject,
            "--body", plain, "--body-html", email_html.read_text(), "--no-input"]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if proc.returncode != 0:
