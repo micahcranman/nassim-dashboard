@@ -23,8 +23,16 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .back{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);padding:7px 12px;border-radius:9px;background:rgba(255,255,255,.03)}
 
 .eyebrow{font:600 12px var(--sans);color:var(--faint);letter-spacing:.4px;text-transform:none;margin-bottom:4px}
-h1.title{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
+h1.title{font-size:28px;font-weight:800;letter-spacing:-.4px;margin:0 0 6px;line-height:1.18}
+.cov{color:var(--muted);font-weight:600}
 .convtag{display:inline-block;font:700 11px var(--sans);letter-spacing:.4px;padding:4px 11px;border-radius:20px;margin-top:6px}
+
+/* avatar next to each voice */
+.vp{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px}
+.vp .avatar{flex:0 0 auto;width:44px;height:44px;border-radius:50%;margin-top:3px;
+box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.vp .vp-body{flex:1;min-width:0}
+.vp .vp-body p{margin:0}
 
 /* the article */
 .note{font-size:16.5px;line-height:1.72;color:#dde4f7;margin-top:26px}
@@ -45,8 +53,10 @@ font:400 13.5px var(--sans);line-height:1.58;color:var(--muted);letter-spacing:0
 transition:opacity .14s ease;pointer-events:none}
 .who-pop::before{content:"";position:absolute;left:18px;top:-6px;width:11px;height:11px;
 background:rgba(10,15,28,.985);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg)}
+.who-hd{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.who-av{width:38px;height:38px;border-radius:50%;flex:0 0 auto}
 .who-pop b{display:block;color:var(--ink);font-size:14.5px;font-weight:700;margin-bottom:1px}
-.who-pop .who-tag{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.who-pop .who-tag{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
 .who:hover .who-pop,.who:focus .who-pop,.who:focus-within .who-pop{visibility:visible;opacity:1}
 @media (max-width:560px){.who-pop{left:auto;right:0}.who-pop::before{left:auto;right:18px}}
 
@@ -67,28 +77,23 @@ background:rgba(10,15,28,.985);border-left:1px solid var(--glass-brd);border-top
 <h1 class="title">Narrative Intelligence</h1>
 <div class="lead">A twice-weekly read of the analysts we trust, set against the Strategy² v8.5 system. It doesn't call trades — it tells you whether the voices we trust make the dashboard's current stance more or less convincing this week, and which voices to weight. Mondays cover Thursday–Sunday; Thursdays cover Monday–Wednesday.</div>
 <div class="rlist"><a class="rrow" href="2026-06-25.html">
-  <div class="rd"><span class="rdate">Week of June 22, 2026</span>
-    <span class="rcov">Jun 22 – Jun 24</span>
+  <div class="rd"><span class="rdate">Thursday report <span class="cov">covers June 22–24, 2026</span></span>
     <span class="spacer"></span><span class="rconv" style="color:#f3c623;background:#f3c6231c;border:1px solid #f3c62344">Same conviction</span></div>
   <div class="rsum">Defensive side mildly corroborated (Howell&#x27;s stronger dollar, Macro Ops&#x27; fresh corrective-period warning). The one voice we&#x27;d trust on a bottom stood down and three others went silent — fearful quiet that fits a capitulation rather than refuting the buy, so conviction holds steady.</div>
 </a><a class="rrow" href="2026-06-22.html">
-  <div class="rd"><span class="rdate">Week of June 18, 2026</span>
-    <span class="rcov">Jun 18 – Jun 21</span>
+  <div class="rd"><span class="rdate">Monday report <span class="cov">covers June 18–21, 2026</span></span>
     <span class="spacer"></span><span class="rconv" style="color:#16c784;background:#16c7841c;border:1px solid #16c78444">More conviction</span></div>
   <div class="rsum">Defensive posture gains conviction — Howell turns hawkish on a Volcker-style Fed, Check personally de-risks on the STRC break below par, and the lone bottom-caller&#x27;s buy signal stays unconfirmed.</div>
 </a><a class="rrow" href="2026-06-18.html">
-  <div class="rd"><span class="rdate">Week of June 15, 2026</span>
-    <span class="rcov">Jun 15 – Jun 17</span>
+  <div class="rd"><span class="rdate">Thursday report <span class="cov">covers June 15–17, 2026</span></span>
     <span class="spacer"></span><span class="rconv" style="color:#f3c623;background:#f3c6231c;border:1px solid #f3c62344">Same conviction</span></div>
   <div class="rsum">Trusted defensive voices (Howell, Macro Ops) confirm the open hedge while the on-chain bottom-watch builds; Check&#x27;s read of capitulation playing out fits the setup rather than fighting it, but no voice gives a buy signal we&#x27;d act on yet — The Bitcoin Layer&#x27;s early turn is still unconfirmed. Conviction unchanged.</div>
 </a><a class="rrow" href="2026-06-15.html">
-  <div class="rd"><span class="rdate">Week of June 11, 2026</span>
-    <span class="rcov">Jun 11 – Jun 14</span>
+  <div class="rd"><span class="rdate">Monday report <span class="cov">covers June 11–14, 2026</span></span>
     <span class="spacer"></span><span class="rconv" style="color:#f3c623;background:#f3c6231c;border:1px solid #f3c62344">Same conviction</span></div>
   <div class="rsum">Howell&#x27;s liquidity-bust warning and Macro Ops&#x27; closed crypto-short hedge confirm the downtrend, but both only restate known direction and are already late; no buy-side voice and Lyn Alden silent — conviction in the open hedge holds steady.</div>
 </a><a class="rrow" href="2026-06-11.html">
-  <div class="rd"><span class="rdate">Week of June 8, 2026</span>
-    <span class="rcov">Jun 8 – Jun 10</span>
+  <div class="rd"><span class="rdate">Thursday report <span class="cov">covers June 8–10, 2026</span></span>
     <span class="spacer"></span><span class="rconv" style="color:#16c784;background:#16c7841c;border:1px solid #16c78444">More conviction</span></div>
   <div class="rsum">The top-watch voices (Howell, Macro Ops) strongly confirm the open hedge from their strong side; the bottom-watch builds on capitulation-style fear but has no genuine buy call yet, with The Bitcoin Layer only asking whether $60K is the bottom.</div>
 </a></div>

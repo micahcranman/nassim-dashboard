@@ -28,6 +28,84 @@ C = dict(bg="#070b14", ink="#eaf0ff", muted="#8c98b8", faint="#586187",
          long="#16c784", short="#ea3943", neutral="#f3c623", accent="#4aa8ff", accent2="#7c5cff")
 
 # ---------------------------------------------------------------------------
+# analyst avatars — monogram by default; drop a real photo/logo at
+# docs/intel/assets/avatars/<slug>.(png|jpg|jpeg|webp) and it's used automatically.
+# ---------------------------------------------------------------------------
+AVATARS_DIR = DOCS_INTEL / "assets" / "avatars"
+ANALYST_AV = {  # name: (initials, color-top, color-bottom, text)
+    "James Check":       ("JC",  "#4aa8ff", "#2b6fd0", "#fff"),
+    "Lyn Alden":         ("LA",  "#7c5cff", "#5a3fd0", "#fff"),
+    "Michael Howell":    ("MH",  "#16c784", "#0e9b66", "#06281c"),
+    "The Bitcoin Layer": ("BL",  "#f9844a", "#e0632a", "#311104"),
+    "Macro Ops":         ("MO",  "#ea3943", "#bf2530", "#fff"),
+    "Willy Woo":         ("WW",  "#f3c623", "#d6a90c", "#2b2402"),
+}
+
+
+def _slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def _avatar_svg(initials, c1, c2, text):
+    fs = 15 if len(initials) <= 2 else 12
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">'
+            f'<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">'
+            f'<stop offset="0" stop-color="{c1}"/><stop offset="1" stop-color="{c2}"/>'
+            f'</linearGradient></defs>'
+            f'<circle cx="22" cy="22" r="21" fill="url(#g)" stroke="rgba(255,255,255,.22)" stroke-width="1"/>'
+            f'<text x="22" y="23" text-anchor="middle" dominant-baseline="central" '
+            f'font-family="Inter,system-ui,sans-serif" font-size="{fs}" font-weight="700" '
+            f'fill="{text}" letter-spacing="0.3">{initials}</text></svg>')
+
+
+def write_avatars():
+    AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+    for name, (ini, c1, c2, tx) in ANALYST_AV.items():
+        f = AVATARS_DIR / f"{_slug(name)}.svg"
+        f.write_text(_avatar_svg(ini, c1, c2, tx))
+
+
+def avatar_src(name, rel="assets/avatars"):
+    """Prefer a real photo/logo if present; else the generated monogram SVG."""
+    slug = _slug(name)
+    for ext in ("png", "jpg", "jpeg", "webp"):
+        if (AVATARS_DIR / f"{slug}.{ext}").exists():
+            return f"{rel}/{slug}.{ext}"
+    return f"{rel}/{slug}.svg"
+
+
+def inject_avatars(html_str):
+    """Wrap each voice paragraph (`<p><strong>NAME</strong> — …`) with the analyst's avatar."""
+    names = "|".join(re.escape(n) for n in ANALYST_AV)
+    lead = re.compile(r"^<p><strong>(" + names + r")</strong>")
+    out = []
+    for line in html_str.split("\n"):
+        m = lead.match(line)
+        if m:
+            name = m.group(1)
+            img = (f'<img class="avatar" src="{avatar_src(name)}" alt="{html.escape(name)}" '
+                   f'width="44" height="44" loading="lazy">')
+            out.append(f'<div class="vp">{img}<div class="vp-body">{line}</div></div>')
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
+def title_phrase(period, html_fmt=True):
+    """e.g. 'Thursday report covers June 22–24, 2026'."""
+    rd = datetime.date.fromisoformat(period["report_date"])
+    s = datetime.date.fromisoformat(period["cover_start"])
+    e = datetime.date.fromisoformat(period["cover_end"])
+    if s.month == e.month:
+        rng = f"{s.strftime('%B %-d')}–{e.strftime('%-d, %Y')}"
+    else:
+        rng = f"{s.strftime('%B %-d')} – {e.strftime('%B %-d, %Y')}"
+    day = rd.strftime("%A")
+    if html_fmt:
+        return f'{day} report <span class="cov">covers {rng}</span>'
+    return f"{day} report covers {rng}"
+
+# ---------------------------------------------------------------------------
 # analyst profiles -> hover popovers
 # ---------------------------------------------------------------------------
 
@@ -56,8 +134,11 @@ def _alias_map(profs):
 def _popover_html(canonical, prof):
     tag = html.escape(prof["tag"].rstrip("."))
     body = html.escape(prof["body"])
-    return (f'<span class="who-pop"><b>{html.escape(canonical)}</b>'
-            f'<span class="who-tag">{tag}</span>{body}</span>')
+    av = (f'<img class="who-av" src="{avatar_src(canonical)}" alt="" width="38" height="38">'
+          if canonical in ANALYST_AV else "")
+    return (f'<span class="who-pop"><span class="who-hd">{av}<span>'
+            f'<b>{html.escape(canonical)}</b><span class="who-tag">{tag}</span></span></span>'
+            f'{body}</span>')
 
 
 def wrap_analyst_names(html_str, profs):
@@ -137,8 +218,16 @@ a{{color:var(--accent);text-decoration:none}}a:hover{{text-decoration:underline}
 .back{{font:600 12px var(--sans);color:var(--muted);border:1px solid var(--glass-brd);padding:7px 12px;border-radius:9px;background:rgba(255,255,255,.03)}}
 
 .eyebrow{{font:600 12px var(--sans);color:var(--faint);letter-spacing:.4px;text-transform:none;margin-bottom:4px}}
-h1.title{{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}}
+h1.title{{font-size:28px;font-weight:800;letter-spacing:-.4px;margin:0 0 6px;line-height:1.18}}
+.cov{{color:var(--muted);font-weight:600}}
 .convtag{{display:inline-block;font:700 11px var(--sans);letter-spacing:.4px;padding:4px 11px;border-radius:20px;margin-top:6px}}
+
+/* avatar next to each voice */
+.vp{{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px}}
+.vp .avatar{{flex:0 0 auto;width:44px;height:44px;border-radius:50%;margin-top:3px;
+box-shadow:0 2px 10px rgba(0,0,0,.35)}}
+.vp .vp-body{{flex:1;min-width:0}}
+.vp .vp-body p{{margin:0}}
 
 /* the article */
 .note{{font-size:16.5px;line-height:1.72;color:#dde4f7;margin-top:26px}}
@@ -159,8 +248,10 @@ font:400 13.5px var(--sans);line-height:1.58;color:var(--muted);letter-spacing:0
 transition:opacity .14s ease;pointer-events:none}}
 .who-pop::before{{content:"";position:absolute;left:18px;top:-6px;width:11px;height:11px;
 background:rgba(10,15,28,.985);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg)}}
+.who-hd{{display:flex;align-items:center;gap:10px;margin-bottom:9px}}
+.who-av{{width:38px;height:38px;border-radius:50%;flex:0 0 auto}}
 .who-pop b{{display:block;color:var(--ink);font-size:14.5px;font-weight:700;margin-bottom:1px}}
-.who-pop .who-tag{{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}}
+.who-pop .who-tag{{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}}
 .who:hover .who-pop,.who:focus .who-pop,.who:focus-within .who-pop{{visibility:visible;opacity:1}}
 @media (max-width:560px){{.who-pop{{left:auto;right:0}}.who-pop::before{{left:auto;right:18px}}}}
 
@@ -221,12 +312,11 @@ def render_report(slug, profs):
     pkt = json.loads((BUILD_DIR / f"packet-{slug}.json").read_text())
     rep = json.loads((BUILD_DIR / f"final-{slug}.json").read_text())
     period = pkt["period"]
-    note = wrap_analyst_names(md_to_html(rep.get("narrative_md", "")), profs)
-    cov = f"{datetime.date.fromisoformat(period['cover_start']).strftime('%b %-d')} – {datetime.date.fromisoformat(period['cover_end']).strftime('%b %-d, %Y')}"
+    note = inject_avatars(md_to_html(rep.get("narrative_md", "")))
+    note = wrap_analyst_names(note, profs)
 
     body = f"""{_topbar()}
-<div class="eyebrow">Covers {cov}</div>
-<h1 class="title">{_week_title(period)}</h1>
+<h1 class="title">{title_phrase(period)}</h1>
 {_conv_tag(rep.get('conviction'), big=True)}
 <article class="note">{note}</article>
 <div class="foot">
@@ -235,7 +325,7 @@ def render_report(slug, profs):
   to see how much to trust them and how to read their calls.<br>
   Generated {rep.get('_generated_at','')} · <a href="{INTEL_URL}">all reports</a> · <a href="{DASH_URL}">v8.5 console</a>
 </div>"""
-    page = HEAD.format(title=f"{_week_title(period)} · Strategy² Intel", css=CSS) + body + "</div></body></html>"
+    page = HEAD.format(title=f"{title_phrase(period, html_fmt=False)} · Strategy² Intel", css=CSS) + body + "</div></body></html>"
     (DOCS_INTEL / f"{slug}.html").write_text(page)
 
     (DOCS_INTEL / "data" / f"{slug}.json").write_text(json.dumps({
@@ -248,10 +338,8 @@ def render_report(slug, profs):
 def render_index(cards):
     rows = []
     for rep, period in cards:
-        cov = f"{datetime.date.fromisoformat(period['cover_start']).strftime('%b %-d')} – {datetime.date.fromisoformat(period['cover_end']).strftime('%b %-d')}"
         rows.append(f"""<a class="rrow" href="{period['slug']}.html">
-  <div class="rd"><span class="rdate">{_week_title(period)}</span>
-    <span class="rcov">{cov}</span>
+  <div class="rd"><span class="rdate">{title_phrase(period)}</span>
     <span class="spacer"></span>{_conv_tag(rep.get('conviction'))}</div>
   <div class="rsum">{html.escape(rep.get('summary',''))}</div>
 </a>""")
@@ -283,8 +371,7 @@ def render_email(slug, profs):
     doc = f"""<div style="background:#070b14;color:#dde4f7;font-family:-apple-system,Segoe UI,Inter,sans-serif;margin:0;padding:0">
 <div style="max-width:600px;margin:0 auto;padding:26px 22px">
   <div style="font-weight:800;color:#eaf0ff;font-size:14px">Strategy² <span style="color:#8c98b8;font-weight:600;font-size:10.5px;letter-spacing:2px">NARRATIVE INTEL</span></div>
-  <div style="color:#586187;font-size:12px;margin-top:16px">Covers {cov}</div>
-  <h1 style="font-size:25px;margin:3px 0 8px;color:#fff;font-weight:800">{_week_title(period)}</h1>
+  <h1 style="font-size:23px;margin:16px 0 8px;color:#fff;font-weight:800;line-height:1.2">{title_phrase(period, html_fmt=False)}</h1>
   {'<span style="display:inline-block;font-size:11px;font-weight:700;color:'+col+';background:'+col+'1c;border:1px solid '+col+'44;border-radius:20px;padding:4px 11px">'+label+'</span>' if label else ''}
   <div style="font-size:15.5px;line-height:1.72;color:#dde4f7;margin-top:22px">{note}</div>
   <p style="margin:26px 0 6px"><a href="{url}" style="background:linear-gradient(180deg,#4aa8ff,#2b6fd0);color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-weight:600;font-size:14px;display:inline-block">Open on the dashboard ↗</a></p>
@@ -299,6 +386,7 @@ def main():
     os.chdir(Path(__file__).resolve().parent)
     DOCS_INTEL.mkdir(parents=True, exist_ok=True)
     (DOCS_INTEL / "data").mkdir(exist_ok=True)
+    write_avatars()
     profs = load_profiles()
     slugs = sorted((Path(p).stem.replace("final-", "")
                     for p in glob.glob(str(BUILD_DIR / "final-*.json"))), reverse=True)
