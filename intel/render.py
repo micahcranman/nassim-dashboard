@@ -225,7 +225,7 @@ h1.title{{font-size:28px;font-weight:800;letter-spacing:-.4px;margin:0 0 6px;lin
 /* avatar next to each voice */
 .vp{{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px}}
 .vp .avatar{{flex:0 0 auto;width:44px;height:44px;border-radius:50%;margin-top:3px;
-box-shadow:0 2px 10px rgba(0,0,0,.35)}}
+object-fit:cover;background:#0d1322;box-shadow:0 2px 10px rgba(0,0,0,.35)}}
 .vp .vp-body{{flex:1;min-width:0}}
 .vp .vp-body p{{margin:0}}
 
@@ -249,7 +249,7 @@ transition:opacity .14s ease;pointer-events:none}}
 .who-pop::before{{content:"";position:absolute;left:18px;top:-6px;width:11px;height:11px;
 background:rgba(10,15,28,.985);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg)}}
 .who-hd{{display:flex;align-items:center;gap:10px;margin-bottom:9px}}
-.who-av{{width:38px;height:38px;border-radius:50%;flex:0 0 auto}}
+.who-av{{width:38px;height:38px;border-radius:50%;flex:0 0 auto;object-fit:cover;background:#0d1322}}
 .who-pop b{{display:block;color:var(--ink);font-size:14.5px;font-weight:700;margin-bottom:1px}}
 .who-pop .who-tag{{display:block;color:var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}}
 .who:hover .who-pop,.who:focus .who-pop,.who:focus-within .who-pop{{visibility:visible;opacity:1}}
