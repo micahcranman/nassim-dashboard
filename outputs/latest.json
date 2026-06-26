@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-26T20:20:19.127975",
+  "timestamp": "2026-06-26T21:49:54.171517",
   "strategy_state": {
     "mri": 11.588888888888889,
     "mri_threshold": 12,
@@ -9,8 +9,8 @@
     "slope_5d": -3.0678970438528603,
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
-    "iv_pct": 1.0625046875000002,
-    "mnav": 0.6325922800917744,
+    "iv_pct": 1.023686522216797,
+    "mnav": 0.6308842373207397,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI < 12 but 1d since last (need 30d) \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
@@ -58,19 +58,19 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 30.38284434163799,
+        "value": 31.046276335768283,
         "score": 32.0,
         "weight": 0.123,
         "contrib": 3.94
       },
       "mnav": {
-        "value": 0.6325922800917744,
+        "value": 0.6308842373207397,
         "score": 100.0,
         "weight": 0.109,
         "contrib": 10.9
       },
       "mstr_btc_trend": {
-        "value": -38.63375742774846,
+        "value": -38.79945051365822,
         "score": 50.0,
         "weight": 0.085,
         "contrib": 4.25
@@ -104,7 +104,7 @@
     "verdict": "LONG-LOCAL"
   },
   "meters_v2": {
-    "net_conviction": 77.8,
+    "net_conviction": 77.5,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
@@ -112,7 +112,7 @@
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 66.1,
+    "bull_sum": 65.9,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -146,19 +146,19 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 30.38284434163799,
-        "score": 60.9,
+        "value": 31.046276335768283,
+        "score": 58.9,
         "weight": 0.12,
-        "contrib": 7.3
+        "contrib": 7.06
       },
       "mnav": {
-        "value": 0.6325922800917744,
+        "value": 0.6308842373207397,
         "score": 100.0,
         "weight": 0.13,
         "contrib": 13.0
       },
       "mstr_btc_trend": {
-        "value": -38.63375742774846,
+        "value": -38.79945051365822,
         "score": 50.0,
         "weight": 0.03,
         "contrib": 1.5
@@ -36368,7 +36368,7 @@
     },
     {
       "d": "2026-06-26",
-      "net": 77.8,
+      "net": 77.5,
       "smooth": 73.9
     }
   ],
@@ -87775,7 +87775,7 @@
           "color": "#ea3943"
         }
       ],
-      "value": 30.38284434163799,
+      "value": 31.046276335768283,
       "score": 32.0,
       "series": [
         {
@@ -97996,7 +97996,7 @@
         },
         {
           "d": "2026-06-26",
-          "v": 30.3828
+          "v": 31.0463
         }
       ]
     },
@@ -98039,7 +98039,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6325922800917744,
+      "value": 0.6308842373207397,
       "score": 100.0,
       "series": [
         {
@@ -106052,7 +106052,7 @@
         },
         {
           "d": "2026-06-26",
-          "v": 0.6326
+          "v": 0.6309
         }
       ]
     },
@@ -106089,7 +106089,7 @@
           "color": "#B22222"
         }
       ],
-      "value": -38.63375742774846,
+      "value": -38.79945051365822,
       "score": 50.0,
       "series": [
         {
@@ -116310,7 +116310,7 @@
         },
         {
           "d": "2026-06-26",
-          "v": -38.6338
+          "v": -38.7995
         }
       ]
     },
@@ -126611,7 +126611,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 10.950000000000001,
+      "value": 9.38084490086985,
       "score": -10.0,
       "series": [
         {
@@ -138748,7 +138748,7 @@
     },
     {
       "d": "2026-06-26",
-      "v": 59673.43
+      "v": 59834.99
     }
   ],
   "mstr_line": [
@@ -144682,15 +144682,15 @@
     }
   ],
   "snapshot": {
-    "btc_price": 59673.4296875,
+    "btc_price": 59834.98828125,
     "mstr_price": 82.30999755859375,
-    "mnav": 0.6325922800917744,
+    "mnav": 0.6308842373207397,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.6326,
-      "basic_shares": 0.5504,
+      "diluted": 0.6309,
+      "basic_shares": 0.5489,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
@@ -144698,7 +144698,7 @@
     },
     "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
-    "mstr_iv_atm": 1.0625046875000002
+    "mstr_iv_atm": 1.023686522216797
   },
   "data_health": [
     {
