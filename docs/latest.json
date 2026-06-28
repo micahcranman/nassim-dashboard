@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-28T21:10:43.976962",
+  "timestamp": "2026-06-28T22:37:08.005796",
   "strategy_state": {
     "mri": 12.766666666666667,
     "mri_threshold": 12,
@@ -10,21 +10,21 @@
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
     "iv_pct": 1.0800827246093752,
-    "mnav": 0.6334595530282078,
+    "mnav": 0.6374642730666645,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI 12.8 \u2014 Q-fire arms below 12 \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
   },
   "meters": {
-    "net_conviction": 67.8,
+    "net_conviction": 72.0,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
-    "confidence": 68,
+    "confidence": 72,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 59.2,
+    "bull_sum": 62.9,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -58,10 +58,10 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 30.8363252726392,
-        "score": 32.0,
+        "value": 29.989081707623797,
+        "score": 62.0,
         "weight": 0.123,
-        "contrib": 3.94
+        "contrib": 7.63
       },
       "mnav": {
         "value": 0.6289769508694053,
@@ -104,7 +104,7 @@
     "verdict": "LONG-CAPITULATION"
   },
   "meters_v2": {
-    "net_conviction": 78.1,
+    "net_conviction": 78.4,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
@@ -112,7 +112,7 @@
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 66.3,
+    "bull_sum": 66.6,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -146,10 +146,10 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 30.8363252726392,
-        "score": 59.5,
+        "value": 29.989081707623797,
+        "score": 62.0,
         "weight": 0.12,
-        "contrib": 7.14
+        "contrib": 7.44
       },
       "mnav": {
         "value": 0.6289769508694053,
@@ -16333,7 +16333,7 @@
     ],
     "local_vs_cycle": "LOCAL vs CYCLE: a lone signal saturating reads as a LOCAL extreme (score lands ~\u00b140/60); a CYCLE extreme requires multiple correlated callers saturating together so the weighted net pushes past \u00b165."
   },
-  "net_delta_7d": 1.9,
+  "net_delta_7d": 6.1,
   "zones": {
     "long": 25.0,
     "short": -25.0
@@ -26361,8 +26361,8 @@
     },
     {
       "d": "2026-06-28",
-      "net": 67.8,
-      "smooth": 63.1
+      "net": 72.0,
+      "smooth": 63.7
     }
   ],
   "oscillator_v2": [
@@ -36388,7 +36388,7 @@
     },
     {
       "d": "2026-06-28",
-      "net": 78.1,
+      "net": 78.4,
       "smooth": 74.8
     }
   ],
@@ -87795,8 +87795,8 @@
           "color": "#ea3943"
         }
       ],
-      "value": 30.8363252726392,
-      "score": 32.0,
+      "value": 29.989081707623797,
+      "score": 62.0,
       "series": [
         {
           "d": "2019-07-01",
@@ -98016,7 +98016,7 @@
         },
         {
           "d": "2026-06-28",
-          "v": 30.8363
+          "v": 29.9891
         }
       ]
     },
@@ -98059,7 +98059,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6334595530282078,
+      "value": 0.6374642730666645,
       "score": 100.0,
       "series": [
         {
@@ -126631,7 +126631,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.58658582548005,
+      "value": 0.6271400709699,
       "score": 15.0,
       "series": [
         {
@@ -138776,7 +138776,7 @@
     },
     {
       "d": "2026-06-28",
-      "v": 59591.73
+      "v": 59217.36
     }
   ],
   "mstr_line": [
@@ -144710,15 +144710,15 @@
     }
   ],
   "snapshot": {
-    "btc_price": 59591.73046875,
+    "btc_price": 59217.359375,
     "mstr_price": 82.30999755859375,
-    "mnav": 0.6334595530282078,
+    "mnav": 0.6374642730666645,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.6335,
-      "basic_shares": 0.5512,
+      "diluted": 0.6375,
+      "basic_shares": 0.5546,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
