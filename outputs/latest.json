@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-28T19:39:49.237032",
+  "timestamp": "2026-06-28T21:10:43.976962",
   "strategy_state": {
     "mri": 12.766666666666667,
     "mri_threshold": 12,
@@ -10,7 +10,7 @@
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
     "iv_pct": 1.0800827246093752,
-    "mnav": 0.6359552701492781,
+    "mnav": 0.6334595530282078,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI 12.8 \u2014 Q-fire arms below 12 \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
@@ -58,7 +58,7 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 30.306655682638024,
+        "value": 30.8363252726392,
         "score": 32.0,
         "weight": 0.123,
         "contrib": 3.94
@@ -104,7 +104,7 @@
     "verdict": "LONG-CAPITULATION"
   },
   "meters_v2": {
-    "net_conviction": 78.3,
+    "net_conviction": 78.1,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
@@ -112,7 +112,7 @@
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 66.5,
+    "bull_sum": 66.3,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -146,10 +146,10 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 30.306655682638024,
-        "score": 61.1,
+        "value": 30.8363252726392,
+        "score": 59.5,
         "weight": 0.12,
-        "contrib": 7.33
+        "contrib": 7.14
       },
       "mnav": {
         "value": 0.6289769508694053,
@@ -32963,48 +32963,48 @@
     },
     {
       "d": "2024-08-12",
-      "net": 15.9,
-      "smooth": 7.9
+      "net": 14.5,
+      "smooth": 7.7
     },
     {
       "d": "2024-08-13",
       "net": 10.4,
-      "smooth": 8.2
+      "smooth": 8.0
     },
     {
       "d": "2024-08-14",
       "net": 16.2,
-      "smooth": 9.3
+      "smooth": 9.1
     },
     {
       "d": "2024-08-15",
       "net": 17.2,
-      "smooth": 10.3
+      "smooth": 10.2
     },
     {
       "d": "2024-08-16",
       "net": 15.0,
-      "smooth": 11.0
+      "smooth": 10.8
     },
     {
       "d": "2024-08-17",
       "net": 14.3,
-      "smooth": 11.4
+      "smooth": 11.3
     },
     {
       "d": "2024-08-18",
       "net": 14.8,
-      "smooth": 11.9
+      "smooth": 11.8
     },
     {
       "d": "2024-08-19",
       "net": 11.2,
-      "smooth": 11.8
+      "smooth": 11.7
     },
     {
       "d": "2024-08-20",
       "net": 11.9,
-      "smooth": 11.8
+      "smooth": 11.7
     },
     {
       "d": "2024-08-21",
@@ -33014,7 +33014,7 @@
     {
       "d": "2024-08-22",
       "net": 9.0,
-      "smooth": 10.7
+      "smooth": 10.6
     },
     {
       "d": "2024-08-23",
@@ -33029,7 +33029,7 @@
     {
       "d": "2024-08-25",
       "net": -5.1,
-      "smooth": 5.6
+      "smooth": 5.5
     },
     {
       "d": "2024-08-26",
@@ -36388,7 +36388,7 @@
     },
     {
       "d": "2026-06-28",
-      "net": 78.3,
+      "net": 78.1,
       "smooth": 74.8
     }
   ],
@@ -87795,7 +87795,7 @@
           "color": "#ea3943"
         }
       ],
-      "value": 30.306655682638024,
+      "value": 30.8363252726392,
       "score": 32.0,
       "series": [
         {
@@ -98016,7 +98016,7 @@
         },
         {
           "d": "2026-06-28",
-          "v": 30.3067
+          "v": 30.8363
         }
       ]
     },
@@ -98059,7 +98059,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6359552701492781,
+      "value": 0.6334595530282078,
       "score": 100.0,
       "series": [
         {
@@ -103340,7 +103340,7 @@
         },
         {
           "d": "2024-08-12",
-          "v": 1.9002
+          "v": 1.9567
         },
         {
           "d": "2024-08-13",
@@ -126631,7 +126631,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 1.7580801003835498,
+      "value": 0.58658582548005,
       "score": 15.0,
       "series": [
         {
@@ -138776,7 +138776,7 @@
     },
     {
       "d": "2026-06-28",
-      "v": 59357.87
+      "v": 59591.73
     }
   ],
   "mstr_line": [
@@ -144710,15 +144710,15 @@
     }
   ],
   "snapshot": {
-    "btc_price": 59357.87109375,
+    "btc_price": 59591.73046875,
     "mstr_price": 82.30999755859375,
-    "mnav": 0.6359552701492781,
+    "mnav": 0.6334595530282078,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.636,
-      "basic_shares": 0.5533,
+      "diluted": 0.6335,
+      "basic_shares": 0.5512,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
