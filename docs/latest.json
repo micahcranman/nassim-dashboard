@@ -1,16 +1,16 @@
 {
-  "timestamp": "2026-06-30T15:17:58.513223",
+  "timestamp": "2026-06-30T17:26:28.499459",
   "strategy_state": {
     "mri": 12.422222222222224,
     "mri_threshold": 12,
     "mri_below_12": false,
     "days_since_mri12": 2,
     "qfire_armed": false,
-    "slope_5d": -3.18549905434032,
+    "slope_5d": -3.1824138683518868,
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
-    "iv_pct": 1.1818888562011716,
-    "mnav": 0.6650297220017869,
+    "iv_pct": 1.0046436486816406,
+    "mnav": 0.6718096342620691,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI 12.4 \u2014 Q-fire arms below 12 \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
@@ -58,25 +58,25 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 28.99231958531611,
+        "value": 29.4962891126426,
         "score": 62.0,
         "weight": 0.123,
         "contrib": 7.63
       },
       "mnav": {
-        "value": 0.6650297220017869,
+        "value": 0.6718096342620691,
         "score": 100.0,
         "weight": 0.109,
         "contrib": 10.9
       },
       "mstr_btc_trend": {
-        "value": -39.516335312962205,
+        "value": -38.89971033186498,
         "score": 50.0,
         "weight": 0.085,
         "contrib": 4.25
       },
       "funding": {
-        "value": 5.7151858574688,
+        "value": 7.0208959912074,
         "score": -10.0,
         "weight": 0.167,
         "contrib": -1.67
@@ -104,7 +104,7 @@
     "verdict": "LONG-LOCAL"
   },
   "meters_v2": {
-    "net_conviction": 78.4,
+    "net_conviction": 78.0,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
@@ -112,7 +112,7 @@
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 66.7,
+    "bull_sum": 66.3,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -146,28 +146,28 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 28.99231958531611,
-        "score": 64.8,
+        "value": 29.4962891126426,
+        "score": 63.4,
         "weight": 0.12,
-        "contrib": 7.78
+        "contrib": 7.61
       },
       "mnav": {
-        "value": 0.6650297220017869,
+        "value": 0.6718096342620691,
         "score": 100.0,
         "weight": 0.13,
         "contrib": 13.0
       },
       "mstr_btc_trend": {
-        "value": -39.516335312962205,
+        "value": -38.89971033186498,
         "score": 50.0,
         "weight": 0.03,
         "contrib": 1.5
       },
       "funding": {
-        "value": 5.7151858574688,
-        "score": 13.2,
+        "value": 7.0208959912074,
+        "score": 9.9,
         "weight": 0.07,
-        "contrib": 0.92
+        "contrib": 0.7
       },
       "tbl_indicator": {
         "value": 0.0209,
@@ -36440,8 +36440,8 @@
     },
     {
       "d": "2026-06-30",
-      "net": 78.4,
-      "smooth": 75.4
+      "net": 78.0,
+      "smooth": 75.3
     }
   ],
   "indicators": {
@@ -87847,7 +87847,7 @@
           "color": "#ea3943"
         }
       ],
-      "value": 28.99231958531611,
+      "value": 29.4962891126426,
       "score": 62.0,
       "series": [
         {
@@ -98068,7 +98068,7 @@
         },
         {
           "d": "2026-06-30",
-          "v": 28.9923
+          "v": 29.4963
         }
       ]
     },
@@ -98111,7 +98111,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6650297220017869,
+      "value": 0.6718096342620691,
       "score": 100.0,
       "series": [
         {
@@ -106140,7 +106140,7 @@
         },
         {
           "d": "2026-06-30",
-          "v": 0.665
+          "v": 0.6718
         }
       ]
     },
@@ -106177,7 +106177,7 @@
           "color": "#B22222"
         }
       ],
-      "value": -39.516335312962205,
+      "value": -38.89971033186498,
       "score": 50.0,
       "series": [
         {
@@ -116398,7 +116398,7 @@
         },
         {
           "d": "2026-06-30",
-          "v": -39.5163
+          "v": -38.8997
         }
       ]
     },
@@ -116435,7 +116435,7 @@
           "color": "#16c784"
         }
       ],
-      "value": -3.18549905434032,
+      "value": -3.1824138683518868,
       "score": null,
       "series": [
         {
@@ -126656,7 +126656,7 @@
         },
         {
           "d": "2026-06-30",
-          "v": -3.1855
+          "v": -3.1824
         }
       ]
     },
@@ -126699,7 +126699,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 6.543024140202,
+      "value": 10.950000000000001,
       "score": -10.0,
       "series": [
         {
@@ -126836,7 +126836,7 @@
         },
         {
           "d": "2026-06-30",
-          "v": 5.7152
+          "v": 7.0209
         }
       ]
     },
@@ -138868,7 +138868,7 @@
     },
     {
       "d": "2026-06-30",
-      "v": 58121.36
+      "v": 58333.51
     }
   ],
   "mstr_line": [
@@ -144806,19 +144806,19 @@
     },
     {
       "d": "2026-06-30",
-      "v": 84.28
+      "v": 85.45
     }
   ],
   "snapshot": {
-    "btc_price": 58121.359375,
-    "mstr_price": 84.27999877929688,
-    "mnav": 0.6650297220017869,
+    "btc_price": 58333.51171875,
+    "mstr_price": 85.44999694824219,
+    "mnav": 0.6718096342620691,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.665,
-      "basic_shares": 0.5786,
+      "diluted": 0.6718,
+      "basic_shares": 0.5845,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
@@ -144826,7 +144826,7 @@
     },
     "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
-    "mstr_iv_atm": 1.1818888562011716
+    "mstr_iv_atm": 1.0046436486816406
   },
   "data_health": [
     {
