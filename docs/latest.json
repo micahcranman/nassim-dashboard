@@ -1,16 +1,16 @@
 {
-  "timestamp": "2026-07-01T17:31:21.751494",
+  "timestamp": "2026-07-01T19:23:26.827803",
   "strategy_state": {
     "mri": 10.933333333333334,
     "mri_threshold": 12,
     "mri_below_12": true,
     "days_since_mri12": 1,
     "qfire_armed": false,
-    "slope_5d": -3.1757611633333225,
+    "slope_5d": -3.185392703555462,
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
-    "iv_pct": 0.8103046313476561,
-    "mnav": 0.7509093982458461,
+    "iv_pct": 0.9538578833007811,
+    "mnav": 0.7222636925586885,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI < 12 but 1d since last (need 30d) \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
@@ -58,19 +58,19 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 37.61932799378147,
+        "value": 38.104527138532816,
         "score": 32.0,
         "weight": 0.123,
         "contrib": 3.94
       },
       "mnav": {
-        "value": 0.7509093982458461,
+        "value": 0.7222636925586885,
         "score": 100.0,
         "weight": 0.109,
         "contrib": 10.9
       },
       "mstr_btc_trend": {
-        "value": -28.55009380487462,
+        "value": -31.275766154990137,
         "score": 22.0,
         "weight": 0.085,
         "contrib": 1.87
@@ -104,7 +104,7 @@
     "verdict": "LONG-CAPITULATION"
   },
   "meters_v2": {
-    "net_conviction": 73.0,
+    "net_conviction": 72.9,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
@@ -146,22 +146,22 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 37.61932799378147,
-        "score": 39.1,
+        "value": 38.104527138532816,
+        "score": 37.7,
         "weight": 0.12,
-        "contrib": 4.7
+        "contrib": 4.52
       },
       "mnav": {
-        "value": 0.7509093982458461,
+        "value": 0.7222636925586885,
         "score": 100.0,
         "weight": 0.13,
         "contrib": 13.0
       },
       "mstr_btc_trend": {
-        "value": -28.55009380487462,
-        "score": 38.0,
+        "value": -31.275766154990137,
+        "score": 43.0,
         "weight": 0.03,
-        "contrib": 1.14
+        "contrib": 1.29
       },
       "funding": {
         "value": 4.12760292995175,
@@ -36458,7 +36458,7 @@
     },
     {
       "d": "2026-07-01",
-      "net": 73.0,
+      "net": 72.9,
       "smooth": 73.7
     }
   ],
@@ -87865,7 +87865,7 @@
           "color": "#ea3943"
         }
       ],
-      "value": 37.61932799378147,
+      "value": 38.104527138532816,
       "score": 32.0,
       "series": [
         {
@@ -98086,7 +98086,7 @@
         },
         {
           "d": "2026-07-01",
-          "v": 37.6193
+          "v": 38.1045
         }
       ]
     },
@@ -98129,7 +98129,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.7509093982458461,
+      "value": 0.7222636925586885,
       "score": 100.0,
       "series": [
         {
@@ -106162,7 +106162,7 @@
         },
         {
           "d": "2026-07-01",
-          "v": 0.7509
+          "v": 0.7223
         }
       ]
     },
@@ -106199,7 +106199,7 @@
           "color": "#B22222"
         }
       ],
-      "value": -28.55009380487462,
+      "value": -31.275766154990137,
       "score": 22.0,
       "series": [
         {
@@ -116420,7 +116420,7 @@
         },
         {
           "d": "2026-07-01",
-          "v": -28.5501
+          "v": -31.2758
         }
       ]
     },
@@ -116457,7 +116457,7 @@
           "color": "#16c784"
         }
       ],
-      "value": -3.1757611633333225,
+      "value": -3.185392703555462,
       "score": null,
       "series": [
         {
@@ -126678,7 +126678,7 @@
         },
         {
           "d": "2026-07-01",
-          "v": -3.1758
+          "v": -3.1854
         }
       ]
     },
@@ -126721,7 +126721,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 8.30981238769275,
+      "value": 10.950000000000001,
       "score": 15.0,
       "series": [
         {
@@ -138898,7 +138898,7 @@
     },
     {
       "d": "2026-07-01",
-      "v": 60110.19
+      "v": 60189.71
     }
   ],
   "mstr_line": [
@@ -144840,19 +144840,19 @@
     },
     {
       "d": "2026-07-01",
-      "v": 98.42
+      "v": 94.79
     }
   ],
   "snapshot": {
-    "btc_price": 60110.19140625,
-    "mstr_price": 98.41999816894531,
-    "mnav": 0.7509093982458461,
+    "btc_price": 60189.7109375,
+    "mstr_price": 94.79070281982422,
+    "mnav": 0.7222636925586885,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.7509,
-      "basic_shares": 0.6534,
+      "diluted": 0.7223,
+      "basic_shares": 0.6284,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
@@ -144860,7 +144860,7 @@
     },
     "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
-    "mstr_iv_atm": 0.8103046313476561
+    "mstr_iv_atm": 0.9538578833007811
   },
   "data_health": [
     {
