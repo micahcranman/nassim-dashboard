@@ -1,30 +1,30 @@
 {
-  "timestamp": "2026-07-01T12:16:57.543258",
+  "timestamp": "2026-07-01T15:21:56.396105",
   "strategy_state": {
     "mri": 10.933333333333334,
     "mri_threshold": 12,
     "mri_below_12": true,
     "days_since_mri12": 1,
     "qfire_armed": false,
-    "slope_5d": -3.1785112249624743,
+    "slope_5d": -3.1797286292510702,
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
-    "iv_pct": 0.00196310546875,
-    "mnav": 0.6819934032984538,
+    "iv_pct": 0.6586948193359375,
+    "mnav": 0.740963117243078,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI < 12 but 1d since last (need 30d) \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
   },
   "meters": {
-    "net_conviction": 73.6,
+    "net_conviction": 66.7,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
-    "confidence": 74,
+    "confidence": 67,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 64.3,
+    "bull_sum": 58.2,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -58,22 +58,22 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 29.765404426281037,
-        "score": 62.0,
+        "value": 37.18061421515176,
+        "score": 32.0,
         "weight": 0.123,
-        "contrib": 7.63
+        "contrib": 3.94
       },
       "mnav": {
-        "value": 0.680815399357373,
+        "value": 0.740963117243078,
         "score": 100.0,
         "weight": 0.109,
         "contrib": 10.9
       },
       "mstr_btc_trend": {
-        "value": -38.08064667462722,
-        "score": 50.0,
+        "value": -29.496494058085286,
+        "score": 22.0,
         "weight": 0.085,
-        "contrib": 4.25
+        "contrib": 1.87
       },
       "funding": {
         "value": 1.42840263562695,
@@ -104,15 +104,15 @@
     "verdict": "LONG-CAPITULATION"
   },
   "meters_v2": {
-    "net_conviction": 77.6,
+    "net_conviction": 74.3,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
-    "confidence": 78,
+    "confidence": 74,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 68.4,
+    "bull_sum": 65.4,
     "bear_sum": -0.0,
     "contributions": {
       "mri": {
@@ -146,22 +146,22 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 29.765404426281037,
-        "score": 62.7,
+        "value": 37.18061421515176,
+        "score": 40.5,
         "weight": 0.12,
-        "contrib": 7.52
+        "contrib": 4.85
       },
       "mnav": {
-        "value": 0.680815399357373,
+        "value": 0.740963117243078,
         "score": 100.0,
         "weight": 0.13,
         "contrib": 13.0
       },
       "mstr_btc_trend": {
-        "value": -38.08064667462722,
-        "score": 50.0,
+        "value": -29.496494058085286,
+        "score": 39.7,
         "weight": 0.03,
-        "contrib": 1.5
+        "contrib": 1.19
       },
       "funding": {
         "value": 1.42840263562695,
@@ -16373,7 +16373,7 @@
     ],
     "local_vs_cycle": "LOCAL vs CYCLE: a lone signal saturating reads as a LOCAL extreme (score lands ~\u00b140/60); a CYCLE extreme requires multiple correlated callers saturating together so the weighted net pushes past \u00b165."
   },
-  "net_delta_7d": 7.5,
+  "net_delta_7d": 0.6,
   "zones": {
     "long": 25.0,
     "short": -25.0
@@ -26416,8 +26416,8 @@
     },
     {
       "d": "2026-07-01",
-      "net": 73.6,
-      "smooth": 63.4
+      "net": 66.7,
+      "smooth": 62.5
     }
   ],
   "oscillator_v2": [
@@ -36458,8 +36458,8 @@
     },
     {
       "d": "2026-07-01",
-      "net": 77.6,
-      "smooth": 74.3
+      "net": 74.3,
+      "smooth": 73.8
     }
   ],
   "indicators": {
@@ -87865,8 +87865,8 @@
           "color": "#ea3943"
         }
       ],
-      "value": 29.765404426281037,
-      "score": 62.0,
+      "value": 37.18061421515176,
+      "score": 32.0,
       "series": [
         {
           "d": "2019-07-04",
@@ -98086,7 +98086,7 @@
         },
         {
           "d": "2026-07-01",
-          "v": 29.7654
+          "v": 37.1806
         }
       ]
     },
@@ -98129,7 +98129,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6819934032984538,
+      "value": 0.740963117243078,
       "score": 100.0,
       "series": [
         {
@@ -106159,6 +106159,10 @@
         {
           "d": "2026-06-30",
           "v": 0.6808
+        },
+        {
+          "d": "2026-07-01",
+          "v": 0.741
         }
       ]
     },
@@ -106195,13 +106199,9 @@
           "color": "#B22222"
         }
       ],
-      "value": -38.08064667462722,
-      "score": 50.0,
+      "value": -29.496494058085286,
+      "score": 22.0,
       "series": [
-        {
-          "d": "2016-05-02",
-          "v": 2.3427
-        },
         {
           "d": "2016-05-03",
           "v": -0.7515
@@ -116417,6 +116417,10 @@
         {
           "d": "2026-06-30",
           "v": -38.0806
+        },
+        {
+          "d": "2026-07-01",
+          "v": -29.4965
         }
       ]
     },
@@ -116453,13 +116457,9 @@
           "color": "#16c784"
         }
       ],
-      "value": -3.1785112249624743,
+      "value": -3.1797286292510702,
       "score": null,
       "series": [
-        {
-          "d": "2016-05-02",
-          "v": 0.0637
-        },
         {
           "d": "2016-05-03",
           "v": 0.0102
@@ -126675,6 +126675,10 @@
         {
           "d": "2026-06-30",
           "v": -3.1785
+        },
+        {
+          "d": "2026-07-01",
+          "v": -3.1797
         }
       ]
     },
@@ -126717,7 +126721,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 6.60739052898195,
+      "value": 2.9135939609236496,
       "score": 15.0,
       "series": [
         {
@@ -138894,7 +138898,7 @@
     },
     {
       "d": "2026-07-01",
-      "v": 58457.71
+      "v": 59991.75
     }
   ],
   "mstr_line": [
@@ -144833,18 +144837,22 @@
     {
       "d": "2026-06-30",
       "v": 86.93
+    },
+    {
+      "d": "2026-07-01",
+      "v": 96.93
     }
   ],
   "snapshot": {
-    "btc_price": 58457.7109375,
-    "mstr_price": 86.93000030517578,
-    "mnav": 0.6819934032984538,
+    "btc_price": 59991.75,
+    "mstr_price": 96.92500305175781,
+    "mnav": 0.740963117243078,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.682,
-      "basic_shares": 0.5934,
+      "diluted": 0.741,
+      "basic_shares": 0.6447,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
@@ -144852,7 +144860,7 @@
     },
     "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
-    "mstr_iv_atm": 0.00196310546875
+    "mstr_iv_atm": 0.6586948193359375
   },
   "data_health": [
     {
