@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-01T09:01:27.115309",
+  "timestamp": "2026-07-01T12:16:57.543258",
   "strategy_state": {
     "mri": 10.933333333333334,
     "mri_threshold": 12,
@@ -10,21 +10,21 @@
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
     "iv_pct": 0.00196310546875,
-    "mnav": 0.6776118210529251,
+    "mnav": 0.6819934032984538,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI < 12 but 1d since last (need 30d) \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
   },
   "meters": {
-    "net_conviction": 69.4,
+    "net_conviction": 73.6,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
-    "confidence": 69,
+    "confidence": 74,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 60.6,
+    "bull_sum": 64.3,
     "bear_sum": 0,
     "contributions": {
       "mri": {
@@ -58,10 +58,10 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 31.48409259254919,
-        "score": 32.0,
+        "value": 29.765404426281037,
+        "score": 62.0,
         "weight": 0.123,
-        "contrib": 3.94
+        "contrib": 7.63
       },
       "mnav": {
         "value": 0.680815399357373,
@@ -104,15 +104,15 @@
     "verdict": "LONG-CAPITULATION"
   },
   "meters_v2": {
-    "net_conviction": 77.0,
+    "net_conviction": 77.6,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
-    "confidence": 77,
+    "confidence": 78,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 67.8,
+    "bull_sum": 68.4,
     "bear_sum": -0.0,
     "contributions": {
       "mri": {
@@ -146,10 +146,10 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 31.48409259254919,
-        "score": 57.5,
+        "value": 29.765404426281037,
+        "score": 62.7,
         "weight": 0.12,
-        "contrib": 6.91
+        "contrib": 7.52
       },
       "mnav": {
         "value": 0.680815399357373,
@@ -16373,7 +16373,7 @@
     ],
     "local_vs_cycle": "LOCAL vs CYCLE: a lone signal saturating reads as a LOCAL extreme (score lands ~\u00b140/60); a CYCLE extreme requires multiple correlated callers saturating together so the weighted net pushes past \u00b165."
   },
-  "net_delta_7d": 3.3,
+  "net_delta_7d": 7.5,
   "zones": {
     "long": 25.0,
     "short": -25.0
@@ -26416,8 +26416,8 @@
     },
     {
       "d": "2026-07-01",
-      "net": 69.4,
-      "smooth": 62.8
+      "net": 73.6,
+      "smooth": 63.4
     }
   ],
   "oscillator_v2": [
@@ -36458,8 +36458,8 @@
     },
     {
       "d": "2026-07-01",
-      "net": 77.0,
-      "smooth": 74.2
+      "net": 77.6,
+      "smooth": 74.3
     }
   ],
   "indicators": {
@@ -87865,8 +87865,8 @@
           "color": "#ea3943"
         }
       ],
-      "value": 31.48409259254919,
-      "score": 32.0,
+      "value": 29.765404426281037,
+      "score": 62.0,
       "series": [
         {
           "d": "2019-07-04",
@@ -98086,7 +98086,7 @@
         },
         {
           "d": "2026-07-01",
-          "v": 31.4841
+          "v": 29.7654
         }
       ]
     },
@@ -98129,7 +98129,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.6776118210529251,
+      "value": 0.6819934032984538,
       "score": 100.0,
       "series": [
         {
@@ -126717,7 +126717,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 3.5716474066372497,
+      "value": 6.60739052898195,
       "score": 15.0,
       "series": [
         {
@@ -138894,7 +138894,7 @@
     },
     {
       "d": "2026-07-01",
-      "v": 58835.71
+      "v": 58457.71
     }
   ],
   "mstr_line": [
@@ -144836,15 +144836,15 @@
     }
   ],
   "snapshot": {
-    "btc_price": 58835.7109375,
+    "btc_price": 58457.7109375,
     "mstr_price": 86.93000030517578,
-    "mnav": 0.6776118210529251,
+    "mnav": 0.6819934032984538,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.6776,
-      "basic_shares": 0.5896,
+      "diluted": 0.682,
+      "basic_shares": 0.5934,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
