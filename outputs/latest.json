@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-02T00:15:44.760164",
+  "timestamp": "2026-07-02T04:43:36.086218",
   "strategy_state": {
     "mri": 12.733333333333333,
     "mri_threshold": 12,
@@ -9,22 +9,22 @@
     "slope_5d": -3.189109935174627,
     "hedge_gate_open": true,
     "hedge_gate_label": "OPEN",
-    "iv_pct": 0.9626468579101561,
-    "mnav": 0.7151003213950293,
+    "iv_pct": 0.0039162109375,
+    "mnav": 0.705651789987798,
     "mnav_confidence": "high",
     "cohort_posture": "Tourists gone \u2014 capitulation",
     "next_action": "MRI 12.7 \u2014 Q-fire arms below 12 \u00b7 hedge gate OPEN (PUT/SHORT admitted)"
   },
   "meters": {
-    "net_conviction": 55.1,
+    "net_conviction": 52.8,
     "zone": "LONG",
     "label": "LONG-LOCAL",
     "read": "LONG-LOCAL",
-    "confidence": 55,
+    "confidence": 53,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 62.0,
+    "bull_sum": 59.6,
     "bear_sum": -1.7,
     "contributions": {
       "mri": {
@@ -46,7 +46,7 @@
         "contrib": 5.25
       },
       "sth_sopr": {
-        "value": 0.992,
+        "value": 0.9989,
         "score": 45.0,
         "weight": 0.09,
         "contrib": 4.05
@@ -64,10 +64,10 @@
         "contrib": 8.65
       },
       "rsi": {
-        "value": 36.76295043884804,
-        "score": 32.0,
+        "value": 40.2349979288445,
+        "score": 12.0,
         "weight": 0.123,
-        "contrib": 3.94
+        "contrib": 1.48
       },
       "mnav": {
         "value": 0.7314085989559431,
@@ -111,15 +111,15 @@
     "verdict": "LONG-LOCAL"
   },
   "meters_v2": {
-    "net_conviction": 69.7,
+    "net_conviction": 67.1,
     "zone": "LONG",
     "label": "LONG-CAPITULATION",
     "read": "LONG-CAPITULATION",
-    "confidence": 70,
+    "confidence": 67,
     "macro_score": null,
     "macro_label": "\u2014",
     "macro_contributions": {},
-    "bull_sum": 70.4,
+    "bull_sum": 67.8,
     "bear_sum": -0.0,
     "contributions": {
       "mri": {
@@ -141,10 +141,10 @@
         "contrib": 8.94
       },
       "sth_sopr": {
-        "value": 0.992,
-        "score": 57.0,
+        "value": 0.9989,
+        "score": 46.6,
         "weight": 0.13,
-        "contrib": 7.41
+        "contrib": 6.06
       },
       "sth_mvrv": {
         "value": 0.8618402147261348,
@@ -159,10 +159,10 @@
         "contrib": 4.6
       },
       "rsi": {
-        "value": 36.76295043884804,
-        "score": 41.7,
+        "value": 40.2349979288445,
+        "score": 31.3,
         "weight": 0.12,
-        "contrib": 5.01
+        "contrib": 3.76
       },
       "mnav": {
         "value": 0.7314085989559431,
@@ -16387,7 +16387,7 @@
     ],
     "local_vs_cycle": "LOCAL vs CYCLE: a lone signal saturating reads as a LOCAL extreme (score lands ~\u00b140/60); a CYCLE extreme requires multiple correlated callers saturating together so the weighted net pushes past \u00b165."
   },
-  "net_delta_7d": -11.0,
+  "net_delta_7d": -13.3,
   "zones": {
     "long": 25.0,
     "short": -25.0
@@ -26435,8 +26435,8 @@
     },
     {
       "d": "2026-07-02",
-      "net": 55.1,
-      "smooth": 60.3
+      "net": 52.8,
+      "smooth": 60.0
     }
   ],
   "oscillator_v2": [
@@ -33037,33 +33037,33 @@
     },
     {
       "d": "2024-08-12",
-      "net": 19.1,
-      "smooth": 12.6
+      "net": 20.4,
+      "smooth": 12.7
     },
     {
       "d": "2024-08-13",
       "net": 17.8,
-      "smooth": 13.3
+      "smooth": 13.4
     },
     {
       "d": "2024-08-14",
       "net": 21.3,
-      "smooth": 14.3
+      "smooth": 14.5
     },
     {
       "d": "2024-08-15",
       "net": 24.0,
-      "smooth": 15.6
+      "smooth": 15.7
     },
     {
       "d": "2024-08-16",
       "net": 20.2,
-      "smooth": 16.2
+      "smooth": 16.3
     },
     {
       "d": "2024-08-17",
       "net": 19.1,
-      "smooth": 16.6
+      "smooth": 16.7
     },
     {
       "d": "2024-08-18",
@@ -33073,7 +33073,7 @@
     {
       "d": "2024-08-19",
       "net": 17.3,
-      "smooth": 16.9
+      "smooth": 17.0
     },
     {
       "d": "2024-08-20",
@@ -33083,7 +33083,7 @@
     {
       "d": "2024-08-21",
       "net": 10.6,
-      "smooth": 16.0
+      "smooth": 16.1
     },
     {
       "d": "2024-08-22",
@@ -33108,12 +33108,12 @@
     {
       "d": "2024-08-26",
       "net": 3.3,
-      "smooth": 8.8
+      "smooth": 8.9
     },
     {
       "d": "2024-08-27",
       "net": 11.9,
-      "smooth": 9.2
+      "smooth": 9.3
     },
     {
       "d": "2024-08-28",
@@ -36477,13 +36477,13 @@
     },
     {
       "d": "2026-07-01",
-      "net": 73.3,
-      "smooth": 71.4
+      "net": 71.9,
+      "smooth": 71.2
     },
     {
       "d": "2026-07-02",
-      "net": 69.7,
-      "smooth": 71.2
+      "net": 67.1,
+      "smooth": 70.6
     }
   ],
   "indicators": {
@@ -67318,13 +67318,9 @@
           "color": "#ea3943"
         }
       ],
-      "value": 0.992,
+      "value": 0.9989,
       "score": 45.0,
       "series": [
-        {
-          "d": "2019-07-03",
-          "v": 1.0532
-        },
         {
           "d": "2019-07-04",
           "v": 1.0649
@@ -77540,6 +77536,10 @@
         {
           "d": "2026-06-30",
           "v": 0.992
+        },
+        {
+          "d": "2026-07-01",
+          "v": 0.9989
         }
       ]
     },
@@ -98110,8 +98110,8 @@
           "color": "#ea3943"
         }
       ],
-      "value": 36.76295043884804,
-      "score": 32.0,
+      "value": 40.2349979288445,
+      "score": 12.0,
       "series": [
         {
           "d": "2019-07-04",
@@ -108331,7 +108331,7 @@
         },
         {
           "d": "2026-07-02",
-          "v": 36.763
+          "v": 40.235
         }
       ]
     },
@@ -108374,7 +108374,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 0.7151003213950293,
+      "value": 0.705651789987798,
       "score": 100.0,
       "series": [
         {
@@ -113655,7 +113655,7 @@
         },
         {
           "d": "2024-08-12",
-          "v": 1.9567
+          "v": 1.9002
         },
         {
           "d": "2024-08-13",
@@ -136966,7 +136966,7 @@
           "color": "#B22222"
         }
       ],
-      "value": 9.906920514054148,
+      "value": 9.50976902547495,
       "score": -10.0,
       "series": [
         {
@@ -149143,7 +149143,7 @@
     },
     {
       "d": "2026-07-02",
-      "v": 59894.33
+      "v": 60696.3
     }
   ],
   "mstr_line": [
@@ -155089,15 +155089,15 @@
     }
   ],
   "snapshot": {
-    "btc_price": 59894.328125,
+    "btc_price": 60696.30078125,
     "mstr_price": 93.38999938964844,
-    "mnav": 0.7151003213950293,
+    "mnav": 0.705651789987798,
     "mnav_confidence": "high",
     "mnav_shares_source": "strategy.com (diluted)",
     "mnav_convention": "common-equity diluted",
     "mnav_xcheck": {
-      "diluted": 0.7151,
-      "basic_shares": 0.6222,
+      "diluted": 0.7057,
+      "basic_shares": 0.614,
       "divergence_pct": 12.99,
       "flag": true,
       "published_source": null,
@@ -155105,13 +155105,13 @@
     },
     "mstr_btc_holdings": 847363.0,
     "mstr_btc_holdings_stale": false,
-    "mstr_iv_atm": 0.9626468579101561
+    "mstr_iv_atm": 0.0039162109375
   },
   "data_health": [
     {
       "name": "mri",
       "stale": false,
-      "source": "checkonchain/meanreversion_index",
+      "source": "checkonchain/meanreversion_index (cache)",
       "error": null
     },
     {
